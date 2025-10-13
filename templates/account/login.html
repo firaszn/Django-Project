@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load socialaccount %}
+
+{% block title %}{% trans "Sign In" %} - AI Personal Journal{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Google Button Styling */
+.btn-google {
+    background: #ffffff;
+    border: 2px solid #dadce0;
+    color: #3c4043;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-google:hover {
+    background: #f8f9fa;
+    border-color: #c6c8ca;
+    color: #1a73e8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-google:focus {
+    background: #f8f9fa;
+    border-color: #1a73e8;
+    color: #1a73e8;
+    box-shadow: 0 0 0 0.2rem rgba(26, 115, 232, 0.25);
+}
+
+.btn-google i {
+    font-size: 20px;
+    background: linear-gradient(45deg, #ea4335, #fbbc05, #34a853, #1a73e8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Divider Styling */
+.divider-container {
+    position: relative;
+    text-align: center;
+}
+
+.divider-line {
+    border: none;
+    height: 1px;
+    background: #e0e0e0;
+    margin: 0;
+}
+
+.divider-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Card enhancements */
+.card {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none;
+}
+
+/* Button animations */
+.btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Form styling */
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <i class="fas fa-book-reader fa-3x mb-3"></i>
+                    <h1 class="card-title mb-0">{% trans "Welcome Back!" %}</h1>
+                    <p class="mb-0 opacity-75">{% trans "Sign in to your AI Journal" %}</p>
+                </div>
+                
+                <div class="card-body p-5">
+                    <!-- Google OAuth Button -->
+                    {% get_providers as socialaccount_providers %}
+                    {% if socialaccount_providers %}
+                        <div class="text-center mb-4">
+                            {% for provider in socialaccount_providers %}
+                                {% if provider.id == "google" %}
+                                    <a href="{% provider_login_url 'google' %}" class="btn btn-google btn-lg w-100 py-3 mb-3">
+                                        <i class="fab fa-google me-3"></i>
+                                        <strong>{% trans "Continue with Google" %}</strong>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="divider-container mb-4">
+                            <hr class="divider-line">
+                            <span class="divider-text bg-white px-3 text-muted">{% trans "or" %}</span>
+                        </div>
+                    {% endif %}
+                    
+                    <form class="login" method="POST" action="{% url 'account_login' %}">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        {% if redirect_field_value %}
+                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-primary btn-lg py-3" type="submit">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                <strong>{% trans "Sign In" %}</strong>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4 text-center">
+                        <hr class="my-4">
+                        
+                        <p class="mb-3">{% trans "Don't have an account?" %}</p>
+                        <a href="{% url 'account_signup' %}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>
+                            {% trans "Create Account" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features Preview -->
+            <div class="card mt-4 border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="card-title text-center mb-3">
+                        <i class="fas fa-magic text-primary me-2"></i>
+                        {% trans "AI-Powered Journal Features" %}
+                    </h6>
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <i class="fas fa-microphone text-success"></i>
+                            <small class="d-block text-muted">{% trans "Voice Notes" %}</small>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-camera text-info"></i>
+                            <small class="d-block text-muted">{% trans "Photo AI" %}</small>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-chart-line text-warning"></i>
+                            <small class="d-block text-muted">{% trans "Insights" %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

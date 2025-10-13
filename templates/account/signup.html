@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Sign Up" %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <i class="fas fa-rocket fa-3x mb-3"></i>
+                    <h1 class="card-title mb-0">{% trans "Start Your AI Journal Journey" %}</h1>
+                    <p class="mb-0 opacity-75">{% trans "Create your account and begin documenting your life with AI" %}</p>
+                </div>
+                
+                <div class="card-body p-5">
+                    <form class="signup" id="signup_form" method="POST" action="{% url 'account_signup' %}">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        {% if redirect_field_value %}
+                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-primary btn-lg py-3" type="submit">
+                                <i class="fas fa-user-plus me-2"></i>
+                                <strong>{% trans "Create My Account" %}</strong>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4 text-center">
+                        <hr class="my-4">
+                        <p class="mb-3">{% trans "Already have an account?" %}</p>
+                        <a href="{% url 'account_login' %}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            {% trans "Sign In Instead" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features Preview -->
+            <div class="row g-4 mt-4">
+                <div class="col-md-4">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-microphone fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">{% trans "Voice Recording" %}</h5>
+                            <p class="card-text text-muted">{% trans "Record your thoughts and let AI transcribe them into beautiful journal entries." %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-camera fa-3x text-info mb-3"></i>
+                            <h5 class="card-title">{% trans "Smart Photos" %}</h5>
+                            <p class="card-text text-muted">{% trans "Upload photos and get AI-powered descriptions and automatic organization." %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-brain fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title">{% trans "AI Insights" %}</h5>
+                            <p class="card-text text-muted">{% trans "Get intelligent summaries, mood analysis, and discover patterns in your memories." %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Notice -->
+            <div class="card mt-4 border-0 bg-light">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-shield-alt fa-2x text-success"></i>
+                        </div>
+                        <div class="col-md-10">
+                            <h6 class="card-title mb-1">{% trans "Your Privacy Matters" %}</h6>
+                            <p class="card-text text-muted mb-0">
+                                {% trans "Your journal entries are encrypted and private. We never share your personal data with third parties." %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

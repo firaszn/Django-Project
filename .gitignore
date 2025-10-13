@@ -1,0 +1,228 @@
+# ===================================
+# .gitignore pour AI Personal Journal
+# Projet Django - Python
+# ===================================
+
+# ============ ENVIRONNEMENT VIRTUEL ============
+venv/
+env/
+ENV/
+.venv/
+*.virtualenv
+
+# ============ PYTHON ============
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# ============ DJANGO ============
+# Base de données locale
+*.sqlite3
+*.db
+db.sqlite3
+db.sqlite3-journal
+
+# Fichiers de migration (optionnel - décommentez si nécessaire)
+# **/migrations/*.py
+# **/migrations/*.pyc
+# !**/migrations/__init__.py
+
+# Media files (fichiers uploadés par les utilisateurs)
+media/
+!media/.gitkeep
+
+# Static files collectés
+staticfiles/
+static_root/
+!staticfiles/.gitkeep
+
+# Django stuff
+*.log
+local_settings.py
+
+# ============ SECRETS & CONFIG ============
+# Fichiers de configuration sensibles
+.env
+.env.local
+.env.*.local
+*.env
+
+# Configuration email (contient des mots de passe)
+email_config.py
+secrets.py
+credentials.py
+
+# Clés secrètes
+secret_key.txt
+*.pem
+*.key
+
+# ============ IDEs & EDITORS ============
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============ SYSTÈME D'EXPLOITATION ============
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============ BACKUP & TEMP ============
+# Fichiers de backup
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.temp
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============ TESTS & COVERAGE ============
+# Testing
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+htmlcov/
+
+# ============ JUPYTER NOTEBOOK ============
+.ipynb_checkpoints
+*.ipynb
+
+# ============ NODE.JS (si utilisé) ============
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# ============ DOCKER ============
+*.dockerignore
+docker-compose.override.yml
+
+# ============ DOCUMENTATION ============
+# Documentation générée
+docs/_build/
+site/
+
+# ============ AUTRES ============
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ============ FICHIERS SPÉCIFIQUES AU PROJET ============
+# Guides temporaires (décommentez si vous ne voulez pas les pousser)
+# GUIDE_*.md
+# *_SETUP.md
+
+# Fichiers de test temporaires
+test_*.py
+scratch.py
+playground.py
+
+# ============ KEEP FILES ============
+# Forcer Git à garder certains dossiers vides
+!.gitkeep
+

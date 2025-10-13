@@ -1,0 +1,932 @@
+{% extends "users/dashboard_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Users Management" %} - AI Personal Journal Admin{% endblock %}
+
+{% block dashboard_content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <h1 class="page-title">Users Management</h1>
+        <p class="page-subtitle">Manage and monitor all platform users</p>
+    </div>
+    <div class="header-actions">
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="Search users..." id="userSearch">
+        </div>
+        <div class="filter-dropdown">
+            <button class="filter-btn" onclick="toggleFilterDropdown()">
+                <i class="fas fa-filter me-2"></i>
+                Filters
+                <i class="fas fa-chevron-down ms-2"></i>
+            </button>
+            <div class="filter-menu" id="filterMenu">
+                <div class="filter-section">
+                    <label>Status</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" value="active" checked>
+                            <span class="checkmark"></span>
+                            Active
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="inactive">
+                            <span class="checkmark"></span>
+                            Inactive
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-section">
+                    <label>Verification</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" value="verified" checked>
+                            <span class="checkmark"></span>
+                            Verified
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="unverified">
+                            <span class="checkmark"></span>
+                            Unverified
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="users-stats">
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="0">
+        <div class="stat-icon primary">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_users }}</h3>
+            <p>Total Users</p>
+        </div>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-icon success">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ active_users }}</h3>
+            <p>Active Users</p>
+        </div>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-icon warning">
+            <i class="fas fa-certificate"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ admin_users }}</h3>
+            <p>Administrators</p>
+        </div>
+    </div>
+</div>
+
+<!-- Users Grid -->
+<div class="users-container">
+    <div class="users-grid" id="usersGrid">
+        {% for user_item in users %}
+        {% if user_item.role != 'admin' %}
+        <div class="user-card" data-aos="zoom-in" data-aos-delay="{{ forloop.counter|add:300 }}" 
+             data-status="{% if user_item.is_active %}active{% else %}inactive{% endif %}"
+             data-verified="{% if user_item.verified %}verified{% else %}unverified{% endif %}"
+             data-search="{{ user_item.get_full_name|lower }} {{ user_item.email|lower }}">
+            
+            <!-- Card Glow Effect -->
+            <div class="card-glow"></div>
+            
+            <!-- User Header -->
+            <div class="user-header">
+                <div class="user-avatar-container">
+                    {% if user_item.profilePicture %}
+                        <img src="{{ user_item.profilePicture.url }}" class="user-avatar" alt="{{ user_item.get_full_name }}">
+                    {% else %}
+                        <div class="user-avatar-placeholder">
+                            {{ user_item.first_name|first|default:user_item.username|first|upper }}{{ user_item.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                    <div class="avatar-status {% if user_item.is_active %}online{% else %}offline{% endif %}"></div>
+                </div>
+                
+                <div class="user-badges">
+                    {% if user_item.verified %}
+                        <span class="badge verified">
+                            <i class="fas fa-check-circle"></i>
+                            Verified
+                        </span>
+                    {% else %}
+                        <span class="badge unverified">
+                            <i class="fas fa-clock"></i>
+                            Pending
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- User Info -->
+            <div class="user-info">
+                <h3 class="user-name">{{ user_item.get_full_name|default:user_item.username }}</h3>
+                <p class="user-email">{{ user_item.email }}</p>
+                
+                <div class="user-meta">
+                    <div class="meta-row">
+                        <span class="meta-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            Joined
+                        </span>
+                        <span class="meta-value">{{ user_item.date_joined|date:"M d, Y" }}</span>
+                    </div>
+                    {% if user_item.last_login %}
+                    <div class="meta-row">
+                        <span class="meta-label">
+                            <i class="fas fa-clock"></i>
+                            Last seen
+                        </span>
+                        <span class="meta-value">{{ user_item.last_login|timesince }} ago</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- User Actions -->
+            <div class="user-actions">
+                <a href="{% url 'admin_user_detail' user_item.id %}" class="action-btn primary">
+                    <i class="fas fa-eye"></i>
+                    <span>View Profile</span>
+                </a>
+                <button class="action-btn secondary" onclick="toggleUserStatus({{ user_item.id }})">
+                    {% if user_item.is_active %}
+                        <i class="fas fa-pause"></i>
+                        <span>Deactivate</span>
+                    {% else %}
+                        <i class="fas fa-play"></i>
+                        <span>Activate</span>
+                    {% endif %}
+                </button>
+            </div>
+
+            <!-- Hover Effects -->
+            <div class="card-particles">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>No Users Found</h3>
+            <p>No users match your current filters</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <div class="pagination-container" data-aos="fade-up">
+        <div class="pagination">
+            {% if users.has_previous %}
+                <a href="?page={{ users.previous_page_number }}" class="page-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in users.paginator.page_range %}
+                {% if users.number == num %}
+                    <span class="page-btn active">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}" class="page-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if users.has_next %}
+                <a href="?page={{ users.next_page_number }}" class="page-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* ============ PAGE HEADER ============ */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    width: 300px;
+    padding: 14px 20px 14px 50px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+    position: relative;
+}
+
+.filter-btn {
+    padding: 14px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 250px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--gray-200);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.filter-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.filter-section {
+    margin-bottom: 20px;
+}
+
+.filter-section:last-child {
+    margin-bottom: 0;
+}
+
+.filter-section label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--gray-600);
+    padding: 8px 0;
+}
+
+.filter-option input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--gray-300);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.filter-option input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.filter-option input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ============ USERS STATS ============ */
+.users-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.stat-icon.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.stat-icon.success {
+    background: linear-gradient(135deg, var(--secondary) 0%, #34d399 100%);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.warning {
+    background: linear-gradient(135deg, var(--warning) 0%, #fbbf24 100%);
+    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+}
+
+.stat-info h3 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin: 0 0 4px 0;
+}
+
+.stat-info p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* ============ USERS GRID ============ */
+.users-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.user-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.user-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--info) 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.user-card:hover::before {
+    transform: scaleX(1);
+}
+
+.user-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary);
+}
+
+.card-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.user-card:hover .card-glow {
+    opacity: 1;
+    animation: rotate-glow 3s linear infinite;
+}
+
+@keyframes rotate-glow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* User Header */
+.user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.user-avatar-container {
+    position: relative;
+}
+
+.user-avatar,
+.user-avatar-placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar-placeholder {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.avatar-status {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.avatar-status.online {
+    background: var(--secondary);
+    animation: pulse-status 2s infinite;
+}
+
+.avatar-status.offline {
+    background: var(--gray-400);
+}
+
+@keyframes pulse-status {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge.verified {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--secondary);
+}
+
+.badge.unverified {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+/* User Info */
+.user-info {
+    margin-bottom: 24px;
+}
+
+.user-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 8px 0;
+}
+
+.user-email {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0 0 16px 0;
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.meta-label {
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.meta-value {
+    color: var(--gray-700);
+    font-weight: 600;
+}
+
+/* User Actions */
+.user-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.action-btn.primary {
+    background: var(--primary);
+    color: white;
+}
+
+.action-btn.primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.action-btn.secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+}
+
+.action-btn.secondary:hover {
+    background: var(--gray-200);
+    border-color: var(--gray-400);
+}
+
+/* Card Particles */
+.card-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.user-card:hover .card-particles {
+    opacity: 1;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: float-particle 3s infinite ease-in-out;
+}
+
+.particle:nth-child(1) {
+    top: 20%;
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+    top: 60%;
+    right: 20%;
+    animation-delay: 1s;
+}
+
+.particle:nth-child(3) {
+    bottom: 20%;
+    left: 60%;
+    animation-delay: 2s;
+}
+
+@keyframes float-particle {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
+    50% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+}
+
+/* Empty State */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--gray-500);
+}
+
+.empty-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: var(--gray-400);
+}
+
+.empty-state h3 {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    color: var(--gray-700);
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+}
+
+.pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.page-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--gray-300);
+    background: white;
+    color: var(--gray-600);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.page-btn:hover,
+.page-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+    .users-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+    
+    .users-stats {
+        flex-direction: column;
+    }
+}
+</style>
+
+<!-- AOS Animation Library -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 600,
+        easing: 'ease-out-cubic',
+        once: true,
+        offset: 50
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('userSearch');
+    const userCards = document.querySelectorAll('.user-card');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        userCards.forEach(card => {
+            const searchData = card.getAttribute('data-search');
+            if (searchData.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Filter functionality
+    const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
+    
+    filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', applyFilters);
+    });
+
+    function applyFilters() {
+        const activeFilters = {
+            status: [],
+            verified: []
+        };
+
+        filterCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const value = checkbox.value;
+                if (value === 'active' || value === 'inactive') {
+                    activeFilters.status.push(value);
+                } else if (value === 'verified' || value === 'unverified') {
+                    activeFilters.verified.push(value);
+                }
+            }
+        });
+
+        userCards.forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            const cardVerified = card.getAttribute('data-verified');
+            
+            const statusMatch = activeFilters.status.length === 0 || activeFilters.status.includes(cardStatus);
+            const verifiedMatch = activeFilters.verified.length === 0 || activeFilters.verified.includes(cardVerified);
+            
+            if (statusMatch && verifiedMatch) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+});
+
+function toggleFilterDropdown() {
+    const filterMenu = document.getElementById('filterMenu');
+    filterMenu.classList.toggle('show');
+}
+
+function toggleUserStatus(userId) {
+    // This would typically make an AJAX call to toggle user status
+    console.log('Toggle status for user:', userId);
+    // You can implement the actual functionality here
+}
+
+// Close filter dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const filterDropdown = document.querySelector('.filter-dropdown');
+    const filterMenu = document.getElementById('filterMenu');
+    
+    if (!filterDropdown.contains(event.target)) {
+        filterMenu.classList.remove('show');
+    }
+});
+</script>
+{% endblock dashboard_content %}
