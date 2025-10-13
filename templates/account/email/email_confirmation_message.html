@@ -1,0 +1,133 @@
+{% load i18n %}{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Confirmation - AI Personal Journal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .content p {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .highlight {
+            background-color: #f0f4ff;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">📖 AI Personal Journal</div>
+            <p>Your AI companion for documenting your memories</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello{% if user.first_name %} {{ user.first_name }}{% endif %}!</h2>
+            
+            <p>Welcome to <strong>AI Personal Journal</strong>! We're excited to have you join our community.</p>
+            
+            <div class="highlight">
+                <p><strong>🎯 Next Step:</strong></p>
+                <p>To activate your account and start using all the features of your AI journal, please confirm your email address by clicking the button below:</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ activate_url }}" class="button" style="color: white;">
+                    ✉️ Confirm My Email Address
+                </a>
+            </div>
+            
+            <p><strong>What can you do with AI Personal Journal?</strong></p>
+            <ul>
+                <li>📝 Create journal entries with AI assistance</li>
+                <li>🎤 Record voice notes</li>
+                <li>📸 Upload and analyze your photos</li>
+                <li>🤖 Get automatic summaries and insights</li>
+                <li>🔍 Organize your memories by people and events</li>
+            </ul>
+            
+            <p>If you didn't create an account, you can safely ignore this email.</p>
+            
+            <p style="font-size: 14px; color: #6c757d;">If the button doesn't work, copy and paste this link:</p>
+            <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px;">{{ activate_url }}</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>AI Personal Journal</strong></p>
+            <p>Your AI companion for documenting and organizing your memories</p>
+            <p>© {% now "Y" %} AI Personal Journal. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+{% endautoescape %}

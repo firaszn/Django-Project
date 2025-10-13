@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ user.get_full_name|default:user.username }} - Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-container {
+    min-height: calc(100vh - 300px);
+    padding-bottom: 80px;
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    background-size: 400% 400%;
+    animation: gradient-shift 20s ease infinite;
+}
+
+@keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.footer {
+    margin-top: 60px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5 profile-container">
+    <div class="row">
+        <!-- Profile Card Exceptionnelle -->
+        <div class="col-md-4" data-aos="fade-right" data-aos-delay="100">
+            <div class="card card-premium text-center h-100">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <div class="profile-picture-container mb-4">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-picture pulse">
+                        {% else %}
+                            <div class="profile-picture d-flex align-items-center justify-content-center float">
+                                <i class="fas fa-user fa-4x text-white"></i>
+                            </div>
+                        {% endif %}
+                        <div class="profile-status">
+                            <span class="badge bg-success pulse">
+                                <i class="fas fa-circle me-1"></i>{% trans "Active" %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body px-4">
+                    <h2 class="card-title text-gradient mb-2">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="text-muted mb-3">{{ user.email }}</p>
+                    
+                    {% if user.bio %}
+                        <div class="bio-section mb-4">
+                            <p class="card-text fst-italic">"{{ user.bio }}"</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="profile-actions">
+                        <a href="{% url 'profile_update' %}" class="btn btn-primary btn-lg mb-2">
+                            <i class="fas fa-edit me-2"></i>{% trans "Edit Profile" %}
+                        </a>
+                        <a href="{% url 'profile_settings' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog me-2"></i>{% trans "Settings" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans "Contact Information" %}</h5>
+                    <ul class="list-unstyled">
+                        {% if user.phone_number %}
+                            <li class="mb-2">
+                                <i class="fas fa-phone me-2 text-primary"></i>
+                                {{ user.phone_number }}
+                            </li>
+                        {% endif %}
+                        {% if user.birth_date %}
+                            <li class="mb-2">
+                                <i class="fas fa-birthday-cake me-2 text-primary"></i>
+                                {{ user.birth_date }}
+                            </li>
+                        {% endif %}
+                        <li>
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            {{ user.email }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Journal Statistics -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">{% trans "Journal Statistics" %}</h4>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h2 class="text-primary">0</h2>
+                                <p class="text-muted">{% trans "Total Entries" %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h2 class="text-success">0</h2>
+                                <p class="text-muted">{% trans "Photos Uploaded" %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h2 class="text-info">0</h2>
+                                <p class="text-muted">{% trans "Voice Notes" %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h4 class="card-title">{% trans "Recent Activity" %}</h4>
+                    <div class="text-center py-4">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">{% trans "No recent activity to display" %}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preferences -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h4 class="card-title">{% trans "Preferences" %}</h4>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{% trans "Dark Mode" %}</h6>
+                                <small class="text-muted">{% trans "Enable dark theme" %}</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="darkModeSwitch" 
+                                       {% if user.dark_mode %}checked{% endif %}>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{% trans "Email Notifications" %}</h6>
+                                <small class="text-muted">{% trans "Receive email updates" %}</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="emailNotificationsSwitch"
+                                       {% if user.email_notifications %}checked{% endif %}>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const darkModeSwitch = document.getElementById('darkModeSwitch');
+    const emailNotificationsSwitch = document.getElementById('emailNotificationsSwitch');
+    
+    async function updatePreference(preference, value) {
+        try {
+            const response = await fetch('{% url "profile_settings" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    [preference]: value
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            // Reload page to apply dark mode changes
+            if (preference === 'dark_mode') {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to update preference');
+        }
+    }
+    
+    darkModeSwitch.addEventListener('change', (e) => {
+        updatePreference('dark_mode', e.target.checked);
+    });
+    
+    emailNotificationsSwitch.addEventListener('change', (e) => {
+        updatePreference('email_notifications', e.target.checked);
+    });
+});
+</script>
+{% endblock %}

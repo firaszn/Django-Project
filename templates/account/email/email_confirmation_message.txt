@@ -1,0 +1,22 @@
+{% load i18n %}{% autoescape off %}
+Hello{% if user.first_name %} {{ user.first_name }}{% endif %}!
+
+Welcome to AI Personal Journal! We're excited to have you join our community.
+
+To activate your account and start using all the features of your AI journal, please confirm your email address by clicking the link below:
+
+{{ activate_url }}
+
+What can you do with AI Personal Journal?
+- Create journal entries with AI assistance
+- Record voice notes  
+- Upload and analyze your photos
+- Get automatic summaries and insights
+- Organize your memories by people and events
+
+If you didn't create an account on AI Personal Journal, you can safely ignore this email.
+
+Thank you for joining AI Personal Journal!
+
+© {% now "Y" %} AI Personal Journal. All rights reserved.
+{% endautoescape %}
