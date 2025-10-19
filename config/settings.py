@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # Local apps
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
+    'reminder_and_goals',
 ]
 
 MIDDLEWARE = [
@@ -85,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'root',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
