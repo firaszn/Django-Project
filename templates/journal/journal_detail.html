@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ journal.title }} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <a href="{% url 'journal_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Journals
+                </a>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="{% url 'goal_create' %}?journal_id={{ journal.id }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Add New Goal
+                    </a>
+                </div>
+            </div>
+
+            <!-- Journal Details -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">{{ journal.title }}</h4>
+                        <span class="text-muted">{{ journal.created_at|date:"F d, Y" }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p class="lead">{{ journal.description }}</p>
+                    </div>
+
+                    <!-- Related Goals Section -->
+                    <div class="mb-4">
+                        <h5 class="mb-0">Related Goals</h5>
+                        {% if journal.related_goals.exists %}
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                {% for goal in journal.related_goals.all %}
+                                <span class="badge bg-primary p-2">
+                                    <i class="fas fa-bullseye me-1"></i>
+                                    {{ goal.title }}
+                                    <span class="ms-1">({{ goal.progress }}/{{ goal.target }})</span>
+                                </span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <div>
+                                        <strong>No goals linked yet.</strong> 
+                                        <p class="mb-0">Create a new goal to track your progress related to this journal entry.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                  
+
+                    <!-- Journal Metadata -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Journal Information</h6>
+                                    <ul class="list-unstyled mb-0">
+                                        <li><strong>Created:</strong> {{ journal.created_at|date:"M d, Y H:i" }}</li>
+                                        <li><strong>Updated:</strong> {{ journal.updated_at|date:"M d, Y H:i" }}</li>
+                                        <li><strong>Word Count:</strong> {{ journal.description|wordcount }} words</li>
+                                        <li><strong>Related Goals:</strong> {{ journal.related_goals.count }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

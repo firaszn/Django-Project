@@ -9,6 +9,7 @@ urlpatterns = [
     path('', include('journal.urls')),
     path('users/', include('users.urls')),
     path('accounts/', include('allauth.urls')),
+    path('reminder-and-goals/', include('reminder_and_goals.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

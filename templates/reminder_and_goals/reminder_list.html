@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 fw-bold text-gradient-warning mb-2">My Reminders</h1>
+                    <p class="text-muted fs-5">Stay organized with timely notifications</p>
+                </div>
+                <a href="{% url 'reminder_create' %}" class="btn btn-warning btn-lg px-4 py-3">
+                    <i class="fas fa-plus me-2"></i>Create New Reminder
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminders List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <h3 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-bell me-2 text-warning"></i>
+                        Active Reminders ({{ object_list.count }})
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    {% if object_list %}
+                    <div class="list-group list-group-flush">
+                        {% for reminder in object_list %}
+                        <div class="list-group-item border-0 py-4 px-5 hover-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-start mb-2">
+                                        <div class="reminder-icon me-3">
+                                            <i class="fas fa-bell fa-2x text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="fw-bold text-dark mb-2">{{ reminder.title }}</h4>
+                                            <p class="text-muted mb-3">{{ reminder.description|default:"No description"|truncatewords:20 }}</p>
+                                            
+                                            <!-- Time and Status -->
+                                            <div class="d-flex flex-wrap gap-4 align-items-center">
+                                                <div class="time-badge">
+                                                    <span class="badge bg-warning bg-opacity-10 text-warning py-2 px-3 rounded-pill">
+                                                        <i class="fas fa-clock me-2"></i>
+                                                        {{ reminder.reminder_time }}
+                                                    </span>
+                                                </div>
+                                                <div class="status-badge">
+                                                    {% if reminder.status %}
+                                                    <span class="badge bg-success bg-opacity-10 text-success py-2 px-3 rounded-pill">
+                                                        <i class="fas fa-check-circle me-2"></i>
+                                                        Active
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger py-2 px-3 rounded-pill">
+                                                        <i class="fas fa-pause-circle me-2"></i>
+                                                        Inactive
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="{% url 'reminder_edit' reminder.id %}" class="btn btn-warning btn-sm px-3 py-2">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <button class="btn btn-danger btn-sm px-3 py-2" 
+                                                onclick="if(confirm('Are you sure you want to delete this reminder?')) { location.href = '{% url 'reminder_delete' reminder.id %}'; }">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if not forloop.last %}
+                        <div class="border-bottom mx-5"></div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="empty-state-icon mb-4">
+                            <i class="fas fa-bell fa-4x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">No Reminders Yet</h4>
+                        <p class="text-muted mb-4">Create your first reminder to stay organized.</p>
+                        <a href="{% url 'reminder_create' %}" class="btn btn-warning btn-lg px-4">
+                            <i class="fas fa-plus me-2"></i>Create Your First Reminder
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-gradient-warning {
+    background: linear-gradient(135deg, #f6ad55 0%, #fbd38d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hover-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.hover-card:hover {
+    background: linear-gradient(135deg, #fffaf0 0%, #fef6e6 100%);
+    border-left-color: #f6ad55;
+    transform: translateX(5px);
+}
+
+.reminder-icon {
+    animation: ring 2s infinite;
+}
+
+@keyframes ring {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+}
+
+.badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.empty-state-icon {
+    opacity: 0.5;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f6ad55 0%, #fbd38d 100%);
+    border: none;
+    color: white;
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(246, 173, 85, 0.4);
+    color: white;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,983 @@
+{% extends "users/dashboard_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Reminders Management" %} - AI Personal Journal Admin{% endblock %}
+
+{% block dashboard_content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <h1 class="page-title">Reminders Management</h1>
+        <p class="page-subtitle">Manage and monitor all user reminders</p>
+    </div>
+    <div class="header-actions">
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="Search reminders..." id="reminderSearch">
+        </div>
+        <div class="filter-dropdown">
+            <button class="filter-btn" onclick="toggleFilterDropdown()">
+                <i class="fas fa-filter me-2"></i>
+                Filters
+                <i class="fas fa-chevron-down ms-2"></i>
+            </button>
+            <div class="filter-menu" id="filterMenu">
+                <div class="filter-section">
+                    <label>Status</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" value="active" checked>
+                            <span class="checkmark"></span>
+                            Active
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="inactive" checked>
+                            <span class="checkmark"></span>
+                            Inactive
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-section">
+                    <label>Time</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" value="morning">
+                            <span class="checkmark"></span>
+                            Morning
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="afternoon">
+                            <span class="checkmark"></span>
+                            Afternoon
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="evening">
+                            <span class="checkmark"></span>
+                            Evening
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="users-stats">
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="0">
+        <div class="stat-icon primary">
+            <i class="fas fa-bell"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ reminders_count }}</h3>
+            <p>Total Reminders</p>
+        </div>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-icon success">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ active_reminders }}</h3>
+            <p>Active Reminders</p>
+        </div>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-icon warning">
+            <i class="fas fa-pause-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ inactive_reminders }}</h3>
+            <p>Inactive Reminders</p>
+        </div>
+    </div>
+</div>
+
+<!-- Reminders Table -->
+<div class="users-container">
+    <div class="table-responsive">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Reminder Details</th>
+                    <th>Time</th>
+                    <th>Description</th>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reminder in reminders %}
+                <tr class="table-row" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:100 }}"
+                    data-status="{% if reminder.status %}active{% else %}inactive{% endif %}"
+                    data-time="{% if reminder.reminder_time.hour < 12 %}morning{% elif reminder.reminder_time.hour < 18 %}afternoon{% else %}evening{% endif %}"
+                    data-search="{{ reminder.title|lower }} {{ reminder.user.username|lower }}">
+                    
+                    <!-- Reminder Details -->
+                    <td>
+                        <div class="reminder-info">
+                            <div class="reminder-title">{{ reminder.title }}</div>
+                            <div class="reminder-meta">
+                                <i class="fas fa-user-clock"></i>
+                                {{ reminder.reminder_time|time:"H:i" }} daily
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Time -->
+                    <td>
+                        <div class="time-display">
+                            <div class="time-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="time-info">
+                                <div class="time-value">{{ reminder.reminder_time|time:"H:i" }}</div>
+                                <div class="time-period">
+                                    {% if reminder.reminder_time.hour < 12 %}
+                                        Morning
+                                    {% elif reminder.reminder_time.hour < 18 %}
+                                        Afternoon
+                                    {% else %}
+                                        Evening
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Description -->
+                    <td>
+                        <div class="description-cell">
+                            {% if reminder.description %}
+                                <div class="description-text">{{ reminder.description|truncatewords:12 }}</div>
+                            {% else %}
+                                <span class="no-description">No description</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    
+                    <!-- User -->
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-small">
+                                {% if reminder.user.profilePicture %}
+                                    <img src="{{ reminder.user.profilePicture.url }}" alt="{{ reminder.user.username }}">
+                                {% else %}
+                                    <div class="avatar-placeholder-small">
+                                        {{ reminder.user.first_name|first|default:reminder.user.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="user-details">
+                                <div class="user-name">{{ reminder.user.get_full_name|default:reminder.user.username }}</div>
+                                <div class="user-email">{{ reminder.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Status -->
+                    <td>
+                        {% if reminder.status %}
+                            <span class="status-badge active">
+                                <i class="fas fa-play-circle"></i>
+                                Active
+                            </span>
+                        {% else %}
+                            <span class="status-badge inactive">
+                                <i class="fas fa-pause-circle"></i>
+                                Inactive
+                            </span>
+                        {% endif %}
+                    </td>
+                    
+                    
+                    <!-- Actions -->
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn primary" title="View Details" onclick="viewReminder({{ reminder.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            
+                            <button class="action-btn {% if reminder.status %}danger{% else %}success{% endif %}" 
+                                    title="{% if reminder.status %}Deactivate{% else %}Activate{% endif %}" 
+                                    onclick="toggleReminderStatus({{ reminder.id }})">
+                                <i class="fas {% if reminder.status %}fa-pause{% else %}fa-play{% endif %}"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-bell-slash"></i>
+                        </div>
+                        <h3>No Reminders Found</h3>
+                        <p>No reminders match your current filters</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+/* CSS Variables */
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --secondary: #10b981;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --danger: #ef4444;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+}
+
+/* ============ PAGE HEADER ============ */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    width: 300px;
+    padding: 14px 20px 14px 50px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+    position: relative;
+}
+
+.filter-btn {
+    padding: 14px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 250px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--gray-200);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.filter-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.filter-section {
+    margin-bottom: 20px;
+}
+
+.filter-section:last-child {
+    margin-bottom: 0;
+}
+
+.filter-section label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--gray-600);
+    padding: 8px 0;
+}
+
+.filter-option input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--gray-300);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.filter-option input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.filter-option input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ============ USERS STATS ============ */
+.users-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.stat-icon.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.stat-icon.success {
+    background: linear-gradient(135deg, var(--secondary) 0%, #34d399 100%);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.warning {
+    background: linear-gradient(135deg, var(--warning) 0%, #fbbf24 100%);
+    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+}
+
+.stat-info h3 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin: 0 0 4px 0;
+}
+
+.stat-info p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* ============ TABLE STYLES ============ */
+.users-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.styled-table thead {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.styled-table th {
+    padding: 20px 16px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: none;
+}
+
+.styled-table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.styled-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.styled-table tbody tr:hover {
+    background: rgba(99, 102, 241, 0.04);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.styled-table td {
+    padding: 20px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+/* ============ REMINDER SPECIFIC STYLES ============ */
+
+/* Reminder Info */
+.reminder-info {
+    min-width: 180px;
+}
+
+.reminder-title {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+}
+
+.reminder-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--gray-500);
+}
+
+.reminder-meta i {
+    font-size: 12px;
+    color: var(--primary);
+}
+
+/* Time Display */
+.time-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.time-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--info) 0%, #60a5fa 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+}
+
+.time-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--gray-900);
+}
+
+.time-period {
+    font-size: 12px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Description Cell */
+.description-cell {
+    max-width: 200px;
+}
+
+.description-text {
+    font-size: 14px;
+    color: var(--gray-700);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.no-description {
+    font-size: 13px;
+    color: var(--gray-400);
+    font-style: italic;
+}
+
+/* User Cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 180px;
+}
+
+.user-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.user-avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder-small {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.user-details {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gray-900);
+    margin-bottom: 2px;
+}
+
+.user-email {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+/* Date Cell */
+.date-cell {
+    text-align: center;
+}
+
+.date-value {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gray-900);
+    margin-bottom: 2px;
+}
+
+.date-ago {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+/* Status Badges for Reminders */
+.status-badge {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--secondary);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.inactive {
+    background: rgba(107, 114, 128, 0.1);
+    color: var(--gray-500);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.action-btn.primary {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+}
+
+.action-btn.primary:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.action-btn.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.action-btn.warning:hover {
+    background: var(--warning);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.action-btn.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.action-btn.danger:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.action-btn.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--secondary);
+}
+
+.action-btn.success:hover {
+    background: var(--secondary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Table Row Animations */
+.table-row {
+    transition: all 0.3s ease;
+}
+
+.table-row:hover {
+    background: rgba(99, 102, 241, 0.04) !important;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Empty State */
+.styled-table .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--gray-50);
+}
+
+.styled-table .empty-state td {
+    border-bottom: none;
+    padding: 40px 20px;
+}
+
+.styled-table .empty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: var(--gray-400);
+}
+
+.styled-table .empty-state h3 {
+    font-size: 20px;
+    margin: 0 0 8px 0;
+    color: var(--gray-700);
+}
+
+.styled-table .empty-state p {
+    font-size: 14px;
+    margin: 0;
+    color: var(--gray-500);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .description-cell {
+        max-width: 150px;
+    }
+    
+    .reminder-info {
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .styled-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .time-display {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+    
+    .user-cell {
+        min-width: 140px;
+    }
+    
+    .users-stats {
+        flex-direction: column;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+}
+</style>
+
+<!-- AOS Animation Library -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 600,
+        easing: 'ease-out-cubic',
+        once: true,
+        offset: 50
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('reminderSearch');
+    const tableRows = document.querySelectorAll('.table-row');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        tableRows.forEach(row => {
+            const searchData = row.getAttribute('data-search');
+            if (searchData.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Filter functionality
+    const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
+    
+    filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', applyFilters);
+    });
+
+    function applyFilters() {
+        const activeFilters = {
+            status: [],
+            time: []
+        };
+
+        filterCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const value = checkbox.value;
+                if (value === 'active' || value === 'inactive') {
+                    activeFilters.status.push(value);
+                } else if (value === 'morning' || value === 'afternoon' || value === 'evening') {
+                    activeFilters.time.push(value);
+                }
+            }
+        });
+
+        tableRows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status');
+            const rowTime = row.getAttribute('data-time');
+            
+            const statusMatch = activeFilters.status.length === 0 || activeFilters.status.includes(rowStatus);
+            const timeMatch = activeFilters.time.length === 0 || activeFilters.time.includes(rowTime);
+            
+            if (statusMatch && timeMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+});
+
+function toggleFilterDropdown() {
+    const filterMenu = document.getElementById('filterMenu');
+    filterMenu.classList.toggle('show');
+}
+
+// Reminder action functions
+function viewReminder(reminderId) {
+    console.log('View reminder:', reminderId);
+    // Implement view functionality
+}
+
+function editReminder(reminderId) {
+    console.log('Edit reminder:', reminderId);
+    // Implement edit functionality
+}
+
+function toggleReminderStatus(reminderId) {
+    console.log('Toggle reminder status:', reminderId);
+    // Implement status toggle functionality
+}
+
+// Close filter dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const filterDropdown = document.querySelector('.filter-dropdown');
+    const filterMenu = document.getElementById('filterMenu');
+    
+    if (!filterDropdown.contains(event.target)) {
+        filterMenu.classList.remove('show');
+    }
+});
+</script>
+{% endblock dashboard_content %}
