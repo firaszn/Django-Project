@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="text-center">
+                <div class="create-goal-icon mb-4">
+                    <i class="fas fa-bullseye fa-3x text-primary"></i>
+                </div>
+                <h1 class="display-6 fw-bold text-gradient-primary mb-3">
+                    {% if form.instance.pk %}
+                        Update Goal
+                    {% else %}
+                        {% if request.GET.journal_id %}
+                            Create Goal for Journal
+                        {% else %}
+                            Create Goal
+                        {% endif %}
+                    {% endif %}
+                </h1>
+                <p class="text-muted fs-5">
+                    {% if form.instance.pk %}
+                        Modify your goal settings and progress
+                    {% else %}
+                        Set your target and track your progress towards achievement
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal Info Banner -->
+    {% if request.GET.journal_id and not form.instance.pk %}
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="journal-banner alert border-0 bg-light-primary rounded-3 p-4">
+                <div class="d-flex align-items-center">
+                    <div class="journal-icon me-4">
+                        <i class="fas fa-book-open fa-2x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="fw-bold text-dark mb-2">Creating Goal for Journal Entry</h5>
+                        <p class="text-muted mb-0">This goal will be automatically linked to your journal entry for better progress tracking.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Form Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card form-card border-0 shadow-lg rounded-3">
+                <div class="card-body p-5">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Hidden field to preserve journal_id -->
+                        {% if not form.instance.pk %}
+                        <input type="hidden" name="journal_id" value="{{ request.GET.journal_id }}">
+                        {% endif %}
+                        
+                        <!-- Title Field -->
+                        <div class="form-group mb-4">
+                            <label for="id_title" class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-heading me-2 text-primary"></i>Goal Title
+                            </label>
+                            {% if request.GET.journal_id and journal_title and not form.instance.pk %}
+                                <div class="input-group input-group-lg">
+                                    {{ form.title|add_class:"form-control form-control-lg border-2 py-3" }}
+                                    <button type="button" class="btn btn-outline-primary border-2 px-4" onclick="fillJournalTitle()">
+                                        <i class="fas fa-wand-magic-sparkles me-2"></i>Auto-Fill
+                                    </button>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-lightbulb text-warning me-1"></i>
+                                    Suggested: <span class="fst-italic">"Goal for: {{ journal_title }}"</span>
+                                </div>
+                            {% else %}
+                                {{ form.title|add_class:"form-control form-control-lg border-2 py-3" }}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Description Field -->
+                        <div class="form-group mb-4">
+                            <label for="id_description" class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-align-left me-2 text-primary"></i>Description
+                            </label>
+                            {{ form.description|add_class:"form-control border-2 py-3" }}
+                            {% if request.GET.journal_id and not form.instance.pk %}
+                            <div class="form-text mt-2">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                You can reference your journal entry in the goal description for context.
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Target Field -->
+                        <div class="form-group mb-4">
+                            <label for="id_target" class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-target me-2 text-primary"></i>Target
+                            </label>
+                            <div class="input-group input-group-lg">
+                                {{ form.target|add_class:"form-control form-control-lg border-2 py-3 text-center" }}
+                                <span class="input-group-text bg-light border-2 fw-semibold">entries</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Field (Only for Update) -->
+                        {% if form.instance.pk %}
+                        <div class="form-group mb-4">
+                            <label for="id_progress" class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-chart-line me-2 text-primary"></i>Current Progress
+                            </label>
+                            <div class="input-group input-group-lg">
+                                {{ form.progress|add_class:"form-control form-control-lg border-2 py-3 text-center" }}
+                                <span class="input-group-text bg-light border-2 fw-semibold">entries</span>
+                            </div>
+                            <div class="form-text mt-2">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                Current progress: {{ form.instance.progress }}/{{ form.instance.target }} ({{ form.instance.progress_percentage|floatformat:0 }}%)
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Date Fields -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="id_start_date" class="form-label fw-semibold text-dark mb-3">
+                                    <i class="fas fa-play-circle me-2 text-success"></i>Start Date
+                                </label>
+                                {{ form.start_date|add_class:"form-control border-2 py-3" }}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="id_end_date" class="form-label fw-semibold text-dark mb-3">
+                                    <i class="fas fa-flag-checkered me-2 text-danger"></i>End Date
+                                </label>
+                                {{ form.end_date|add_class:"form-control border-2 py-3" }}
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-3 mt-5 pt-3">
+                            <button type="submit" class="btn btn-primary btn-lg flex-grow-1 py-3 fw-semibold">
+                                <i class="fas {% if form.instance.pk %}fa-save{% else %}fa-bullseye{% endif %} me-2"></i>
+                                {% if form.instance.pk %}
+                                    Update Goal
+                                {% else %}
+                                    {% if request.GET.journal_id %}
+                                        Create Goal & Link to Journal
+                                    {% else %}
+                                        Create Goal
+                                    {% endif %}
+                                {% endif %}
+                            </button>
+                            
+                            {% if request.GET.journal_id and not form.instance.pk %}
+                            <a href="{% url 'journal_detail' journal_id=request.GET.journal_id %}" class="btn btn-outline-secondary btn-lg py-3">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </a>
+                            {% else %}
+                            <a href="{% url 'goal_list' %}" class="btn btn-outline-secondary btn-lg py-3">
+                                <i class="fas fa-arrow-left me-2"></i>Back to List
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Your existing CSS styles here */
+</style>
+
+<script>
+function fillJournalTitle() {
+    const titleField = document.querySelector('#id_title');
+    const journalTitle = "{{ journal_title|escapejs }}";
+    if (journalTitle && !titleField.value) {
+        titleField.value = "Goal for: " + journalTitle;
+        titleField.focus();
+        titleField.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            titleField.style.transform = 'scale(1)';
+        }, 300);
+    }
+}
+</script>
+{% endblock %}

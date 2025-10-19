@@ -12,4 +12,5 @@ urlpatterns = [
     path('dashboard/users/', views.admin_users_list, name='admin_users_list'),
     path('dashboard/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
     path('dashboard/users/<int:user_id>/toggle-status/', views.admin_user_toggle_status, name='admin_user_toggle_status'),
+    
 ]
