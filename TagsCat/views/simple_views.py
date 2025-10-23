@@ -9,6 +9,10 @@ class SimpleCategoryViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         return Category.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        """Automatically set user when creating category"""
+        serializer.save(user=self.request.user)
 
 class SimpleTagViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -16,3 +20,7 @@ class SimpleTagViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         return Tag.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        """Automatically set user when creating tag"""
+        serializer.save(user=self.request.user)
