@@ -9,11 +9,9 @@ urlpatterns = [
     path('', include('journal.urls')),
     path('users/', include('users.urls')),
     path('accounts/', include('allauth.urls')),
-    # API endpoints for categories and tags
-    path('api/categories/', include('TagsCat.urls.category_urls')),
-    path('api/tags/', include('TagsCat.urls.tag_urls')),
-    # Web interfaces for categories and tags
-    path('categories/', include('TagsCat.web_urls')),
+    # API endpoints for categories and tags (removed - using unified URLs)
+    # Category and Tag Management
+    path('manage/', include('TagsCat.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

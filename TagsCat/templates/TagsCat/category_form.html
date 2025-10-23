@@ -1,90 +1,117 @@
-{% extends 'TagsCat/base.html' %}
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ title }} - AI Personal Journal{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="fas fa-folder"></i> {{ title }}</h3>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.name.id_for_label }}" class="form-label">
-                            {{ form.name.label }}
-                        </label>
-                        {{ form.name }}
-                        {% if form.name.errors %}
-                            <div class="text-danger">
-                                {% for error in form.name.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.color.id_for_label }}" class="form-label">
-                                    {{ form.color.label }}
-                                </label>
-                                {{ form.color }}
-                                {% if form.color.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.color.errors %}
-                                            <small>{{ error }}</small>
-                                        {% endfor %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card card-premium">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-folder text-primary me-2"></i>{{ title }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-tag me-2"></i>{{ form.name.label }}
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for error in form.name.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="{{ form.color.id_for_label }}" class="form-label fw-bold">
+                                        <i class="fas fa-palette me-2"></i>{{ form.color.label }}
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.color }}
+                                        <span class="input-group-text">
+                                            <i class="fas fa-eye"></i>
+                                        </span>
                                     </div>
-                                {% endif %}
+                                    {% if form.color.errors %}
+                                        <div class="text-danger mt-2">
+                                            {% for error in form.color.errors %}
+                                                <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="{{ form.icon.id_for_label }}" class="form-label fw-bold">
+                                        <i class="fas fa-icons me-2"></i>{{ form.icon.label }}
+                                    </label>
+                                    {{ form.icon }}
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "Examples: home, work, heart, star, book" %}
+                                    </div>
+                                    {% if form.icon.errors %}
+                                        <div class="text-danger mt-2">
+                                            {% for error in form.icon.errors %}
+                                                <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.icon.id_for_label }}" class="form-label">
-                                    {{ form.icon.label }}
-                                </label>
-                                {{ form.icon }}
-                                {% if form.icon.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.icon.errors %}
-                                            <small>{{ error }}</small>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-align-left me-2"></i>{{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for error in form.description.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">
-                            {{ form.description.label }}
-                        </label>
-                        {{ form.description }}
-                        {% if form.description.errors %}
-                            <div class="text-danger">
-                                {% for error in form.description.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{% url 'TagsCat:category_list' %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Annuler
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Enregistrer
-                        </button>
-                    </div>
-                </form>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'TagsCat:category_management' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Categories" %}
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>{% trans "Save Category" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+</style>
 {% endblock %}

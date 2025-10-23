@@ -13,7 +13,7 @@ class CategoryForm(forms.ModelForm):
             'color': forms.TextInput(attrs={
                 'class': 'form-control',
                 'type': 'color',
-                'placeholder': '#3B82F6'
+                'placeholder': '#4a90e2'
             }),
             'icon': forms.TextInput(attrs={
                 'class': 'form-control',
