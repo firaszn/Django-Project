@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="text-center">
+                <div class="create-reminder-icon mb-4">
+                    <i class="fas fa-bell fa-3x text-warning"></i>
+                </div>
+                <h1 class="display-6 fw-bold text-gradient-warning mb-3">
+                    {% if form.instance.pk %}Update Reminder{% else %}Create Reminder{% endif %}
+                </h1>
+                <p class="text-muted fs-5">
+                    {% if form.instance.pk %}Modify your reminder settings{% else %}Set up notifications to keep you on track{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card form-card border-0 shadow-lg rounded-3">
+                <div class="card-body p-5">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Title Field -->
+                        <div class="form-group mb-4">
+                            <label for="id_title" class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-heading me-2 text-warning"></i>Reminder Title
+                            </label>
+                            {{ form.title|add_class:"form-control form-control-lg border-2 py-3" }}
+                        </div>
+                        
+                        <!-- Description Field -->
+                        <div class="form-group mb-4">
+                            <label for="id_description" class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-align-left me-2 text-warning"></i>Description
+                            </label>
+                            {{ form.description|add_class:"form-control border-2 py-3" }}
+                            <div class="form-text mt-2">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                Add details about what this reminder is for
+                            </div>
+                        </div>
+                        
+                        <!-- Reminder Time Field -->
+                        <div class="form-group mb-4">
+                            <label for="id_reminder_time" class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-clock me-2 text-warning"></i>Reminder Time
+                            </label>
+                            <div class="input-group input-group-lg">
+                                {{ form.reminder_time|add_class:"form-control form-control-lg border-2 py-3 text-center" }}
+                                <span class="input-group-text bg-light border-2 fw-semibold">
+                                    <i class="fas fa-clock me-1"></i>Time
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Field -->
+                        <div class="form-group mb-4">
+                            <label class="form-label fw-semibold text-dark mb-3">
+                                <i class="fas fa-toggle-on me-2 text-warning"></i>Status
+                            </label>
+                            <div class="form-check form-switch">
+                                {{ form.status|add_class:"form-check-input" }}
+                                <label class="form-check-label fw-semibold" for="id_status">
+                                    Active Reminder
+                                </label>
+                            </div>
+                            <div class="form-text mt-2">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                Toggle to enable or disable this reminder
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-3 mt-5 pt-3">
+                            <button type="submit" class="btn btn-warning btn-lg flex-grow-1 py-3 fw-semibold">
+                                <i class="fas {% if form.instance.pk %}fa-save{% else %}fa-bell{% endif %} me-2"></i>
+                                {% if form.instance.pk %}Update Reminder{% else %}Create Reminder{% endif %}
+                            </button>
+                            <a href="{% url 'reminder_list' %}" class="btn btn-outline-secondary btn-lg py-3">
+                                <i class="fas fa-arrow-left me-2"></i>Back to List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-gradient-warning {
+    background: linear-gradient(135deg, #f6ad55 0%, #fbd38d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.create-reminder-icon {
+    animation: ring 2s infinite;
+}
+
+@keyframes ring {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+}
+
+.form-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fef6e6 100%);
+    border: 1px solid #ffecc7 !important;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: #f6ad55;
+    box-shadow: 0 0 0 0.2rem rgba(246, 173, 85, 0.25);
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f6ad55 0%, #fbd38d 100%);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(246, 173, 85, 0.4);
+    color: white;
+}
+
+.form-check-input:checked {
+    background-color: #f6ad55;
+    border-color: #f6ad55;
+}
+
+.form-check-input {
+    width: 3em;
+    height: 1.5em;
+}
+
+.input-group-text {
+    background: linear-gradient(135deg, #f6ad55 0%, #fbd38d 100%);
+    color: white;
+    border: 2px solid #f6ad55;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

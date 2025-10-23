@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # Local apps
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
+    'reminder_and_goals',
     'TagsCat',
 ]
 
