@@ -1,0 +1,926 @@
+{% extends "users/dashboard_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Goals Management" %} - AI Personal Journal Admin{% endblock %}
+
+{% block dashboard_content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <h1 class="page-title">Goals Management</h1>
+        <p class="page-subtitle">Track and manage all user goals and progress</p>
+    </div>
+    <div class="header-actions">
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="Search goals..." id="goalSearch">
+        </div>
+        <div class="filter-dropdown">
+            <button class="filter-btn" onclick="toggleFilterDropdown()">
+                <i class="fas fa-filter me-2"></i>
+                Filters
+                <i class="fas fa-chevron-down ms-2"></i>
+            </button>
+            <div class="filter-menu" id="filterMenu">
+                <div class="filter-section">
+                    <label>Status</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" value="achieved" checked>
+                            <span class="checkmark"></span>
+                            Achieved
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="in-progress" checked>
+                            <span class="checkmark"></span>
+                            In Progress
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-section">
+                    <label>Progress</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" value="high">
+                            <span class="checkmark"></span>
+                            High (70%+)
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="medium">
+                            <span class="checkmark"></span>
+                            Medium (30-70%)
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" value="low">
+                            <span class="checkmark"></span>
+                            Low (0-30%)
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="users-stats">
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="0">
+        <div class="stat-icon primary">
+            <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ goals_count }}</h3>
+            <p>Total Goals</p>
+        </div>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-icon success">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ completed_goals }}</h3>
+            <p>Achieved Goals</p>
+        </div>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-icon warning">
+            <i class="fas fa-spinner"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ in_progress_goals }}</h3>
+            <p>In Progress</p>
+        </div>
+    </div>
+</div>
+
+<!-- Goals Table -->
+<div class="users-container">
+    <div class="table-responsive">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Goal Details</th>
+                    <th>Progress</th>
+                    <th>Timeline</th>
+                    <th>User</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for goal in goals %}
+                <tr class="table-row" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:100 }}"
+                    data-status="{% if goal.is_achieved %}achieved{% else %}in-progress{% endif %}"
+                    data-progress="{% if goal.progress_percentage >= 70 %}high{% elif goal.progress_percentage >= 30 %}medium{% else %}low{% endif %}"
+                    data-search="{{ goal.title|lower }} {{ goal.user.username|lower }}">
+                    
+                    <!-- Goal Details -->
+                    <td>
+                        <div class="goal-info">
+                            <div class="goal-title">{{ goal.title }}</div>
+                            {% if goal.description %}
+                            <div class="goal-description">{{ goal.description|truncatewords:8 }}</div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    
+                    <!-- Progress -->
+                    <td>
+                        <div class="progress-container">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar 
+                                    {% if goal.is_achieved %}
+                                        bg-success
+                                    {% elif goal.progress_percentage > 70 %}
+                                        bg-warning
+                                    {% elif goal.progress_percentage > 30 %}
+                                        bg-info
+                                    {% else %}
+                                        bg-danger
+                                    {% endif %}" 
+                                    style="width: {{ goal.progress_percentage }}%">
+                                    <div class="progress-text">{{ goal.progress_percentage|floatformat:0 }}%</div>
+                                </div>
+                            </div>
+                            <div class="progress-stats">
+                                {{ goal.progress }}/{{ goal.target }}
+                            </div>
+                        </div>
+                    </td>
+                    
+                
+                    
+                    <!-- Timeline -->
+                    <td>
+                        <div class="timeline-info">
+                            <div class="date-row">
+                                <i class="fas fa-play-circle text-primary"></i>
+                                <span>{{ goal.start_date|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="date-row">
+                                <i class="fas fa-flag-checkered text-info"></i>
+                                <span>{{ goal.end_date|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- User -->
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-small">
+                                {% if goal.user.profilePicture %}
+                                    <img src="{{ goal.user.profilePicture.url }}" alt="{{ goal.user.username }}">
+                                {% else %}
+                                    <div class="avatar-placeholder-small">
+                                        {{ goal.user.first_name|first|default:goal.user.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="user-details">
+                                <div class="user-name">{{ goal.user.get_full_name|default:goal.user.username }}</div>
+                                <div class="user-email">{{ goal.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Status -->
+                    <td>
+                        {% if goal.is_achieved %}
+                            <span class="status-badge achieved">
+                                <i class="fas fa-check-circle"></i>
+                                Achieved
+                            </span>
+                        {% else %}
+                            <span class="status-badge in-progress">
+                                <i class="fas fa-spinner"></i>
+                                In Progress
+                            </span>
+                        {% endif %}
+                    </td>
+                    
+                    
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3>No Goals Found</h3>
+                        <p>No goals match your current filters</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+/* CSS Variables */
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --secondary: #10b981;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --danger: #ef4444;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+}
+
+/* ============ PAGE HEADER ============ */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    width: 300px;
+    padding: 14px 20px 14px 50px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+    position: relative;
+}
+
+.filter-btn {
+    padding: 14px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 250px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--gray-200);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.filter-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.filter-section {
+    margin-bottom: 20px;
+}
+
+.filter-section:last-child {
+    margin-bottom: 0;
+}
+
+.filter-section label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--gray-600);
+    padding: 8px 0;
+}
+
+.filter-option input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--gray-300);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.filter-option input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.filter-option input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ============ USERS STATS ============ */
+.users-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.stat-icon.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.stat-icon.success {
+    background: linear-gradient(135deg, var(--secondary) 0%, #34d399 100%);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.warning {
+    background: linear-gradient(135deg, var(--warning) 0%, #fbbf24 100%);
+    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+}
+
+.stat-info h3 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin: 0 0 4px 0;
+}
+
+.stat-info p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* ============ TABLE STYLES ============ */
+.users-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.styled-table thead {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.styled-table th {
+    padding: 20px 16px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: none;
+}
+
+.styled-table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.styled-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.styled-table tbody tr:hover {
+    background: rgba(99, 102, 241, 0.04);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.styled-table td {
+    padding: 20px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+/* Goal Info */
+.goal-info {
+    min-width: 200px;
+}
+
+.goal-title {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+}
+
+.goal-description {
+    font-size: 14px;
+    color: var(--gray-600);
+    line-height: 1.4;
+}
+
+/* Progress Container */
+.progress-container {
+    min-width: 150px;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 24px;
+    background: var(--gray-200);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 12px;
+    position: relative;
+    transition: width 1s ease-in-out;
+    background: linear-gradient(90deg, currentColor 0%, rgba(255,255,255,0.3) 100%);
+}
+
+.progress-bar.bg-success { background: linear-gradient(90deg, var(--secondary) 0%, #34d399 100%); }
+.progress-bar.bg-warning { background: linear-gradient(90deg, var(--warning) 0%, #fbbf24 100%); }
+.progress-bar.bg-info { background: linear-gradient(90deg, var(--info) 0%, #60a5fa 100%); }
+.progress-bar.bg-danger { background: linear-gradient(90deg, var(--danger) 0%, #ef4444 100%); }
+
+.progress-text {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.progress-stats {
+    font-size: 12px;
+    color: var(--gray-600);
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Target Info */
+.target-info {
+    text-align: center;
+}
+
+.target-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.target-label {
+    font-size: 12px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Timeline Info */
+.timeline-info {
+    min-width: 120px;
+}
+
+.date-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.date-row:last-child {
+    margin-bottom: 0;
+}
+
+.date-row i {
+    font-size: 12px;
+}
+
+/* User Cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 180px;
+}
+
+.user-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.user-avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder-small {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.user-details {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gray-900);
+    margin-bottom: 2px;
+}
+
+.user-email {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-badge.achieved {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--secondary);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.in-progress {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.action-btn.primary {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+}
+
+.action-btn.primary:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.action-btn.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.action-btn.warning:hover {
+    background: var(--warning);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.action-btn.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.action-btn.danger:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Empty State in Table */
+.styled-table .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--gray-50);
+}
+
+.styled-table .empty-state td {
+    border-bottom: none;
+    padding: 40px 20px;
+}
+
+.styled-table .empty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: var(--gray-400);
+}
+
+.styled-table .empty-state h3 {
+    font-size: 20px;
+    margin: 0 0 8px 0;
+    color: var(--gray-700);
+}
+
+.styled-table .empty-state p {
+    font-size: 14px;
+    margin: 0;
+    color: var(--gray-500);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .styled-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .user-cell {
+        min-width: 150px;
+    }
+    
+    .goal-info {
+        min-width: 150px;
+    }
+    
+    .users-stats {
+        flex-direction: column;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+}
+</style>
+
+<!-- AOS Animation Library -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 600,
+        easing: 'ease-out-cubic',
+        once: true,
+        offset: 50
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('goalSearch');
+    const tableRows = document.querySelectorAll('.table-row');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        tableRows.forEach(row => {
+            const searchData = row.getAttribute('data-search');
+            if (searchData.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Filter functionality
+    const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
+    
+    filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', applyFilters);
+    });
+
+    function applyFilters() {
+        const activeFilters = {
+            status: [],
+            progress: []
+        };
+
+        filterCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const value = checkbox.value;
+                if (value === 'achieved' || value === 'in-progress') {
+                    activeFilters.status.push(value);
+                } else if (value === 'high' || value === 'medium' || value === 'low') {
+                    activeFilters.progress.push(value);
+                }
+            }
+        });
+
+        tableRows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status');
+            const rowProgress = row.getAttribute('data-progress');
+            
+            const statusMatch = activeFilters.status.length === 0 || activeFilters.status.includes(rowStatus);
+            const progressMatch = activeFilters.progress.length === 0 || activeFilters.progress.includes(rowProgress);
+            
+            if (statusMatch && progressMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+});
+
+function toggleFilterDropdown() {
+    const filterMenu = document.getElementById('filterMenu');
+    filterMenu.classList.toggle('show');
+}
+
+// Close filter dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const filterDropdown = document.querySelector('.filter-dropdown');
+    const filterMenu = document.getElementById('filterMenu');
+    
+    if (!filterDropdown.contains(event.target)) {
+        filterMenu.classList.remove('show');
+    }
+});
+</script>
+{% endblock dashboard_content %}

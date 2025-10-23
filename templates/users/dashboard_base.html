@@ -84,6 +84,37 @@
                         {% endif %}
                         <div class="nav-indicator"></div>
                 </a>
+
+
+                <!-- Goals Admin Link -->
+                <a href="{% url 'goal_list_admin' %}" class="nav-item {% if request.resolver_match.url_name == 'goal_list_admin' %}active{% endif %}">
+                    <div class="nav-icon">
+                        <i class="fas fa-bullseye"></i>  <!-- Appropriate icon for goals -->
+                    </div>
+                    <span class="nav-text">Goals</span>
+                    {% if goals_count %}  <!-- Updated variable name -->
+                    <span class="nav-badge">{{ goals_count }}</span>
+                    {% endif %}
+                    <div class="nav-indicator"></div>
+                </a>
+
+                <!-- Reminders Admin Link -->
+                <a href="{% url 'reminder_list_admin' %}" class="nav-item {% if request.resolver_match.url_name == 'reminder_list_admin' %}active{% endif %}">
+                    <div class="nav-icon">
+                        <i class="fas fa-bell"></i>  <!-- Appropriate icon for reminders -->
+                    </div>
+                    <span class="nav-text">Reminders</span>
+                    {% if reminders_count %}  <!-- Updated variable name -->
+                    <span class="nav-badge">{{ reminders_count }}</span>
+                    {% endif %}
+                    <div class="nav-indicator"></div>
+                </a>
+
+
+
+
+
+                
             </div>
         </nav>
     </aside>
