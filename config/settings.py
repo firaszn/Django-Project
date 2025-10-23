@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     
     # Third party apps
+    'rest_framework',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     # Local apps
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
+    'TagsCat',
 ]
 
 MIDDLEWARE = [
