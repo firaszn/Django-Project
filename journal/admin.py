@@ -1,8 +1,7 @@
 from django.contrib import admin
-from .models import JournalEntry
+from .models import Journal  # <- correction ici
 
-
-@admin.register(JournalEntry)
+@admin.register(Journal) 
 class JournalEntryAdmin(admin.ModelAdmin):
     list_display = ['title', 'user', 'category', 'created_at', 'is_public']
     list_filter = ['user', 'category', 'is_public', 'created_at']
