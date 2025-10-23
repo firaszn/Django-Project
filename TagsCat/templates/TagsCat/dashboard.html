@@ -1,0 +1,128 @@
+{% extends 'TagsCat/base.html' %}
+
+{% block title %}Dashboard - Catégories & Tags{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </h1>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-folder fa-2x mb-2"></i>
+                <h3>{{ total_categories }}</h3>
+                <p class="mb-0">Catégories</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-tag fa-2x mb-2"></i>
+                <h3>{{ total_tags }}</h3>
+                <p class="mb-0">Tags</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-file-alt fa-2x mb-2"></i>
+                <h3>{{ categories_with_entries }}</h3>
+                <p class="mb-0">Catégories utilisées</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-star fa-2x mb-2"></i>
+                <h3>{{ most_used_tag.usage_count|default:0 }}</h3>
+                <p class="mb-0">Utilisations max</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Catégories récentes -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-folder"></i> Catégories récentes</h5>
+                <a href="{% url 'TagsCat:category_list' %}" class="btn btn-sm btn-outline-primary">
+                    Voir tout
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_categories %}
+                    {% for category in recent_categories %}
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="category-color" style="background-color: {{ category.color }};"></span>
+                            <span>{{ category.name }}</span>
+                            <small class="text-muted ms-auto">{{ category.created_at|date:"d/m/Y" }}</small>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Aucune catégorie créée</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tags populaires -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-tag"></i> Tags populaires</h5>
+                <a href="{% url 'TagsCat:tag_list' %}" class="btn btn-sm btn-outline-primary">
+                    Voir tout
+                </a>
+            </div>
+            <div class="card-body">
+                {% if popular_tags %}
+                    {% for tag in popular_tags %}
+                        <span class="badge bg-primary tag-badge">
+                            {{ tag.name }} ({{ tag.usage_count }})
+                        </span>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Aucun tag créé</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Actions rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{% url 'TagsCat:category_create' %}" class="btn btn-primary btn-lg w-100 mb-2">
+                            <i class="fas fa-plus"></i> Créer une catégorie
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'TagsCat:tag_create' %}" class="btn btn-success btn-lg w-100 mb-2">
+                            <i class="fas fa-plus"></i> Créer un tag
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
