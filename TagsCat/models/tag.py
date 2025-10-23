@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
+
 class Tag(models.Model):
   
     user = models.ForeignKey(
