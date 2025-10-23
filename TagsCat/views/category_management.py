@@ -28,7 +28,7 @@ def category_management(request):
 def category_create(request):
     """Créer une nouvelle catégorie"""
     if request.method == 'POST':
-        form = CategoryForm(request.POST)
+        form = CategoryForm(request.POST, user=request.user)
         if form.is_valid():
             category = form.save(commit=False)
             category.user = request.user
@@ -36,7 +36,7 @@ def category_create(request):
             messages.success(request, f'Catégorie "{category.name}" créée avec succès!')
             return redirect('TagsCat:category_management')
     else:
-        form = CategoryForm()
+        form = CategoryForm(user=request.user)
     
     return render(request, 'TagsCat/category_form.html', {
         'form': form,
@@ -49,13 +49,13 @@ def category_edit(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
     
     if request.method == 'POST':
-        form = CategoryForm(request.POST, instance=category)
+        form = CategoryForm(request.POST, instance=category, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, f'Catégorie "{category.name}" modifiée avec succès!')
             return redirect('TagsCat:category_management')
     else:
-        form = CategoryForm(instance=category)
+        form = CategoryForm(instance=category, user=request.user)
     
     return render(request, 'TagsCat/category_form.html', {
         'form': form,
@@ -100,7 +100,7 @@ def tag_management(request):
 def tag_create(request):
     """Créer un nouveau tag"""
     if request.method == 'POST':
-        form = TagForm(request.POST)
+        form = TagForm(request.POST, user=request.user)
         if form.is_valid():
             tag = form.save(commit=False)
             tag.user = request.user
@@ -108,7 +108,7 @@ def tag_create(request):
             messages.success(request, f'Tag "{tag.name}" créé avec succès!')
             return redirect('TagsCat:tag_management')
     else:
-        form = TagForm()
+        form = TagForm(user=request.user)
     
     return render(request, 'TagsCat/tag_form.html', {
         'form': form,
@@ -121,13 +121,13 @@ def tag_edit(request, pk):
     tag = get_object_or_404(Tag, pk=pk, user=request.user)
     
     if request.method == 'POST':
-        form = TagForm(request.POST, instance=tag)
+        form = TagForm(request.POST, instance=tag, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, f'Tag "{tag.name}" modifié avec succès!')
             return redirect('TagsCat:tag_management')
     else:
-        form = TagForm(instance=tag)
+        form = TagForm(instance=tag, user=request.user)
     
     return render(request, 'TagsCat/tag_form.html', {
         'form': form,
