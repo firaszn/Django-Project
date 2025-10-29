@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.hashers import make_password, check_password
 
 class CustomUser(AbstractUser):
     # Attributs du diagramme (userid est géré automatiquement par Django)
@@ -31,6 +32,9 @@ class CustomUser(AbstractUser):
         ('user', 'User'),
         ('admin', 'Admin')
     ])
+    # Hashed 4-digit PIN used to unlock hidden journals. Use helper methods to set/check.
+    journal_pin = models.CharField(_('journal pin'), max_length=128, null=True, blank=True,
+                                   help_text=_('Hashed 4-digit PIN for accessing hidden journals'))
     
     # Make email the primary identifier
     USERNAME_FIELD = 'email'
@@ -79,3 +83,19 @@ class CustomUser(AbstractUser):
                     counter += 1
         
         super().save(*args, **kwargs)
+
+    def set_journal_pin(self, raw_pin: str):
+        """Set a 4-digit numeric PIN for accessing hidden journals. Stores a hashed value."""
+        if raw_pin is None or raw_pin == '':
+            # clear pin
+            self.journal_pin = None
+        else:
+            # Expecting exactly 4 digits
+            self.journal_pin = make_password(raw_pin)
+        # Note: caller should save()
+
+    def check_journal_pin(self, raw_pin: str) -> bool:
+        """Return True if raw_pin matches the stored hashed journal PIN."""
+        if not self.journal_pin:
+            return False
+        return check_password(raw_pin, self.journal_pin)

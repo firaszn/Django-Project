@@ -125,6 +125,46 @@
                                     </button>
                                 </div>
                             </div>
+                            
+                            <!-- Hidden Journals PIN Management -->
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{% trans "Hidden Journals" %}</h6>
+                                        <p class="mb-0 text-muted small">
+                                            {% trans "Manage your PIN for accessing hidden journals or view your hidden entries." %}
+                                        </p>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{% url 'journal_hidden' %}" class="btn btn-outline-primary btn-sm">{% trans "View Hidden Journals" %}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Journal PIN Settings -->
+                    <div class="mb-4">
+                        <h5>{% trans "Hidden Journals PIN" %}</h5>
+                        <div class="list-group">
+                            <div class="list-group-item">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        {{ form.new_pin.label_tag }}
+                                        {{ form.new_pin }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.confirm_pin.label_tag }}
+                                        {{ form.confirm_pin }}
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-center">
+                                        <div class="form-check">
+                                            {{ form.remove_pin }} {{ form.remove_pin.label_tag }}
+                                            <div class="small text-muted">{{ form.remove_pin.help_text }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     

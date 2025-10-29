@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Entry - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-8 offset-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Confirm Delete</h4>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to permanently delete the journal entry "<strong>{{ journal.title }}</strong>"?</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" type="submit">Yes, delete</button>
+                        <a href="{% url 'journal_detail' journal.id %}" class="btn btn-outline-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
