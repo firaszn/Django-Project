@@ -144,6 +144,14 @@ def tag_delete(request, pk):
         tag_name = tag.name
         entry_count = tag.entries.count()
         tag.delete()
+        # Réponse AJAX discrète
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'Tag "{tag_name}" supprimé avec succès!',
+                'detached_entries': entry_count,
+                'tag_id': pk,
+            })
         messages.success(request, f'Tag "{tag_name}" supprimé avec succès!')
         if entry_count > 0:
             messages.info(request, f'{entry_count} entrée(s) ont été déliées de ce tag.')

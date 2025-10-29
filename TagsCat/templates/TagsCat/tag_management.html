@@ -76,9 +76,9 @@
                                         <a href="{% url 'TagsCat:tag_edit' tag.pk %}" class="btn-action btn-edit" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{% url 'TagsCat:tag_delete' tag.pk %}" class="btn-action btn-delete" title="Supprimer">
+                                        <button type="button" class="btn-action btn-delete" title="Supprimer" data-delete-url="{% url 'TagsCat:tag_delete' tag.pk %}" data-tag-id="{{ tag.pk }}">
                                             <i class="fas fa-trash"></i>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -359,4 +359,160 @@
     }
 }
 </style>
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h5 class="modal-title">Confirmer la suppression</h5>
+        </div>
+        <div class="modal-body">
+            <p>Êtes-vous sûr de vouloir supprimer ce tag ? Cette action est irréversible.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modern btn-light" id="modalCancel">Annuler</button>
+            <button type="button" class="btn-modern btn-primary" id="modalConfirm">
+                <i class="fas fa-trash me-2"></i>Supprimer
+            </button>
+        </div>
+    </div>
+    <div class="modal-backdrop"></div>
+    <style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    .modal-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.35);
+        animation: fadeIn 0.2s ease;
+    }
+    .modal-card {
+        position: relative;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        width: min(520px, 92vw);
+        max-width: 90vw;
+        overflow: hidden;
+        animation: slideDown 0.2s ease;
+        z-index: 10000;
+        pointer-events: auto;
+    }
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+    }
+    .modal-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-title { margin: 0; }
+    .modal-body { padding: 1.25rem; color: #4a5568; }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+        background: #f7fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+    .btn-light {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+    .btn-light:hover { filter: brightness(0.98); }
+    </style>
+<!-- End Confirmation Modal -->
+ 
+<script>
+// CSRF helper
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+let pendingDelete = null;
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button.btn-delete[data-delete-url]');
+    if (!btn) return;
+    e.preventDefault();
+    pendingDelete = {
+        url: btn.getAttribute('data-delete-url'),
+        tagItem: btn.closest('.tag-item')
+    };
+    openConfirmModal();
+});
+
+function openConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    if (modal) modal.style.display = 'grid';
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    if (modal) modal.style.display = 'none';
+}
+
+document.getElementById('modalCancel').addEventListener('click', () => {
+    pendingDelete = null;
+    closeConfirmModal();
+});
+
+// Fermer le modal en cliquant sur le backdrop
+document.getElementById('confirmModal').addEventListener('click', (e) => {
+    if (e.target.id === 'confirmModal') {
+        pendingDelete = null;
+        closeConfirmModal();
+    }
+});
+
+document.getElementById('modalConfirm').addEventListener('click', async () => {
+    if (!pendingDelete) return;
+    try {
+        const res = await fetch(pendingDelete.url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+        if (data.success) {
+            pendingDelete.tagItem?.parentNode?.removeChild(pendingDelete.tagItem);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Erreur lors de la suppression du tag.');
+    } finally {
+        pendingDelete = null;
+        closeConfirmModal();
+    }
+});
+</script>
 {% endblock %}

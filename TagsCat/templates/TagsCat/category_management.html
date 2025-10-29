@@ -17,9 +17,17 @@
                         </h1>
                         <p class="lead text-muted mb-0">{% trans "Organize your thoughts with beautiful categories" %}</p>
                     </div>
-                    <a href="{% url 'TagsCat:category_create' %}" class="btn btn-gradient btn-lg shadow-lg">
-                        <i class="fas fa-plus-circle me-2"></i>{% trans "Create Category" %}
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'TagsCat:tag_management' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-tags me-2"></i>{% trans "Manage Tags" %}
+                        </a>
+                        <a href="{% url 'TagsCat:tag_create' %}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>{% trans "Create Tag" %}
+                        </a>
+                        <a href="{% url 'TagsCat:category_create' %}" class="btn btn-gradient btn-lg shadow-lg">
+                            <i class="fas fa-plus-circle me-2"></i>{% trans "Create Category" %}
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -415,4 +423,5 @@
 }
 </style>
 {% endblock %}
+
 
