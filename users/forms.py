@@ -320,3 +320,62 @@ class UserProfileForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+    # --- PIN handling for hidden journals ---
+    # Add PIN fields dynamically so templates can show them if desired
+    new_pin = forms.CharField(
+        label=_('Journal PIN (4 digits)'),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter 4-digit PIN'}),
+        required=False,
+        help_text=_('Set a 4-digit numeric PIN to access hidden journals')
+    )
+
+    confirm_pin = forms.CharField(
+        label=_('Confirm PIN'),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm PIN'}),
+        required=False
+    )
+
+    remove_pin = forms.BooleanField(
+        label=_('Remove existing PIN'),
+        required=False,
+        help_text=_('Check to remove your current journal PIN')
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_pin = cleaned_data.get('new_pin')
+        confirm_pin = cleaned_data.get('confirm_pin')
+        remove_pin = cleaned_data.get('remove_pin')
+
+        # If user asked to remove pin, ignore new_pin/confirm_pin
+        if remove_pin:
+            return cleaned_data
+
+        if new_pin or confirm_pin:
+            if not new_pin or not confirm_pin:
+                raise forms.ValidationError(_('Please provide both PIN fields or check Remove PIN.'))
+            if new_pin != confirm_pin:
+                raise forms.ValidationError(_('The PINs do not match.'))
+            if not new_pin.isdigit() or len(new_pin) != 4:
+                raise forms.ValidationError(_('PIN must be exactly 4 digits.'))
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+
+        # Handle PIN removal or set
+        if self.cleaned_data.get('remove_pin'):
+            user.set_journal_pin(None)
+        else:
+            new_pin = self.cleaned_data.get('new_pin')
+            if new_pin:
+                # Use model helper to set hashed PIN
+                user.set_journal_pin(new_pin)
+
+        # Password handling already done by earlier save logic
+        if commit:
+            user.save()
+        return user

@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if create %}New Entry{% else %}Edit Entry{% endif %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">{% if create %}Create New Journal Entry{% else %}Edit Journal Entry{% endif %}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.title.label_tag }}
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                            <div id="content-suggestions" class="list-group mt-1" style="position: absolute; z-index: 50; width: 100%; display: none;"></div>
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.entry_date.label_tag }}
+                                {{ form.entry_date }}
+                                {% if form.entry_date.help_text %}
+                                    <small class="form-text text-muted">{{ form.entry_date.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.location.label_tag }}
+                                {{ form.location }}
+                                <div id="location-suggestions" class="list-group mt-1" style="position: absolute; z-index: 50; width: 100%; display: none;"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_images">Images</label>
+                            <input type="file" name="images" id="id_images" multiple class="form-control">
+                            <small class="form-text text-muted">You can upload multiple images.</small>
+                        </div>
+
+                        {% if not create and journal.images.all %}
+                        <div class="mb-3">
+                            <h6>Existing Images</h6>
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% for img in journal.images.all %}
+                                    <img src="{{ img.image.url }}" alt="img" style="width:100px; height:100px; object-fit:cover;" class="rounded">
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" type="submit">{% if create %}Create{% else %}Save Changes{% endif %}</button>
+                            <a href="{% url 'journal_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Simple debounce
+function debounce(fn, wait){
+    let t;
+    return function(...args){
+        clearTimeout(t);
+        t = setTimeout(()=>fn.apply(this,args), wait);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    const locInput = document.getElementById('id_location');
+    const sugBox = document.getElementById('location-suggestions');
+    if(!locInput) return;
+
+    const renderSuggestions = (items)=>{
+        if(!items || items.length===0){
+            sugBox.style.display = 'none';
+            sugBox.innerHTML = '';
+            return;
+        }
+        sugBox.innerHTML = '';
+        items.forEach(it=>{
+            const a = document.createElement('button');
+            a.type = 'button';
+            a.className = 'list-group-item list-group-item-action';
+            a.textContent = it.display_name;
+            a.dataset.lat = it.lat;
+            a.dataset.lon = it.lon;
+            a.addEventListener('click', ()=>{
+                locInput.value = it.display_name;
+                locInput.dataset.lat = it.lat;
+                locInput.dataset.lon = it.lon;
+                sugBox.style.display = 'none';
+            });
+            sugBox.appendChild(a);
+        });
+        sugBox.style.display = 'block';
+    };
+
+    const fetchPlaces = debounce(function(q){
+        if(!q || q.length < 2){ renderSuggestions([]); return; }
+        fetch(`{% url 'journal_place_suggest' %}?q=${encodeURIComponent(q)}`)
+            .then(r=>r.json())
+            .then(data=>{
+                renderSuggestions(data);
+            })
+            .catch(err=>{
+                console.error('Place suggest error', err);
+                renderSuggestions([]);
+            });
+    }, 300);
+
+    locInput.addEventListener('input', (e)=>{
+        fetchPlaces(e.target.value);
+    });
+
+    // Content autocomplete
+    const contentInput = document.getElementById('id_description');
+    const contentSug = document.getElementById('content-suggestions');
+    const renderContent = (items)=>{
+        if(!items || items.length===0){ contentSug.style.display='none'; contentSug.innerHTML=''; return; }
+        contentSug.innerHTML='';
+        items.forEach(it=>{
+            const b = document.createElement('button');
+            b.type='button';
+            b.className = 'list-group-item list-group-item-action';
+            b.textContent = it;
+            b.addEventListener('click', ()=>{
+                insertAtCursor(contentInput, it + ' ');
+                contentSug.style.display='none';
+            });
+            contentSug.appendChild(b);
+        });
+        contentSug.style.display='block';
+    }
+
+    const fetchContent = debounce(function(q){
+        if(!q || q.length < 2){ renderContent([]); return; }
+        fetch(`{% url 'journal_content_suggest' %}?q=${encodeURIComponent(q)}`)
+            .then(r=>r.json())
+            .then(data=> renderContent(data) )
+            .catch(err=>{ console.error('Content suggest error', err); renderContent([]); });
+    }, 300);
+
+    function insertAtCursor(textarea, text) {
+        if(!textarea) return;
+        const start = textarea.selectionStart || 0;
+        const end = textarea.selectionEnd || 0;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+        textarea.value = before + text + after;
+        const pos = start + text.length;
+        textarea.setSelectionRange(pos, pos);
+        textarea.focus();
+    }
+
+    if(contentInput){
+        contentInput.addEventListener('input', (e)=>{
+            // send the last 40 chars around caret as query to be more relevant
+            const v = e.target.value;
+            const start = Math.max(0, e.target.selectionStart - 40);
+            const q = v.substring(start, e.target.selectionStart).trim();
+            fetchContent(q);
+        });
+
+        document.addEventListener('click', function(e){
+            if(!contentSug.contains(e.target) && e.target !== contentInput){
+                contentSug.style.display = 'none';
+            }
+        });
+    }
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e){
+        if(!sugBox.contains(e.target) && e.target !== locInput){
+            sugBox.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}
