@@ -8,6 +8,7 @@ from django.db import models
 import json
 from ..models import Category, Tag
 from ..forms import CategoryForm, TagForm
+from ..ai_utils import suggest_tags_from_text
 
 @login_required
 def category_management(request):
@@ -100,6 +101,14 @@ def tag_management(request):
 def tag_create(request):
     """Créer un nouveau tag"""
     if request.method == 'POST':
+        # AJAX quick create support
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.content_type.startswith('application/json'):
+            data = json.loads(request.body.decode('utf-8'))
+            name = (data.get('name') or '').strip()
+            if not name:
+                return JsonResponse({'success': False, 'error': 'Nom requis'}, status=400)
+            tag, created = Tag.objects.get_or_create(user=request.user, name=name)
+            return JsonResponse({'success': True, 'created': created, 'tag': {'id': tag.id, 'name': tag.name, 'usage_count': getattr(tag, 'usage_count', 0)}})
         form = TagForm(request.POST, user=request.user)
         if form.is_valid():
             tag = form.save(commit=False)
@@ -114,6 +123,19 @@ def tag_create(request):
         'form': form,
         'title': 'Créer un tag'
     })
+
+@login_required
+@require_POST
+def tag_suggest(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        payload = {}
+    text = (payload.get('text') or request.POST.get('text') or '').strip()
+    if not text:
+        return JsonResponse({'success': False, 'error': 'Texte requis'}, status=400)
+    suggestions = suggest_tags_from_text(text)
+    return JsonResponse({'success': True, 'tags': suggestions})
 
 @login_required
 def tag_edit(request, pk):

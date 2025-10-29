@@ -52,6 +52,27 @@
                 </div>
             </div>
 
+            <!-- AI Suggestion -->
+            <div class="modern-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Générer des tags avec IA</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <textarea id="aiText" class="form-control" rows="3" placeholder="Collez votre texte ici..."></textarea>
+                    </div>
+                    <div class="d-flex gap-2 mb-3">
+                        <button id="btnSuggest" class="btn-modern btn-primary" type="button">
+                            <i class="fas fa-wand-sparkles me-2"></i>Générer des tags
+                        </button>
+                        <button id="btnValidate" class="btn-modern btn-success" type="button" style="display: none;">
+                            <i class="fas fa-check-circle me-2"></i>Valider la sélection (<span id="selectedCount">0</span>)
+                        </button>
+                    </div>
+                    <div id="aiResults" class="d-flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
             <!-- Tags List -->
             <div class="modern-card">
                 <div class="card-header">
@@ -359,93 +380,6 @@
     }
 }
 </style>
-<!-- Confirmation Modal -->
-<div id="confirmModal" class="modal-overlay" style="display:none;">
-    <div class="modal-card">
-        <div class="modal-header">
-            <div class="modal-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h5 class="modal-title">Confirmer la suppression</h5>
-        </div>
-        <div class="modal-body">
-            <p>Êtes-vous sûr de vouloir supprimer ce tag ? Cette action est irréversible.</p>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn-modern btn-light" id="modalCancel">Annuler</button>
-            <button type="button" class="btn-modern btn-primary" id="modalConfirm">
-                <i class="fas fa-trash me-2"></i>Supprimer
-            </button>
-        </div>
-    </div>
-    <div class="modal-backdrop"></div>
-    <style>
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-    }
-    .modal-backdrop {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.35);
-        animation: fadeIn 0.2s ease;
-    }
-    .modal-card {
-        position: relative;
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-        width: min(520px, 92vw);
-        max-width: 90vw;
-        overflow: hidden;
-        animation: slideDown 0.2s ease;
-        z-index: 10000;
-        pointer-events: auto;
-    }
-    .modal-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem 1.25rem;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: #fff;
-    }
-    .modal-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        background: rgba(255,255,255,0.18);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal-title { margin: 0; }
-    .modal-body { padding: 1.25rem; color: #4a5568; }
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.75rem;
-        padding: 1rem 1.25rem;
-        background: #f7fafc;
-        border-top: 1px solid #e2e8f0;
-    }
-    .btn-light {
-        background: #e2e8f0;
-        color: #2d3748;
-    }
-    .btn-light:hover { filter: brightness(0.98); }
-    </style>
-<!-- End Confirmation Modal -->
  
 <script>
 // CSRF helper
@@ -455,46 +389,16 @@ function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-let pendingDelete = null;
-
-document.addEventListener('click', function(e) {
+document.addEventListener('click', async function(e) {
     const btn = e.target.closest('button.btn-delete[data-delete-url]');
     if (!btn) return;
     e.preventDefault();
-    pendingDelete = {
-        url: btn.getAttribute('data-delete-url'),
-        tagItem: btn.closest('.tag-item')
-    };
-    openConfirmModal();
-});
-
-function openConfirmModal() {
-    const modal = document.getElementById('confirmModal');
-    if (modal) modal.style.display = 'grid';
-}
-
-function closeConfirmModal() {
-    const modal = document.getElementById('confirmModal');
-    if (modal) modal.style.display = 'none';
-}
-
-document.getElementById('modalCancel').addEventListener('click', () => {
-    pendingDelete = null;
-    closeConfirmModal();
-});
-
-// Fermer le modal en cliquant sur le backdrop
-document.getElementById('confirmModal').addEventListener('click', (e) => {
-    if (e.target.id === 'confirmModal') {
-        pendingDelete = null;
-        closeConfirmModal();
-    }
-});
-
-document.getElementById('modalConfirm').addEventListener('click', async () => {
-    if (!pendingDelete) return;
+    
+    const url = btn.getAttribute('data-delete-url');
+    const tagItem = btn.closest('.tag-item');
+    
     try {
-        const res = await fetch(pendingDelete.url, {
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken'),
@@ -504,14 +408,152 @@ document.getElementById('modalConfirm').addEventListener('click', async () => {
         if (!res.ok) throw new Error('Network error');
         const data = await res.json();
         if (data.success) {
-            pendingDelete.tagItem?.parentNode?.removeChild(pendingDelete.tagItem);
+            tagItem?.parentNode?.removeChild(tagItem);
         }
     } catch (err) {
         console.error(err);
         alert('Erreur lors de la suppression du tag.');
+    }
+});
+
+// AI Suggestion handlers
+const aiText = document.getElementById('aiText');
+const aiResults = document.getElementById('aiResults');
+const btnSuggest = document.getElementById('btnSuggest');
+const btnValidate = document.getElementById('btnValidate');
+const selectedCount = document.getElementById('selectedCount');
+
+async function createTagQuick(name) {
+    const res = await fetch('{% url "TagsCat:tag_create" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ name })
+    });
+    if (!res.ok) throw new Error('create failed');
+    return res.json();
+}
+
+async function deleteTagQuick(tagId) {
+    const res = await fetch(`{% url "TagsCat:tag_delete" 0 %}`.replace('0', tagId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    });
+    if (!res.ok) throw new Error('delete failed');
+    return res.json();
+}
+
+function updateSelectedCount() {
+    const selectedTags = document.querySelectorAll('#aiResults button[data-is-added="true"]');
+    const count = selectedTags.length;
+    selectedCount.textContent = count;
+    btnValidate.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+
+btnValidate.addEventListener('click', async () => {
+    const selectedTags = document.querySelectorAll('#aiResults button[data-is-added="true"]');
+    if (selectedTags.length === 0) return;
+    
+    btnValidate.disabled = true;
+    btnValidate.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validation...';
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const tag of selectedTags) {
+        try {
+            const res = await createTagQuick(tag.dataset.tagName);
+            if (res.success) {
+                successCount++;
+                tag.className = 'btn btn-sm btn-success';
+                tag.innerHTML = '<i class="fas fa-check me-1"></i>' + (res.tag?.name || tag.dataset.tagName);
+                tag.dataset.tagId = res.tag?.id || '';
+            }
+        } catch (e) {
+            errorCount++;
+            tag.className = 'btn btn-sm btn-danger';
+            tag.innerHTML = '<i class="fas fa-times me-1"></i>Erreur';
+        }
+    }
+    
+    
+    btnValidate.disabled = false;
+    btnValidate.innerHTML = '<i class="fas fa-check-circle me-2"></i>Valider la sélection (<span id="selectedCount">0</span>)';
+    updateSelectedCount();
+});
+
+btnSuggest.addEventListener('click', async () => {
+    const text = (aiText.value || '').trim();
+    if (!text) return;
+    btnSuggest.disabled = true;
+    btnSuggest.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération...';
+    aiResults.innerHTML = '';
+    try {
+        const resp = await fetch('{% url "TagsCat:tag_suggest" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ text })
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'Erreur IA');
+        (data.tags || []).forEach(tag => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'btn btn-sm btn-outline-primary';
+            chip.textContent = tag;
+            chip.dataset.tagName = tag;
+            chip.dataset.isAdded = 'false';
+            
+            chip.addEventListener('click', async () => {
+                if (chip.disabled) return;
+                
+                const isAdded = chip.dataset.isAdded === 'true';
+                const tagId = chip.dataset.tagId;
+                
+                chip.disabled = true;
+                
+                try {
+                    if (isAdded && tagId) {
+                        // Supprimer le tag
+                        await deleteTagQuick(tagId);
+                        chip.className = 'btn btn-sm btn-outline-primary';
+                        chip.innerHTML = tag;
+                        chip.dataset.isAdded = 'false';
+                        chip.dataset.tagId = '';
+                    } else {
+                        // Ajouter le tag
+                        const res = await createTagQuick(tag);
+                        chip.className = 'btn btn-sm btn-success';
+                        chip.innerHTML = '<i class="fas fa-check me-1"></i>' + (res.tag?.name || tag);
+                        chip.dataset.isAdded = 'true';
+                        chip.dataset.tagId = res.tag?.id || '';
+                    }
+                } catch (e) {
+                    chip.className = 'btn btn-sm btn-danger';
+                    chip.innerHTML = '<i class="fas fa-times me-1"></i>Erreur';
+                } finally {
+                    chip.disabled = false;
+                    updateSelectedCount();
+                }
+            });
+            aiResults.appendChild(chip);
+        });
+        updateSelectedCount();
+    } catch (e) {
+        aiResults.innerHTML = '<span class="text-danger">Erreur lors de la génération des tags.</span>';
     } finally {
-        pendingDelete = null;
-        closeConfirmModal();
+        btnSuggest.disabled = false;
+        btnSuggest.innerHTML = '<i class="fas fa-wand-sparkles me-2"></i>Générer des tags';
     }
 });
 </script>
