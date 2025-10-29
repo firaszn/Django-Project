@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Category Management" %} - AI Personal Journal {% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="header-banner">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-4 fw-bold mb-2">
+                            <i class="fas fa-layer-group me-3"></i>{% trans "Categories" %}
+                        </h1>
+                        <p class="lead text-muted mb-0">{% trans "Organize your thoughts with beautiful categories" %}</p>
+                    </div>
+                    <a href="{% url 'TagsCat:category_create' %}" class="btn btn-gradient btn-lg shadow-lg">
+                        <i class="fas fa-plus-circle me-2"></i>{% trans "Create Category" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="stat-card stat-card-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-number">{{ total_categories }}</h2>
+                    <p class="stat-label">{% trans "Total Categories" %}</p>
+                </div>
+                <div class="stat-decoration"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-card-success">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-number">{{ categories_with_entries }}</h2>
+                    <p class="stat-label">{% trans "Active Categories" %}</p>
+                </div>
+                <div class="stat-decoration"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-card-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-number">{{ categories|length }}</h2>
+                    <p class="stat-label">{% trans "In Use" %}</p>
+                </div>
+                <div class="stat-decoration"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="row">
+        <div class="col-12">
+            {% if categories %}
+                <div class="row g-4">
+                    {% for category in categories %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="category-card">
+                                <div class="category-header" style="background: linear-gradient(135deg, {{ category.color }}dd, {{ category.color }});">
+                                    <div class="category-badge">
+                                        {% if category.icon %}
+                                            <i class="fas fa-{{ category.icon }}"></i>
+                                        {% else %}
+                                            <i class="fas fa-folder"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="category-count">
+                                        <span>{{ category.get_entry_count }}</span>
+                                        <small>{% trans "entries" %}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="category-body">
+                                    <h4 class="category-title">{{ category.name }}</h4>
+                                    
+                                    {% if category.description %}
+                                        <p class="category-description">{{ category.description|truncatewords:20 }}</p>
+                                    {% else %}
+                                        <p class="category-description text-muted fst-italic">{% trans "No description" %}</p>
+                                    {% endif %}
+                                    
+                                    <div class="category-meta">
+                                        <span class="meta-item">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            {{ category.created_at|date:"d M Y" }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="category-footer">
+                                    <a href="{% url 'TagsCat:category_edit' category.pk %}" class="btn-action btn-action-edit">
+                                        <i class="fas fa-pen"></i>
+                                        <span>{% trans "Edit" %}</span>
+                                    </a>
+                                    <a href="{% url 'TagsCat:category_delete' category.pk %}" class="btn-action btn-action-delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>{% trans "Delete" %}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-folder-plus"></i>
+                    </div>
+                    <h3 class="empty-title">{% trans "No Categories Yet" %}</h3>
+                    <p class="empty-text">
+                        {% trans "Start organizing your journal entries by creating your first category." %}
+                    </p>
+                    <a href="{% url 'TagsCat:category_create' %}" class="btn btn-gradient btn-lg shadow-lg mt-3">
+                        <i class="fas fa-plus-circle me-2"></i>{% trans "Create Your First Category" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --warning-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.header-banner {
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 2px solid #667eea30;
+}
+
+.btn-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3) !important;
+    color: white;
+}
+
+/* Stat Cards */
+.stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.stat-card-primary .stat-icon {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.stat-card-success .stat-icon {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.stat-card-warning .stat-icon {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #2d3748;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.95rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.stat-decoration {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    opacity: 0.1;
+    right: -20px;
+    bottom: -20px;
+}
+
+.stat-card-primary .stat-decoration {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.stat-card-success .stat-decoration {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.stat-card-warning .stat-decoration {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+/* Category Cards */
+.category-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.category-header {
+    padding: 2rem;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.category-badge {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.category-count {
+    text-align: right;
+    color: white;
+}
+
+.category-count span {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.category-count small {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.category-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+}
+
+.category-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.75rem;
+}
+
+.category-description {
+    color: #718096;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.category-meta {
+    display: flex;
+    gap: 1rem;
+}
+
+.meta-item {
+    font-size: 0.85rem;
+    color: #a0aec0;
+}
+
+.category-footer {
+    display: flex;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-action:hover {
+    transform: scale(1.05);
+}
+
+.btn-action-edit {
+    color: #667eea;
+    border-right: 1px solid #e2e8f0;
+}
+
+.btn-action-edit:hover {
+    background: #667eea10;
+    color: #667eea;
+}
+
+.btn-action-delete {
+    color: #f56565;
+}
+
+.btn-action-delete:hover {
+    background: #f5656510;
+    color: #f56565;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: linear-gradient(135deg, #667eea08, #764ba208);
+    border-radius: 20px;
+    border: 2px dashed #667eea40;
+}
+
+.empty-icon {
+    font-size: 5rem;
+    color: #cbd5e0;
+    margin-bottom: 2rem;
+}
+
+.empty-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 1rem;
+}
+
+.empty-text {
+    font-size: 1.1rem;
+    color: #718096;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .header-banner {
+        padding: 1.5rem;
+    }
+    
+    .header-banner .d-flex {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}

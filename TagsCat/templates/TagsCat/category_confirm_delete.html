@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Delete Category" %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Warning Animation -->
+            <div class="warning-animation mb-4">
+                <div class="warning-circle">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+
+            <!-- Delete Card -->
+            <div class="delete-card">
+                <div class="delete-header">
+                    <h2 class="delete-title">
+                        <i class="fas fa-trash-alt me-2"></i>{% trans "Delete Category" %}
+                    </h2>
+                    <p class="delete-subtitle">{% trans "This action cannot be undone" %}</p>
+                </div>
+
+                <div class="delete-body">
+                    <!-- Alert Box -->
+                    <div class="alert-box alert-danger mb-4">
+                        <div class="alert-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6 class="alert-title">{% trans "Permanent Action" %}</h6>
+                            <p class="alert-text">{% trans "Once deleted, this category cannot be recovered." %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Category Preview -->
+                    <div class="category-preview-delete">
+                        <div class="preview-badge-delete" style="background: linear-gradient(135deg, {{ category.color }}dd, {{ category.color }});">
+                            {% if category.icon %}
+                                <i class="fas fa-{{ category.icon }}"></i>
+                            {% else %}
+                                <i class="fas fa-folder"></i>
+                            {% endif %}
+                        </div>
+                        <div class="preview-info">
+                            <h4 class="preview-category-name">{{ category.name }}</h4>
+                            {% if category.description %}
+                                <p class="preview-category-desc">{{ category.description|truncatewords:20 }}</p>
+                            {% endif %}
+                            <div class="preview-meta">
+                                <span class="meta-badge">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    {{ category.created_at|date:"d M Y" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entry Count Warning -->
+                    {% if category.get_entry_count > 0 %}
+                        <div class="alert-box alert-info mb-4">
+                            <div class="alert-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h6 class="alert-title">
+                                    <strong>{{ category.get_entry_count }}</strong> 
+                                    {% if category.get_entry_count == 1 %}
+                                        {% trans "entry is linked to this category" %}
+                                    {% else %}
+                                        {% trans "entries are linked to this category" %}
+                                    {% endif %}
+                                </h6>
+                                <p class="alert-text">
+                                    {% trans "Don't worry - your journal entries will be preserved, but they will no longer be associated with this category." %}
+                                </p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert-box alert-success mb-4">
+                            <div class="alert-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h6 class="alert-title">{% trans "Safe to Delete" %}</h6>
+                                <p class="alert-text">{% trans "This category has no linked entries." %}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Confirmation Question -->
+                    <div class="confirmation-section">
+                        <p class="confirmation-text">
+                            {% trans "Are you absolutely sure you want to delete" %} 
+                            <strong>"{{ category.name }}"</strong>?
+                        </p>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="action-buttons">
+                            <a href="{% url 'TagsCat:category_management' %}" class="btn-action btn-cancel">
+                                <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
+                            </a>
+                            <button type="submit" class="btn-action btn-delete">
+                                <i class="fas fa-trash-alt me-2"></i>{% trans "Yes, Delete Forever" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Safety Note -->
+            <div class="safety-note mt-4">
+                <i class="fas fa-lightbulb me-2"></i>
+                {% trans "Tip: Consider editing the category instead if you just want to change its details." %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Warning Animation */
+.warning-animation {
+    display: flex;
+    justify-content: center;
+    animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.warning-circle {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #fc8181, #f56565);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    box-shadow: 0 10px 40px rgba(245, 101, 101, 0.4);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 10px 40px rgba(245, 101, 101, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 15px 50px rgba(245, 101, 101, 0.6);
+    }
+}
+
+/* Delete Card */
+.delete-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.1);
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.delete-header {
+    background: linear-gradient(135deg, #fc8181, #f56565);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.delete-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.delete-subtitle {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 1rem;
+}
+
+.delete-body {
+    padding: 2rem;
+}
+
+/* Alert Boxes */
+.alert-box {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 15px;
+    animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #fff5f5, #fed7d7);
+    border-left: 4px solid #f56565;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #ebf8ff, #bee3f8);
+    border-left: 4px solid #4299e1;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #f0fff4, #c6f6d5);
+    border-left: 4px solid #48bb78;
+}
+
+.alert-icon {
+    flex-shrink: 0;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.alert-danger .alert-icon {
+    background: #feb2b2;
+    color: #c53030;
+}
+
+.alert-info .alert-icon {
+    background: #90cdf4;
+    color: #2c5282;
+}
+
+.alert-success .alert-icon {
+    background: #9ae6b4;
+    color: #22543d;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.alert-danger .alert-title {
+    color: #c53030;
+}
+
+.alert-info .alert-title {
+    color: #2c5282;
+}
+
+.alert-success .alert-title {
+    color: #22543d;
+}
+
+.alert-text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.alert-danger .alert-text {
+    color: #742a2a;
+}
+
+.alert-info .alert-text {
+    color: #2a4365;
+}
+
+.alert-success .alert-text {
+    color: #276749;
+}
+
+/* Category Preview for Delete */
+.category-preview-delete {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: #f7fafc;
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    border: 2px solid #e2e8f0;
+}
+
+.preview-badge-delete {
+    flex-shrink: 0;
+    width: 70px;
+    height: 70px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.preview-category-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.preview-category-desc {
+    color: #718096;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+}
+
+.preview-meta {
+    display: flex;
+    gap: 1rem;
+}
+
+.meta-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #718096;
+    border: 1px solid #e2e8f0;
+}
+
+/* Confirmation Section */
+.confirmation-section {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fff5f5, #fed7d7);
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    border: 2px dashed #fc8181;
+}
+
+.confirmation-text {
+    font-size: 1.1rem;
+    color: #2d3748;
+    margin: 0;
+}
+
+.confirmation-text strong {
+    color: #c53030;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.btn-cancel {
+    background: #e2e8f0;
+    color: #2d3748;
+}
+
+.btn-cancel:hover {
+    background: #cbd5e0;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    color: #2d3748;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #fc8181, #f56565);
+    color: white;
+    box-shadow: 0 5px 20px rgba(245, 101, 101, 0.3);
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 101, 101, 0.5);
+}
+
+/* Safety Note */
+.safety-note {
+    text-align: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #fefcbf, #faf089);
+    border-radius: 12px;
+    color: #744210;
+    font-size: 0.95rem;
+    border: 1px solid #f6e05e;
+    animation: fadeIn 0.7s ease;
+}
+
+@media (max-width: 768px) {
+    .warning-circle {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+    }
+    
+    .delete-header {
+        padding: 1.5rem;
+    }
+    
+    .delete-title {
+        font-size: 1.5rem;
+    }
+    
+    .delete-body {
+        padding: 1.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .category-preview-delete {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .preview-badge-delete {
+        margin: 0 auto;
+    }
+}
+</style>
+{% endblock %}
