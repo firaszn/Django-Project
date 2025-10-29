@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Hidden Journals - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Hidden Journal Entries ({{ journals.count }})</h3>
+
+            {% if journals %}
+                <div class="row g-3">
+                    {% for journal in journals %}
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>{{ journal.title }}</h5>
+                                    <p class="text-muted">{{ journal.description|truncatewords:30 }}</p>
+                                    <a href="{% url 'journal_detail' journal.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">No hidden journals found.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

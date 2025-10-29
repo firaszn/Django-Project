@@ -88,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '3308',
         'OPTIONS': {
@@ -97,6 +97,8 @@ DATABASES = {
         }
     }
 }
+GEMINI_API_KEY = 'AIzaSyCIReSYkG37uyIV-VvU87LObnhPzEJSN9M'
+GEMINI_MODEL="models/text-bison-001"
 
 
 # Désactiver les messages de validation de mot de passe
