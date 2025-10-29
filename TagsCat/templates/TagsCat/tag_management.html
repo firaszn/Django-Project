@@ -58,17 +58,31 @@
                     <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Générer des tags avec IA</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <textarea id="aiText" class="form-control" rows="3" placeholder="Collez votre texte ici..."></textarea>
-                    </div>
-                    <div class="d-flex gap-2 mb-3">
-                        <button id="btnSuggest" class="btn-modern btn-primary" type="button">
-                            <i class="fas fa-wand-sparkles me-2"></i>Générer des tags
-                        </button>
-                        <button id="btnValidate" class="btn-modern btn-success" type="button" style="display: none;">
-                            <i class="fas fa-check-circle me-2"></i>Valider la sélection (<span id="selectedCount">0</span>)
-                        </button>
-                    </div>
+            <div class="mb-3">
+                <textarea id="aiText" class="form-control" rows="3" placeholder="Collez votre texte ici..."></textarea>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="tagCount" class="form-label">
+                        <i class="fas fa-hashtag me-2"></i>Nombre de tags par phrase
+                    </label>
+                    <select id="tagCount" class="form-select">
+                        <option value="1">1 tag (le plus important)</option>
+                        <option value="2" selected>2 tags (les plus importants)</option>
+                        <option value="3">3 tags (les plus importants)</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button id="btnSuggest" class="btn-modern btn-primary" type="button">
+                        <i class="fas fa-wand-sparkles me-2"></i>Générer des tags
+                    </button>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+                <button id="btnValidate" class="btn-modern btn-success" type="button" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>Valider la sélection (<span id="selectedCount">0</span>)
+                </button>
+            </div>
                     <div id="aiResults" class="d-flex flex-wrap gap-2"></div>
                 </div>
             </div>
@@ -456,6 +470,76 @@ function updateSelectedCount() {
     btnValidate.style.display = count > 0 ? 'inline-flex' : 'none';
 }
 
+function addTagsToList(tags) {
+    const tagsGrid = document.querySelector('.tags-grid');
+    if (!tagsGrid) return;
+    
+    tags.forEach(tagData => {
+        // Vérifier si le tag n'existe pas déjà
+        const existingTag = tagsGrid.querySelector(`[data-tag-id="${tagData.id}"]`);
+        if (existingTag) return;
+        
+        // Créer l'élément de tag
+        const tagItem = document.createElement('div');
+        tagItem.className = 'tag-item';
+        tagItem.setAttribute('data-tag-id', tagData.id);
+        
+        tagItem.innerHTML = `
+            <div class="tag-content">
+                <div class="tag-name">
+                    <i class="fas fa-tag me-2"></i>${tagData.name}
+                </div>
+                <div class="tag-stats">
+                    <span class="usage-count">${tagData.usage_count || 0} utilisation${(tagData.usage_count || 0) > 1 ? 's' : ''}</span>
+                </div>
+            </div>
+            <div class="tag-actions">
+                <a href="{% url 'TagsCat:tag_edit' 0 %}" class="btn-action btn-edit" title="Modifier" data-tag-id="${tagData.id}">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <button type="button" class="btn-action btn-delete" title="Supprimer" data-delete-url="{% url 'TagsCat:tag_delete' 0 %}" data-tag-id="${tagData.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        // Remplacer les URLs avec l'ID du tag
+        const editLink = tagItem.querySelector('a[data-tag-id]');
+        const deleteBtn = tagItem.querySelector('button[data-tag-id]');
+        
+        if (editLink) {
+            editLink.href = editLink.href.replace('0', tagData.id);
+        }
+        if (deleteBtn) {
+            deleteBtn.setAttribute('data-delete-url', deleteBtn.getAttribute('data-delete-url').replace('0', tagData.id));
+        }
+        
+        // Ajouter l'animation d'apparition
+        tagItem.style.opacity = '0';
+        tagItem.style.transform = 'translateY(20px)';
+        tagsGrid.appendChild(tagItem);
+        
+        // Animation d'apparition
+        setTimeout(() => {
+            tagItem.style.transition = 'all 0.3s ease';
+            tagItem.style.opacity = '1';
+            tagItem.style.transform = 'translateY(0)';
+        }, 100);
+    });
+}
+
+function updateUsageCounts(tags) {
+    tags.forEach(tagData => {
+        const existingTag = document.querySelector(`[data-tag-id="${tagData.id}"]`);
+        if (existingTag) {
+            const usageCountElement = existingTag.querySelector('.usage-count');
+            if (usageCountElement) {
+                usageCountElement.textContent = `${tagData.usage_count || 0} utilisation${(tagData.usage_count || 0) > 1 ? 's' : ''}`;
+            }
+        }
+    });
+}
+
 btnValidate.addEventListener('click', async () => {
     const selectedTags = document.querySelectorAll('#aiResults button[data-is-added="true"]');
     if (selectedTags.length === 0) return;
@@ -465,6 +549,7 @@ btnValidate.addEventListener('click', async () => {
     
     let successCount = 0;
     let errorCount = 0;
+    const newTags = [];
     
     for (const tag of selectedTags) {
         try {
@@ -474,6 +559,11 @@ btnValidate.addEventListener('click', async () => {
                 tag.className = 'btn btn-sm btn-success';
                 tag.innerHTML = '<i class="fas fa-check me-1"></i>' + (res.tag?.name || tag.dataset.tagName);
                 tag.dataset.tagId = res.tag?.id || '';
+                
+                // Ajouter à la liste des nouveaux tags pour l'affichage
+                if (res.tag) {
+                    newTags.push(res.tag);
+                }
             }
         } catch (e) {
             errorCount++;
@@ -481,6 +571,14 @@ btnValidate.addEventListener('click', async () => {
             tag.innerHTML = '<i class="fas fa-times me-1"></i>Erreur';
         }
     }
+    
+    // Ajouter les nouveaux tags à la liste principale
+    if (newTags.length > 0) {
+        addTagsToList(newTags);
+    }
+    
+    // Mettre à jour le compteur d'utilisation des tags existants
+    updateUsageCounts(newTags);
     
     
     btnValidate.disabled = false;
@@ -490,6 +588,7 @@ btnValidate.addEventListener('click', async () => {
 
 btnSuggest.addEventListener('click', async () => {
     const text = (aiText.value || '').trim();
+    const tagCount = parseInt(document.getElementById('tagCount').value) || 2;
     if (!text) return;
     btnSuggest.disabled = true;
     btnSuggest.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération...';
@@ -502,7 +601,7 @@ btnSuggest.addEventListener('click', async () => {
                 'X-CSRFToken': getCookie('csrftoken'),
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: JSON.stringify({ text })
+            body: JSON.stringify({ text, tag_count: tagCount })
         });
         const data = await resp.json();
         if (!data.success) throw new Error(data.error || 'Erreur IA');
@@ -537,6 +636,14 @@ btnSuggest.addEventListener('click', async () => {
                         chip.innerHTML = '<i class="fas fa-check me-1"></i>' + (res.tag?.name || tag);
                         chip.dataset.isAdded = 'true';
                         chip.dataset.tagId = res.tag?.id || '';
+                        
+                        // Ajouter à la liste principale si c'est un nouveau tag
+                        if (res.tag && res.created) {
+                            addTagsToList([res.tag]);
+                        } else if (res.tag) {
+                            // Mettre à jour le compteur d'utilisation du tag existant
+                            updateUsageCounts([res.tag]);
+                        }
                     }
                 } catch (e) {
                     chip.className = 'btn btn-sm btn-danger';

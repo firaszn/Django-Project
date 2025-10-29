@@ -34,6 +34,13 @@ def category_create(request):
             category = form.save(commit=False)
             category.user = request.user
             category.save()
+            # Sauvegarder les tags sélectionnés
+            form.save_m2m()
+            
+            # Incrémenter le compteur d'utilisation des tags
+            for tag in category.tags.all():
+                tag.increment_usage()
+            
             messages.success(request, f'Catégorie "{category.name}" créée avec succès!')
             return redirect('TagsCat:category_management')
     else:
@@ -50,9 +57,26 @@ def category_edit(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
     
     if request.method == 'POST':
+        # Sauvegarder les anciens tags pour comparaison
+        old_tags = set(category.tags.all())
+        
         form = CategoryForm(request.POST, instance=category, user=request.user)
         if form.is_valid():
             form.save()
+            
+            # Obtenir les nouveaux tags
+            new_tags = set(category.tags.all())
+            
+            # Décrementer les tags supprimés
+            removed_tags = old_tags - new_tags
+            for tag in removed_tags:
+                tag.decrement_usage()
+            
+            # Incrémenter les nouveaux tags
+            added_tags = new_tags - old_tags
+            for tag in added_tags:
+                tag.increment_usage()
+            
             messages.success(request, f'Catégorie "{category.name}" modifiée avec succès!')
             return redirect('TagsCat:category_management')
     else:
@@ -70,6 +94,10 @@ def category_delete(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
     
     if request.method == 'POST':
+        # Décrémenter le compteur d'utilisation des tags associés
+        for tag in category.tags.all():
+            tag.decrement_usage()
+        
         category_name = category.name
         entry_count = category.get_entry_count()
         category.delete()
@@ -132,9 +160,12 @@ def tag_suggest(request):
     except Exception:
         payload = {}
     text = (payload.get('text') or request.POST.get('text') or '').strip()
+    tag_count = int(payload.get('tag_count', 2))
     if not text:
         return JsonResponse({'success': False, 'error': 'Texte requis'}, status=400)
-    suggestions = suggest_tags_from_text(text)
+    if tag_count < 1 or tag_count > 3:
+        tag_count = 2
+    suggestions = suggest_tags_from_text(text, tag_count)
     return JsonResponse({'success': True, 'tags': suggestions})
 
 @login_required

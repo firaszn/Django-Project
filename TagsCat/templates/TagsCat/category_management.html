@@ -110,6 +110,16 @@
                                             {{ category.created_at|date:"d M Y" }}
                                         </span>
                                     </div>
+                                    
+                                    {% if category.tags.all %}
+                                        <div class="category-tags">
+                                            {% for tag in category.tags.all %}
+                                                <span class="tag-badge">
+                                                    <i class="fas fa-tag me-1"></i>{{ tag.name }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 
                                 <div class="category-footer">
@@ -335,6 +345,25 @@
 .meta-item {
     font-size: 0.85rem;
     color: #a0aec0;
+}
+
+.category-tags {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .category-footer {

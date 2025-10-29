@@ -58,7 +58,7 @@ def journal_detail(request, journal_id):
 def journal_create(request):
     """Create a new journal entry."""
     if request.method == 'POST':
-        form = JournalForm(request.POST, request.FILES)
+        form = JournalForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             journal = form.save(commit=False)
             journal.user = request.user
@@ -69,6 +69,7 @@ def journal_create(request):
                 journal.entry_date = form.cleaned_data.get('entry_date')
             journal.save()
 
+
             # Handle multiple images
             images = request.FILES.getlist('images')
             for img in images:
@@ -77,7 +78,7 @@ def journal_create(request):
             messages.success(request, 'Journal entry created.')
             return redirect('journal_detail', journal_id=journal.id)
     else:
-        form = JournalForm()
+        form = JournalForm(user=request.user)
 
     return render(request, 'journal/journal_form.html', {'form': form, 'create': True})
 
@@ -87,7 +88,7 @@ def journal_update(request, journal_id):
     journal = get_object_or_404(Journal, user=request.user, id=journal_id)
 
     if request.method == 'POST':
-        form = JournalForm(request.POST, request.FILES, instance=journal)
+        form = JournalForm(request.POST, request.FILES, instance=journal, user=request.user)
         if form.is_valid():
             journal = form.save(commit=False)
             # If no entry_date provided, keep existing or use today
@@ -105,7 +106,7 @@ def journal_update(request, journal_id):
             messages.success(request, 'Journal entry updated.')
             return redirect('journal_detail', journal_id=journal.id)
     else:
-        form = JournalForm(instance=journal)
+        form = JournalForm(instance=journal, user=request.user)
 
     return render(request, 'journal/journal_form.html', {'form': form, 'create': False, 'journal': journal})
 
