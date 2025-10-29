@@ -88,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'root',
         'HOST': 'localhost',
         'PORT': '3308',
         'OPTIONS': {
