@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from decouple import config, Csv
 
 # Import de la configuration email
 try:
@@ -90,7 +91,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3308',
+        'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -223,3 +224,12 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 
 # Adapter pour les comptes sociaux
 SOCIALACCOUNT_ADAPTER = 'users.adapter.CustomSocialAccountAdapter'
+
+# Configuration API IA (Génération de bio)
+# Groq API - Gratuit et rapide : https://console.groq.com/
+# IMPORTANT: Ne pas mettre la clé directement dans le code !
+# Utilisez la variable d'environnement GROQ_API_KEY ou un fichier .env
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
+
+# HuggingFace API (Optionnel - fallback)
+HUGGINGFACE_API_KEY = config('HUGGINGFACE_API_KEY', default=None)  # Optionnel : clé HuggingFace si vous en avez une
