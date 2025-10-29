@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     
     # Third party apps
+    'rest_framework',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -41,12 +42,13 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'widget_tweaks',
-    'django_cleanup.apps.CleanupConfig',
+    # 'django_cleanup',  # Temporarily disabled
     
     # Local apps
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
     'reminder_and_goals',
+    'TagsCat',
     'statistics_and_insights',
 ]
 
@@ -80,7 +82,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
 # Database
 DATABASES = {
     'default': {
@@ -89,7 +90,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3306',
+        'PORT': '3308',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -98,6 +99,7 @@ DATABASES = {
 }
 GEMINI_API_KEY = 'AIzaSyCIReSYkG37uyIV-VvU87LObnhPzEJSN9M'
 GEMINI_MODEL="models/text-bison-001"
+
 
 # Désactiver les messages de validation de mot de passe
 AUTH_PASSWORD_VALIDATORS = []

@@ -3,6 +3,11 @@
 import os
 import sys
 
+# Appliquer le patch MySQL avant d'importer Django
+try:
+    import mysql_patch
+except ImportError:
+    pass
 
 def main():
     """Run administrative tasks."""
