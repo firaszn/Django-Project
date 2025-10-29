@@ -20,7 +20,6 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ('email', 'username', 'first_name', 'last_name')
 
 class CustomSignupForm(SignupForm):
-<<<<<<< HEAD
     first_name = forms.CharField(max_length=30, label=_('First Name'),
                                widget=forms.TextInput(attrs={'placeholder': _('First Name')}))
     last_name = forms.CharField(max_length=30, label=_('Last Name'),
@@ -33,7 +32,6 @@ class CustomSignupForm(SignupForm):
                                    'placeholder': _('Date of Birth'),
                                    'class': 'form-control'
                                }))
-=======
     first_name = forms.CharField(
         max_length=30, 
         label=_('First Name'),
@@ -64,14 +62,12 @@ class CustomSignupForm(SignupForm):
         }),
         help_text=_('You must be at least 13 years old to register.')
     )
->>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
-<<<<<<< HEAD
-=======
+
             # Désactiver la validation HTML5 pour laisser Django gérer la validation
             if hasattr(field.widget, 'attrs'):
                 field.widget.attrs['required'] = False
@@ -252,7 +248,6 @@ class CustomSignupForm(SignupForm):
             raise forms.ValidationError(_('First name and last name cannot be identical.'))
         
         return cleaned_data
->>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
     
     def save(self, request):
         user = super().save(request)
@@ -304,8 +299,7 @@ class UserProfileForm(forms.ModelForm):
             'phone_number': _('Phone Number'),
         }
     
-<<<<<<< HEAD
-=======
+
     # --- PIN handling for hidden journals ---
     # Add PIN fields dynamically so templates can show them if desired
     new_pin = forms.CharField(
@@ -327,18 +321,15 @@ class UserProfileForm(forms.ModelForm):
         help_text=_('Check to remove your current journal PIN')
     )
 
->>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
     def clean(self):
         cleaned_data = super().clean()
         current_password = cleaned_data.get('current_password')
         new_password = cleaned_data.get('new_password')
         confirm_password = cleaned_data.get('confirm_password')
-<<<<<<< HEAD
-=======
+
         new_pin = cleaned_data.get('new_pin')
         confirm_pin = cleaned_data.get('confirm_pin')
         remove_pin = cleaned_data.get('remove_pin')
->>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
         
         # Si l'utilisateur veut changer son mot de passe
         if new_password or confirm_password:
@@ -355,10 +346,8 @@ class UserProfileForm(forms.ModelForm):
             if not self.instance.check_password(current_password):
                 raise forms.ValidationError(_('Your current password is incorrect.'))
         
-<<<<<<< HEAD
         return cleaned_data
     
-=======
         # If user asked to remove pin, ignore new_pin/confirm_pin
         if remove_pin:
             return cleaned_data
@@ -373,7 +362,6 @@ class UserProfileForm(forms.ModelForm):
 
         return cleaned_data
 
->>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
     def save(self, commit=True):
         user = super().save(commit=False)
         new_password = self.cleaned_data.get('new_password')
@@ -381,9 +369,7 @@ class UserProfileForm(forms.ModelForm):
         # Changer le mot de passe si fourni
         if new_password:
             user.set_password(new_password)
-<<<<<<< HEAD
-        
-=======
+
 
         # Handle PIN removal or set
         if self.cleaned_data.get('remove_pin'):
@@ -394,7 +380,6 @@ class UserProfileForm(forms.ModelForm):
                 # Use model helper to set hashed PIN
                 user.set_journal_pin(new_pin)
 
->>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
         if commit:
             user.save()
         return user

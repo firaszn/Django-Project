@@ -7,12 +7,11 @@ urlpatterns = [
     path('profile/update/', views.ProfileUpdateView.as_view(), name='profile_update'),
     path('profile/settings/', views.profile_settings, name='profile_settings'),
     
-<<<<<<< HEAD
-=======
+
     # AI Features
     path('profile/generate-bio-ai/', views.generate_bio_ai, name='generate_bio_ai'),
     
->>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
+
     # Admin Dashboard URLs
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/users/', views.admin_users_list, name='admin_users_list'),
