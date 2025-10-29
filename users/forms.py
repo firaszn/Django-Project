@@ -286,42 +286,6 @@ class UserProfileForm(forms.ModelForm):
             'phone_number': _('Phone Number'),
         }
     
-    def clean(self):
-        cleaned_data = super().clean()
-        current_password = cleaned_data.get('current_password')
-        new_password = cleaned_data.get('new_password')
-        confirm_password = cleaned_data.get('confirm_password')
-        
-        # Si l'utilisateur veut changer son mot de passe
-        if new_password or confirm_password:
-            if not current_password:
-                raise forms.ValidationError(_('You must enter your current password to change your password.'))
-            
-            if new_password != confirm_password:
-                raise forms.ValidationError(_("The two password fields didn't match."))
-            
-            if len(new_password) < 8:
-                raise forms.ValidationError(_('Password must be at least 8 characters long.'))
-            
-            # Vérifier le mot de passe actuel
-            if not self.instance.check_password(current_password):
-                raise forms.ValidationError(_('Your current password is incorrect.'))
-        
-        return cleaned_data
-    
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        new_password = self.cleaned_data.get('new_password')
-        
-        # Changer le mot de passe si fourni
-        if new_password:
-            user.set_password(new_password)
-        
-        if commit:
-            user.save()
-        return user
-
-
     # --- PIN handling for hidden journals ---
     # Add PIN fields dynamically so templates can show them if desired
     new_pin = forms.CharField(
@@ -345,10 +309,28 @@ class UserProfileForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        current_password = cleaned_data.get('current_password')
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
         new_pin = cleaned_data.get('new_pin')
         confirm_pin = cleaned_data.get('confirm_pin')
         remove_pin = cleaned_data.get('remove_pin')
-
+        
+        # Si l'utilisateur veut changer son mot de passe
+        if new_password or confirm_password:
+            if not current_password:
+                raise forms.ValidationError(_('You must enter your current password to change your password.'))
+            
+            if new_password != confirm_password:
+                raise forms.ValidationError(_("The two password fields didn't match."))
+            
+            if len(new_password) < 8:
+                raise forms.ValidationError(_('Password must be at least 8 characters long.'))
+            
+            # Vérifier le mot de passe actuel
+            if not self.instance.check_password(current_password):
+                raise forms.ValidationError(_('Your current password is incorrect.'))
+        
         # If user asked to remove pin, ignore new_pin/confirm_pin
         if remove_pin:
             return cleaned_data
@@ -365,6 +347,11 @@ class UserProfileForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        new_password = self.cleaned_data.get('new_password')
+        
+        # Changer le mot de passe si fourni
+        if new_password:
+            user.set_password(new_password)
 
         # Handle PIN removal or set
         if self.cleaned_data.get('remove_pin'):
@@ -375,7 +362,6 @@ class UserProfileForm(forms.ModelForm):
                 # Use model helper to set hashed PIN
                 user.set_journal_pin(new_pin)
 
-        # Password handling already done by earlier save logic
         if commit:
             user.save()
         return user
