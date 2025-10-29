@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{% if action == 'edit' %}Modifier Souvenir{% else %}Ajouter Souvenir{% endif %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="memory-hero py-5">
+    <div class="container">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="hero-icon shadow-sm">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <div>
+                        <h1 class="fw-bold mb-1 display-6">{% if action == 'edit' %}Modifier le souvenir{% else %}Ajouter un souvenir{% endif %}</h1>
+                        <p class="mb-0 text-muted">Capturez vos moments précieux — ajoutez une description, des photos et des tags pour les retrouver facilement.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{% url 'memory:memory_management' %}" class="btn btn-outline-light btn-sm">Retour</a>
+                <a href="#" class="btn btn-light btn-sm ms-2">Aide</a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-9">
+                <div class="card glass p-4 shadow-sm">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <strong>Corrigez les erreurs :</strong>
+                                <ul class="mb-0">
+                                    {% for field in form %}
+                                        {% for error in field.errors %}
+                                            <li>{{ field.label }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <div class="row gx-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Titre</label>
+                                {{ form.title|add_class:"form-control form-control-lg" }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date</label>
+                                {{ form.date|add_class:"form-control" }}
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Description</label>
+                                {{ form.description|add_class:"form-control" }}
+                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Tags</label>
+                                                <div id="tag-container" class="d-flex flex-wrap gap-2 align-items-center">
+                                                    <div id="tag-list" class="d-flex flex-wrap gap-2"></div>
+                                                    <input id="tag-input" class="form-control form-control-sm" style="min-width:160px; max-width:100%;" placeholder="Tapez un tag puis , ou Entrée" autocomplete="off">
+                                                </div>
+                                                {% if action == 'edit' and memory %}
+                                                    {% with memory.tags.all as existing_tags %}
+                                                        <input type="hidden" name="tags_input" id="tags_input" value="{% for t in existing_tags %}{{ t.name }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                                                    {% endwith %}
+                                                {% else %}
+                                                    <input type="hidden" name="tags_input" id="tags_input" value="">
+                                                {% endif %}
+                                                <small class="text-muted d-block mt-1">Séparez les tags avec une virgule. Ils apparaîtront en couleur.</small>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label d-block">Photo</label>
+                                                <div id="drop-zone" class="drop-zone p-3 text-center rounded">
+                                                    <input id="id_photo" type="file" name="photo" accept="image/*" class="d-none">
+                                                    <div class="drop-caption">Glisser-déposer votre image ici ou <button type="button" id="browse-btn" class="btn btn-sm btn-outline-primary ms-2">Parcourir</button></div>
+                                                    <small class="text-muted d-block mt-2">JPG, PNG — une seule image.</small>
+                                                </div>
+                                                <div id="thumbs" class="d-flex flex-wrap gap-2 mt-3"></div>
+                                            </div>
+
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <div>
+                                <button type="submit" class="btn btn-primary btn-lg">Enregistrer</button>
+                                <a href="{% url 'memory:memory_management' %}" class="btn btn-outline-secondary ms-2">Annuler</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                {% if action == 'edit' and memory %}
+                    <div class="mt-4">
+                        <h5>Photos existantes</h5>
+                        <div class="row g-3 mt-2">
+                            {% for photo in memory.photos.all %}
+                                <div class="col-sm-6 col-md-4">
+                                    <div class="card photo-card p-2">
+                                        <img src="{{ photo.image.url }}" class="img-fluid rounded mb-2" alt="photo">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">{{ photo.uploaded_at|date:"M j, Y" }}</small>
+                                            <form method="post" action="{% url 'memory:memory_photo_delete' memory.pk photo.pk %}">{% csrf_token %}
+                                                <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="col-12 text-muted">Aucune photo enregistrée.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <div class="col-lg-3">
+                <div class="card sidebar-card p-3 shadow-sm">
+                    <h6 class="mb-2">Astuces</h6>
+                    <p class="small text-muted mb-2">Utilisez des tags pour retrouver rapidement vos souvenirs. Les images seront compressées côté serveur si nécessaire.</p>
+                    <hr>
+                    <p class="small mb-0"><strong>Rappels :</strong></p>
+                    <ul class="small mb-0">
+                        <li>Taille max recommandée : 5MB par image</li>
+                        <li>Formats acceptés : JPG, PNG</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hero */
+.memory-hero { background: linear-gradient(135deg, #ff7ab6 0%, #ff7a7a 50%, #ffc5d9 100%); color: #fff; }
+.hero-icon { width:64px; height:64px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; border-radius:14px; font-size:20px; }
+
+.card.glass { background: rgba(255,255,255,0.9); border-radius:14px; }
+.drop-zone { border:2px dashed rgba(0,0,0,0.06); background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4)); cursor:pointer; }
+.drop-zone:hover { background:linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.5)); }
+.drop-zone .drop-caption { font-size:0.95rem; }
+
+#thumbs .thumb { width:86px; height:86px; border-radius:8px; overflow:hidden; position:relative; border:1px solid #e9e9ef; }
+#thumbs .thumb img { width:100%; height:100%; object-fit:cover; }
+#thumbs .thumb .remove { position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.55); color:#fff; border:none; border-radius:4px; padding:2px 6px; font-size:12px; }
+
+.sidebar-card { border-radius:12px; }
+.photo-card { border-radius:10px; }
+
+.tag-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; color:#fff; font-size:0.9rem; }
+.tag-badge .tag-remove { background:rgba(255,255,255,0.18); border:0; color:#fff; padding:0 6px; border-radius:6px; cursor:pointer; font-weight:600; }
+
+@media (max-width: 767px){ .memory-hero { padding-top:2rem; padding-bottom:2rem; } }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('id_photo');
+    const browseBtn = document.getElementById('browse-btn');
+    const thumbs = document.getElementById('thumbs');
+
+        function handleFiles(files){
+            // Accept only first file for preview (we only allow a single image)
+            const file = Array.from(files)[0];
+            if(!file) return;
+            if(!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e){
+                thumbs.innerHTML = '';
+                const div = document.createElement('div');
+                div.className = 'thumb';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="preview">
+                    <button type="button" class="remove">&times;</button>
+                `;
+                thumbs.appendChild(div);
+                const removeBtn = div.querySelector('.remove');
+                removeBtn.addEventListener('click', () => { div.remove(); fileInput.value = ''; });
+            };
+            reader.readAsDataURL(file);
+        }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    browseBtn.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault(); dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault(); dropZone.classList.remove('dragover');
+        const dt = e.dataTransfer; if(dt && dt.files) {
+            // Use only the first file
+            handleFiles([dt.files[0]]);
+            try{ fileInput.files = dt.files; }catch(err){ /* ignore on unsupported browsers */ }
+        }
+    });
+
+    fileInput.addEventListener('change', (e)=>{
+        thumbs.innerHTML = '';
+        handleFiles(fileInput.files);
+    });
+});
+</script>
+
+<script>
+// Tag input UI: allow comma/enter separated tags, show colored badges and populate hidden input
+document.addEventListener('DOMContentLoaded', function(){
+    const tagInput = document.getElementById('tag-input');
+    const tagList = document.getElementById('tag-list');
+    const tagsHidden = document.getElementById('tags_input');
+    const form = document.querySelector('form');
+
+    function stringToColor(str){
+        let hash = 0; for(let i=0;i<str.length;i++){ hash = str.charCodeAt(i) + ((hash<<5)-hash); }
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        return '#'+('00000'.substring(0, 6 - c.length) + c);
+    }
+
+    function createBadge(name){
+        const span = document.createElement('span');
+        span.className = 'tag-badge';
+        span.style.background = stringToColor(name);
+        span.setAttribute('data-name', name);
+        span.innerHTML = `<span class="tag-name">${name}</span><button type="button" class="tag-remove">×</button>`;
+        const btn = span.querySelector('.tag-remove');
+        btn.addEventListener('click', ()=>{ span.remove(); updateHidden(); });
+        tagList.appendChild(span);
+    }
+
+    function updateHidden(){
+        const names = Array.from(tagList.querySelectorAll('[data-name]')).map(el=> el.getAttribute('data-name'));
+        tagsHidden.value = names.join(',');
+    }
+
+    function addTagFromInput(raw){
+        const name = raw.trim();
+        if(!name) return;
+        const exists = Array.from(tagList.querySelectorAll('[data-name]')).some(el => el.getAttribute('data-name') === name);
+        if(exists) return;
+        createBadge(name);
+        updateHidden();
+    }
+
+    if(tagsHidden && tagsHidden.value){
+        tagsHidden.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(n=> createBadge(n));
+        updateHidden();
+    }
+
+    tagInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ','){
+            e.preventDefault();
+            addTagFromInput(tagInput.value.replace(',', ''));
+            tagInput.value = '';
+        }
+        if(e.key === 'Backspace' && tagInput.value === ''){
+            const badges = tagList.querySelectorAll('.tag-badge');
+            if(badges.length) { badges[badges.length-1].remove(); updateHidden(); }
+        }
+    });
+
+    tagInput.addEventListener('paste', function(e){
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        if(text && text.includes(',')){ e.preventDefault(); text.split(',').forEach(part => addTagFromInput(part)); tagInput.value = ''; }
+    });
+
+    if(form){
+        form.addEventListener('submit', function(){ updateHidden(); });
+    }
+});
+</script>
+
+{% endblock %}

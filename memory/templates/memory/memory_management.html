@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Mes Souvenirs - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="memory-list-hero py-5">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="hero-icon shadow-sm"><i class="fas fa-bookmark"></i></div>
+                <div>
+                    <h1 class="display-5 fw-bold mb-1">Souvenirs</h1>
+                    <p class="mb-0 text-muted">Gardez une trace de vos moments spéciaux. Ajoutez des photos, descriptions et tags colorés.</p>
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'memory:memory_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus me-2"></i>Ajouter Memory</a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="stat shadow-sm p-3 rounded d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-white text-primary rounded-circle p-2"><i class="fas fa-bookmark"></i></div>
+                    <div>
+                        <div class="small text-muted">Souvenirs</div>
+                        <div class="h4 mb-0">{{ total_memories }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat shadow-sm p-3 rounded d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-white text-primary rounded-circle p-2"><i class="fas fa-image"></i></div>
+                    <div>
+                        <div class="small text-muted">Photos</div>
+                        <div class="h4 mb-0">{{ total_photos }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-3 shadow-sm">
+            <h5 class="mb-3"><i class="fas fa-list me-2"></i>Vos Souvenirs</h5>
+
+            {% if memories and memories.object_list %}
+                <div class="row gy-4">
+                    {% for memory in memories %}
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card memory-card h-100 overflow-hidden">
+                                <a href="{% url 'memory:memory_detail' memory.pk %}" class="text-decoration-none text-reset">
+                                    <div class="memory-thumb" style="background-image: url('{% with f=memory.photos.first %}{% if f %}{{ f.image.url }}{% else %}{{ STATIC_URL }}img/placeholder.png{% endif %}{% endwith %}');"></div>
+                                    <div class="p-3">
+                                        <h6 class="mb-1">{{ memory.title|default:"(Sans titre)" }}</h6>
+                                        <p class="text-muted small mb-2">{{ memory.description|truncatechars:100 }}</p>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="d-flex flex-wrap" style="gap:6px;">
+                                                {% for tag in memory.tags.all %}
+                                                    <span class="tag-badge" data-name="{{ tag.name }}">{{ tag.name }}</span>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="small text-muted">{{ memory.date|date:"M j, Y" }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-4 d-flex justify-content-center">
+                    <nav>
+                        <ul class="pagination">
+                            {% if memories.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?page={{ memories.previous_page_number }}">Préc</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">Préc</span></li>
+                            {% endif %}
+                            <li class="page-item disabled"><span class="page-link">Page {{ memories.number }} / {{ memories.paginator.num_pages }}</span></li>
+                            {% if memories.has_next %}
+                                <li class="page-item"><a class="page-link" href="?page={{ memories.next_page_number }}">Suiv</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">Suiv</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3"><i class="fas fa-bookmark fa-3x text-muted"></i></div>
+                    <h4 class="mb-1">Aucun souvenir</h4>
+                    <p class="text-muted">Créez votre premier souvenir pour commencer.</p>
+                    <a href="{% url 'memory:memory_create' %}" class="btn btn-primary">Ajouter un souvenir</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.memory-list-hero { background: linear-gradient(135deg,#ffccd9 0%, #ffd6e8 50%, #fff 100%); }
+.hero-icon { width:64px; height:64px; display:flex; align-items:center; justify-content:center; border-radius:12px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; font-size:20px; }
+.stat { border-radius:12px; }
+.memory-card { border-radius:12px; transition:transform .18s ease, box-shadow .18s ease; }
+.memory-card:hover { transform:translateY(-6px); box-shadow:0 18px 40px rgba(0,0,0,0.12); }
+.memory-thumb { height:160px; background-size:cover; background-position:center; }
+.tag-badge { display:inline-block; padding:6px 10px; border-radius:999px; color:#fff; font-weight:600; margin-right:6px; font-size:0.78rem; }
+
+@media (max-width:767px){ .memory-thumb { height:140px; } }
+</style>
+
+<script>
+// Color tags deterministically from their name
+document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('.tag-badge').forEach(function(el){
+        const name = el.getAttribute('data-name') || el.textContent.trim();
+        let hash = 0; for(let i=0;i<name.length;i++){ hash = name.charCodeAt(i) + ((hash<<5)-hash); }
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        const color = '#' + ('00000'.substring(0, 6 - c.length) + c);
+        el.style.background = color;
+    });
+});
+</script>
+
+{% endblock %}

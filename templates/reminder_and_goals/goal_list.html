@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 fw-bold text-gradient-primary mb-2">My Goals</h1>
+                    <p class="text-muted fs-5">Track your progress and achievements</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <h3 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-bullseye me-2 text-primary"></i>
+                        Active Goals ({{ object_list.count }})
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    {% if object_list %}
+                    <div class="list-group list-group-flush">
+                        {% for goal in object_list %}
+                        <div class="list-group-item border-0 py-4 px-5 hover-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-start mb-2">
+                                        <div class="goal-icon me-3">
+                                            <i class="fas fa-bullseye fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="fw-bold text-dark mb-2">{{ goal.title }}</h4>
+                                            <p class="text-muted mb-3">{{ goal.description|default:"No description"|truncatewords:20 }}</p>
+                                            
+                                            <!-- Progress Bar -->
+                                            <div class="progress-wrapper mb-2">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="text-sm fw-semibold">Progress</span>
+                                                    <span class="text-sm fw-bold text-primary">{{ goal.progress }}/{{ goal.target }}</span>
+                                                </div>
+                                                <div class="progress" style="height: 10px;">
+                                                    <div class="progress-bar bg-gradient-primary" 
+                                                         role="progressbar" 
+                                                         style="width: {{ goal.progress_percentage }}%"
+                                                         aria-valuenow="{{ goal.progress_percentage }}" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted mt-1">{{ goal.progress_percentage|floatformat:0 }}% Complete</small>
+                                            </div>
+                                            
+                                            <!-- Dates -->
+                                            <div class="d-flex gap-4 text-sm">
+                                                <span class="text-muted">
+                                                    <i class="fas fa-play-circle me-1 text-success"></i>
+                                                    {{ goal.start_date|date:"M d, Y" }}
+                                                </span>
+                                                <span class="text-muted">
+                                                    <i class="fas fa-flag-checkered me-1 text-danger"></i>
+                                                    {{ goal.end_date|date:"M d, Y" }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="{% url 'goal_edit' goal.id %}" class="btn btn-warning btn-sm px-3 py-2">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <button class="btn btn-danger btn-sm px-3 py-2" 
+                                                onclick="if(confirm('Are you sure you want to delete this goal?')) { location.href = '{% url 'goal_delete' goal.id %}'; }">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if not forloop.last %}
+                        <div class="border-bottom mx-5"></div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="empty-state-icon mb-4">
+                            <i class="fas fa-bullseye fa-4x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">No Goals Yet</h4>
+                        <p class="text-muted mb-4">Start by creating your first goal to track your progress.</p>
+                        <a href="{% url 'goal_create' %}" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-plus me-2"></i>Create Your First Goal
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.hover-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.hover-card:hover {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border-left-color: #667eea;
+    transform: translateX(5px);
+}
+
+.progress {
+    border-radius: 10px;
+    background-color: #f1f3f9;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 1s ease-in-out;
+}
+
+.empty-state-icon {
+    opacity: 0.5;
+}
+
+.btn {
+    border: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f6ad55 0%, #fbd38d 100%);
+    color: white;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #fc8181 0%, #feb2b2 100%);
+    color: white;
+}
+
+.goal-icon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+</style>
+{% endblock %}

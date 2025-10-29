@@ -1,0 +1,621 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Personal Journal Admin{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="admin-container">
+    <!-- Top Navigation Bar -->
+    <nav class="admin-navbar">
+        <div class="navbar-left">
+            <div class="logo-section">
+                <i class="fas fa-chart-line logo-icon"></i>
+                <span class="logo-text">AI Journal Admin</span>
+            </div>
+        </div>
+
+        <div class="navbar-right">
+            <!-- Admin Profile Dropdown -->
+            <div class="admin-profile-dropdown" onclick="toggleProfileDropdown()">
+                <div class="profile-info">
+                    <span class="admin-name">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="admin-role">Administrator</span>
+                </div>
+                {% if user.profilePicture %}
+                    <img src="{{ user.profilePicture.url }}" class="profile-avatar" alt="{{ user.get_full_name }}">
+                {% else %}
+                    <div class="profile-avatar-placeholder">
+                        {{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                {% endif %}
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                
+                <!-- Dropdown Menu -->
+                <div class="dropdown-menu" id="profileDropdown">
+                    <a href="{% url 'profile' %}" class="dropdown-item">
+                        <i class="fas fa-user"></i>
+                        <span>My Profile</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'account_logout' %}" class="dropdown-item logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </a>
+            </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <a href="{% url 'admin_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                        <div class="nav-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <span class="nav-text">Dashboard</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                    
+                    <a href="{% url 'admin_users_list' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_users_list' or request.resolver_match.url_name == 'admin_user_detail' %}active{% endif %}">
+                        <div class="nav-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span class="nav-text">Users</span>
+                        {% if total_users %}
+                        <span class="nav-badge">{{ total_users }}</span>
+                        {% endif %}
+                        <div class="nav-indicator"></div>
+                </a>
+
+
+                <!-- Goals Admin Link -->
+                <a href="{% url 'goal_list_admin' %}" class="nav-item {% if request.resolver_match.url_name == 'goal_list_admin' %}active{% endif %}">
+                    <div class="nav-icon">
+                        <i class="fas fa-bullseye"></i>  <!-- Appropriate icon for goals -->
+                    </div>
+                    <span class="nav-text">Goals</span>
+                    {% if goals_count %}  <!-- Updated variable name -->
+                    <span class="nav-badge">{{ goals_count }}</span>
+                    {% endif %}
+                    <div class="nav-indicator"></div>
+                </a>
+
+                <!-- Reminders Admin Link -->
+                <a href="{% url 'reminder_list_admin' %}" class="nav-item {% if request.resolver_match.url_name == 'reminder_list_admin' %}active{% endif %}">
+                    <div class="nav-icon">
+                        <i class="fas fa-bell"></i>  <!-- Appropriate icon for reminders -->
+                    </div>
+                    <span class="nav-text">Reminders</span>
+                    {% if reminders_count %}  <!-- Updated variable name -->
+                    <span class="nav-badge">{{ reminders_count }}</span>
+                    {% endif %}
+                    <div class="nav-indicator"></div>
+                </a>
+
+
+
+
+
+                
+            </div>
+        </nav>
+    </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Messages -->
+            {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% if 'success' in message.tags %}
+                                <i class="fas fa-check-circle me-2"></i>
+                            {% elif 'error' in message.tags or 'danger' in message.tags %}
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                            {% elif 'warning' in message.tags %}
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% elif 'info' in message.tags %}
+                                <i class="fas fa-info-circle me-2"></i>
+                            {% endif %}
+                            <strong>{{ message }}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="content-wrapper">
+                {% block dashboard_content %}{% endblock %}
+            </div>
+        </main>
+        </div>
+</div>
+
+<style>
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --secondary: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --dark: #1f2937;
+    --light: #f8fafc;
+    --white: #ffffff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --sidebar-width: 280px;
+    --navbar-height: 80px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    background-size: 400% 400%;
+    animation: gradient-shift 20s ease infinite;
+    min-height: 100vh;
+}
+
+@keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ============ ADMIN CONTAINER ============ */
+.admin-container {
+    min-height: 100vh;
+    position: relative;
+}
+
+/* ============ TOP NAVBAR ============ */
+.admin-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-height);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Admin Profile Dropdown */
+.admin-profile-dropdown {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.admin-profile-dropdown:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.admin-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-800);
+    line-height: 1.2;
+}
+
+.admin-role {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-avatar,
+.profile-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.profile-avatar-placeholder {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.dropdown-arrow {
+    color: var(--gray-600);
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.admin-profile-dropdown.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--gray-200);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    color: var(--gray-700);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.dropdown-item:hover {
+    background: var(--gray-50);
+    color: var(--primary);
+}
+
+.dropdown-item.logout:hover {
+    background: rgba(239, 68, 68, 0.05);
+    color: var(--danger);
+}
+
+.dropdown-item i {
+    width: 20px;
+    font-size: 16px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 8px 0;
+}
+
+/* ============ ADMIN LAYOUT ============ */
+.admin-layout {
+    display: flex;
+    margin-top: var(--navbar-height);
+    min-height: calc(100vh - var(--navbar-height));
+}
+
+/* ============ SIDEBAR ============ */
+.admin-sidebar {
+    width: var(--sidebar-width);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    position: fixed;
+    left: 0;
+    top: var(--navbar-height);
+    bottom: 0;
+    z-index: 999;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-nav {
+    padding: 32px 0;
+}
+
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 24px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    font-weight: 600;
+    overflow: hidden;
+}
+
+.nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.nav-item:hover {
+    background: rgba(99, 102, 241, 0.08);
+    color: var(--primary);
+    transform: translateX(8px);
+}
+
+.nav-item.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%);
+    color: var(--primary);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+}
+
+.nav-item.active::before {
+    transform: scaleY(1);
+}
+
+.nav-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.nav-item.active .nav-icon {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.nav-text {
+    flex: 1;
+    font-size: 16px;
+}
+
+.nav-badge {
+    background: var(--primary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+}
+
+.nav-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nav-item.active .nav-indicator {
+    opacity: 1;
+}
+
+/* ============ MAIN CONTENT ============ */
+.admin-main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    position: relative;
+}
+
+.content-wrapper {
+    padding: 32px;
+    min-height: calc(100vh - var(--navbar-height));
+}
+
+/* ============ MESSAGES ============ */
+.messages-container {
+    padding: 20px 32px 0;
+}
+
+.messages-container .alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    margin-bottom: 16px;
+}
+
+.messages-container .alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--secondary);
+    border-left: 4px solid var(--secondary);
+}
+
+.messages-container .alert-danger,
+.messages-container .alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border-left: 4px solid var(--danger);
+}
+
+.messages-container .alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border-left: 4px solid var(--warning);
+}
+
+.messages-container .alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+    border-left: 4px solid var(--info);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1200px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .admin-sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .admin-main {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-navbar {
+        padding: 0 16px;
+    }
+    
+    .profile-info {
+    display: none;
+    }
+    
+    .content-wrapper {
+        padding: 16px;
+    }
+}
+</style>
+
+<script>
+function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profileDropdown');
+    const profileBtn = document.querySelector('.admin-profile-dropdown');
+    
+    dropdown.classList.toggle('show');
+    profileBtn.classList.toggle('active');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('profileDropdown');
+    const profileBtn = document.querySelector('.admin-profile-dropdown');
+    
+    if (!profileBtn.contains(event.target)) {
+        dropdown.classList.remove('show');
+        profileBtn.classList.remove('active');
+    }
+});
+
+// Mobile sidebar toggle (for future use)
+function toggleSidebar() {
+    const sidebar = document.querySelector('.admin-sidebar');
+    sidebar.classList.toggle('show');
+}
+</script>
+
+{% block dashboard_extra_js %}{% endblock %}
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="{% static 'js/main.js' %}"></script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

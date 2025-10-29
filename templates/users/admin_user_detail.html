@@ -1,0 +1,415 @@
+{% extends "users/dashboard_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "User Details" %} - {{ viewed_user.get_full_name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="container py-4">
+    <div class="row mb-4" data-aos="fade-down">
+        <div class="col-12">
+            <a href="{% url 'admin_users_list' %}" class="btn btn-light mb-3">
+                <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Users" %}
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- User Profile Card -->
+        <div class="col-lg-4" data-aos="fade-right">
+            <div class="card user-profile-card">
+                <div class="card-body text-center">
+                    <div class="profile-picture-wrapper mb-3">
+                        {% if viewed_user.profilePicture %}
+                            <img src="{{ viewed_user.profilePicture.url }}" class="profile-picture" alt="{{ viewed_user.get_full_name }}">
+                        {% else %}
+                            <div class="profile-picture-placeholder">
+                                {{ viewed_user.first_name|first|default:viewed_user.username|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <h3 class="user-full-name">{{ viewed_user.get_full_name|default:viewed_user.username }}</h3>
+                    <p class="user-username-detail">@{{ viewed_user.username }}</p>
+                    
+                    <div class="user-badges mb-3">
+                        {% if viewed_user.role == 'admin' %}
+                            <span class="badge role-badge role-admin">
+                                <i class="fas fa-user-shield me-1"></i>{% trans "Admin" %}
+                            </span>
+                        {% else %}
+                            <span class="badge role-badge role-user">
+                                <i class="fas fa-user me-1"></i>{% trans "User" %}
+                            </span>
+                        {% endif %}
+                        
+                        <span class="status-badge status-{{ viewed_user.status }}">
+                            <i class="fas fa-circle status-dot"></i>
+                            {{ viewed_user.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    {% if viewed_user.bio %}
+                    <div class="user-bio">
+                        <p>{{ viewed_user.bio }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'admin_user_toggle_status' viewed_user.id %}" 
+                           class="btn btn-action btn-toggle"
+                           onclick="return confirm('{% trans 'Are you sure?' %}')">
+                            <i class="fas fa-{% if viewed_user.is_active %}ban{% else %}check{% endif %} me-2"></i>
+                            {% if viewed_user.is_active %}{% trans "Deactivate User" %}{% else %}{% trans "Activate User" %}{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Details -->
+        <div class="col-lg-8" data-aos="fade-left">
+            <div class="card details-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>{% trans "User Information" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-envelope me-2"></i>{% trans "Email" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.email }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-phone me-2"></i>{% trans "Phone Number" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.phone_number|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-user me-2"></i>{% trans "First Name" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.first_name|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-user me-2"></i>{% trans "Last Name" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.last_name|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-birthday-cake me-2"></i>{% trans "Birth Date" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.birth_date|date:"d M Y"|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-calendar-plus me-2"></i>{% trans "Joined Date" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.date_joined|date:"d M Y - H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-clock me-2"></i>{% trans "Last Login" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.last_login|date:"d M Y - H:i"|default:"Never" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="detail-item">
+                                <label class="detail-label">
+                                    <i class="fas fa-info me-2"></i>{% trans "Status" %}
+                                </label>
+                                <p class="detail-value">{{ viewed_user.get_status_display }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preferences -->
+            <div class="card details-card mt-4" data-aos="fade-left" data-aos-delay="200">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>{% trans "Preferences" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="preference-item">
+                                <i class="fas fa-moon me-2"></i>
+                                <span>{% trans "Dark Mode" %}:</span>
+                                <span class="preference-value">
+                                    {% if viewed_user.dark_mode %}
+                                        <i class="fas fa-check-circle text-success"></i> {% trans "Enabled" %}
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i> {% trans "Disabled" %}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="preference-item">
+                                <i class="fas fa-bell me-2"></i>
+                                <span>{% trans "Email Notifications" %}:</span>
+                                <span class="preference-value">
+                                    {% if viewed_user.email_notifications %}
+                                        <i class="fas fa-check-circle text-success"></i> {% trans "Enabled" %}
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i> {% trans "Disabled" %}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Permissions -->
+            <div class="card details-card mt-4" data-aos="fade-left" data-aos-delay="300">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>{% trans "Permissions" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="permission-item">
+                                <i class="fas fa-{% if viewed_user.is_active %}check{% else %}times{% endif %} me-2 text-{% if viewed_user.is_active %}success{% else %}danger{% endif %}"></i>
+                                <span>{% trans "Active" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="permission-item">
+                                <i class="fas fa-{% if viewed_user.role == 'admin' %}user-shield{% else %}user{% endif %} me-2 text-{% if viewed_user.role == 'admin' %}warning{% else %}info{% endif %}"></i>
+                                <span>{% trans "Role" %}: {{ viewed_user.get_role_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-profile-card {
+    border: none;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.profile-picture {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid var(--primary-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.profile-picture-placeholder {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 4rem;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    margin: 0 auto;
+}
+
+.user-full-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.user-username-detail {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+.user-bio {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+}
+
+.details-card {
+    border: none;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.details-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 25px;
+    font-weight: 600;
+}
+
+.detail-item {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.preference-item,
+.permission-item {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.preference-value {
+    float: right;
+    font-weight: 600;
+}
+
+.btn-toggle {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-toggle:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(240, 147, 251, 0.4);
+}
+
+/* Reuse badges from list page */
+.role-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.role-superuser {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.role-admin {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.role-user {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.status-dot {
+    font-size: 0.5rem;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    color: white;
+}
+
+.status-inactive {
+    background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+    color: white;
+}
+
+.status-pending {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.status-suspended {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+</style>
+{% endblock dashboard_content %}

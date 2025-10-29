@@ -1,0 +1,809 @@
+{% extends "users/dashboard_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Dashboard" %} - AI Personal Journal Admin{% endblock %}
+
+{% block dashboard_content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <h1 class="page-title">Dashboard Overview</h1>
+        <p class="page-subtitle">Real-time analytics and platform insights</p>
+    </div>
+    <div class="header-actions">
+        <div class="time-filter">
+            <button class="filter-btn active" data-period="7d">7 Days</button>
+            <button class="filter-btn" data-period="30d">30 Days</button>
+            <button class="filter-btn" data-period="90d">90 Days</button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card primary" data-aos="fade-up" data-aos-delay="0">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span>+12%</span>
+            </div>
+        </div>
+        <div class="stat-content">
+            <h3 class="stat-value" data-target="{{ total_users }}">0</h3>
+            <p class="stat-label">Total Users</p>
+            <div class="stat-progress">
+                <div class="progress-bar" style="width: 85%"></div>
+            </div>
+        </div>
+        <div class="stat-sparkline" id="users-sparkline"></div>
+    </div>
+
+    <div class="stat-card success" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span>+8%</span>
+            </div>
+        </div>
+        <div class="stat-content">
+            <h3 class="stat-value" data-target="{{ active_users }}">0</h3>
+            <p class="stat-label">Active Users</p>
+            <div class="stat-progress">
+                <div class="progress-bar" style="width: 92%"></div>
+            </div>
+        </div>
+        <div class="stat-sparkline" id="active-sparkline"></div>
+    </div>
+
+    <div class="stat-card warning" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-certificate"></i>
+            </div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span>+15%</span>
+            </div>
+        </div>
+        <div class="stat-content">
+            <h3 class="stat-value" data-target="{{ verified_users }}">0</h3>
+            <p class="stat-label">Verified Users</p>
+            <div class="stat-progress">
+                <div class="progress-bar" style="width: 78%"></div>
+            </div>
+        </div>
+        <div class="stat-sparkline" id="verified-sparkline"></div>
+    </div>
+
+    <div class="stat-card info" data-aos="fade-up" data-aos-delay="300">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span>+25%</span>
+            </div>
+        </div>
+        <div class="stat-content">
+            <h3 class="stat-value" data-target="98">0</h3>
+            <p class="stat-label">Growth Rate</p>
+            <div class="stat-progress">
+                <div class="progress-bar" style="width: 98%"></div>
+            </div>
+        </div>
+        <div class="stat-sparkline" id="growth-sparkline"></div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="charts-grid">
+    <!-- Main Analytics Chart -->
+    <div class="chart-card main-chart" data-aos="fade-up" data-aos-delay="400">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">User Analytics</h3>
+                <p class="chart-subtitle">Registration trends over time</p>
+            </div>
+            <div class="chart-controls">
+                <button class="chart-btn active" data-chart="registrations">Registrations</button>
+                <button class="chart-btn" data-chart="activity">Activity</button>
+                <button class="chart-btn" data-chart="engagement">Engagement</button>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="mainChart"></canvas>
+        </div>
+    </div>
+
+    <!-- User Distribution Chart -->
+    <div class="chart-card" data-aos="fade-up" data-aos-delay="500">
+        <div class="chart-header">
+            <h3 class="chart-title">User Distribution</h3>
+            <p class="chart-subtitle">By status and verification</p>
+        </div>
+        <div class="chart-container">
+            <canvas id="distributionChart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <div class="legend-item">
+                <span class="legend-color" style="background: #6366f1;"></span>
+                <span>Active ({{ active_users }})</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #10b981;"></span>
+                <span>Verified ({{ verified_users }})</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #f59e0b;"></span>
+                <span>Pending ({{ total_users|add:"-"|add:verified_users }})</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Heatmap -->
+    <div class="chart-card" data-aos="fade-up" data-aos-delay="600">
+        <div class="chart-header">
+            <h3 class="chart-title">Activity Heatmap</h3>
+            <p class="chart-subtitle">User activity by hour</p>
+        </div>
+        <div class="heatmap-container">
+            <div class="heatmap-grid" id="activityHeatmap"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Feed -->
+<div class="activity-feed" data-aos="fade-up" data-aos-delay="700">
+    <div class="feed-header">
+        <h3 class="feed-title">
+            <i class="fas fa-pulse me-2"></i>
+            Real-time Activity
+        </h3>
+        <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span>Live</span>
+        </div>
+    </div>
+    <div class="feed-content">
+        {% for user in recent_users %}
+        <div class="activity-item" data-aos="slide-right" data-aos-delay="{{ forloop.counter|add:700 }}">
+            <div class="activity-avatar">
+                {% if user.profilePicture %}
+                    <img src="{{ user.profilePicture.url }}" alt="{{ user.get_full_name }}">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        {{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="activity-content">
+                <div class="activity-text">
+                    <strong>{{ user.get_full_name|default:user.username }}</strong> joined the platform
+                </div>
+                <div class="activity-time">{{ user.date_joined|timesince }} ago</div>
+            </div>
+            <div class="activity-status">
+                {% if user.is_active %}
+                    <span class="status-badge active">Active</span>
+                {% else %}
+                    <span class="status-badge inactive">Inactive</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+/* ============ PAGE HEADER ============ */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.time-filter {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ============ STATISTICS CARDS ============ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--info) 100%);
+}
+
+.stat-card.success::before {
+    background: linear-gradient(90deg, var(--secondary) 0%, #34d399 100%);
+}
+
+.stat-card.warning::before {
+    background: linear-gradient(90deg, var(--warning) 0%, #fbbf24 100%);
+}
+
+.stat-card.info::before {
+    background: linear-gradient(90deg, var(--info) 0%, #60a5fa 100%);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.stat-card.success .stat-icon {
+    background: linear-gradient(135deg, var(--secondary) 0%, #34d399 100%);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+}
+
+.stat-card.warning .stat-icon {
+    background: linear-gradient(135deg, var(--warning) 0%, #fbbf24 100%);
+    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+}
+
+.stat-card.info .stat-icon {
+    background: linear-gradient(135deg, var(--info) 0%, #60a5fa 100%);
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--secondary);
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--gray-900);
+    margin: 0 0 8px 0;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.stat-progress {
+    width: 100%;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 3px;
+    transition: width 2s ease;
+}
+
+.stat-card.success .progress-bar {
+    background: linear-gradient(90deg, var(--secondary) 0%, #34d399 100%);
+}
+
+.stat-card.warning .progress-bar {
+    background: linear-gradient(90deg, var(--warning) 0%, #fbbf24 100%);
+}
+
+.stat-card.info .progress-bar {
+    background: linear-gradient(90deg, var(--info) 0%, #60a5fa 100%);
+}
+
+.stat-sparkline {
+    height: 40px;
+    margin-top: 16px;
+}
+
+/* ============ CHARTS SECTION ============ */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.chart-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.main-chart {
+    grid-row: span 2;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.chart-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 4px 0;
+}
+
+.chart-subtitle {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+.chart-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.chart-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--gray-300);
+    background: white;
+    color: var(--gray-600);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.chart-btn.active,
+.chart-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--gray-600);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+/* Heatmap */
+.heatmap-container {
+    height: 200px;
+    padding: 16px 0;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(24, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    gap: 2px;
+    height: 100%;
+}
+
+.heatmap-cell {
+    background: var(--gray-200);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.2);
+}
+
+/* ============ ACTIVITY FEED ============ */
+.activity-feed {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.feed-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--secondary);
+    font-weight: 600;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--secondary);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--gray-200);
+    transition: all 0.3s ease;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background: var(--gray-50);
+    margin: 0 -16px;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.activity-avatar img,
+.avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-text {
+    font-size: 15px;
+    color: var(--gray-800);
+    margin-bottom: 4px;
+}
+
+.activity-time {
+    font-size: 13px;
+    color: var(--gray-500);
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--secondary);
+}
+
+.status-badge.inactive {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .main-chart {
+        grid-row: span 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+</style>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- AOS Animation Library -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        easing: 'ease-out-cubic',
+        once: true,
+        offset: 50
+    });
+
+    // Animate counter values
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            element.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Animate all stat values
+    const statValues = document.querySelectorAll('.stat-value[data-target]');
+    statValues.forEach(stat => {
+        const target = parseInt(stat.getAttribute('data-target'));
+        if (!isNaN(target)) {
+            animateValue(stat, 0, target, 2000);
+        }
+    });
+
+    // Main Chart
+    const mainCtx = document.getElementById('mainChart').getContext('2d');
+    const mainChart = new Chart(mainCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+                label: 'User Registrations',
+                data: [12, 19, 8, 15, 25, 22, 30],
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#6366f1',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 3,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Distribution Chart
+    const distCtx = document.getElementById('distributionChart').getContext('2d');
+    const distributionChart = new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Verified', 'Pending'],
+            datasets: [{
+                data: [{{ active_users }}, {{ verified_users }}, {{ total_users|add:"-"|add:verified_users }}],
+                backgroundColor: ['#6366f1', '#10b981', '#f59e0b'],
+                borderWidth: 0,
+                cutout: '70%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Generate Activity Heatmap
+    const heatmapContainer = document.getElementById('activityHeatmap');
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    for (let day = 0; day < 7; day++) {
+        for (let hour = 0; hour < 24; hour++) {
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell';
+            const intensity = Math.random();
+            const opacity = 0.1 + (intensity * 0.9);
+            cell.style.background = `rgba(99, 102, 241, ${opacity})`;
+            cell.title = `${days[day]} ${hour}:00 - Activity: ${Math.floor(intensity * 100)}%`;
+            heatmapContainer.appendChild(cell);
+        }
+    }
+
+    // Filter buttons functionality
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Chart control buttons
+    const chartBtns = document.querySelectorAll('.chart-btn');
+    chartBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            chartBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock dashboard_content %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Verify Your Email Address" %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0" data-aos="fade-up">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <div class="email-icon mb-3">
+                        <i class="fas fa-paper-plane fa-4x"></i>
+                    </div>
+                    <h1 class="card-title mb-0">{% trans "Verify Your Email Address" %}</h1>
+                    <p class="mb-0 opacity-75">{% trans "We've sent you a confirmation email!" %}</p>
+                </div>
+                
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="success-icon mb-3">
+                            <i class="fas fa-check-circle fa-3x text-success"></i>
+                        </div>
+                        <h4 class="text-success mb-3">{% trans "Email Sent Successfully!" %}</h4>
+                    </div>
+                    
+                    <div class="verification-info bg-light rounded p-4 mb-4">
+                        <p class="mb-3">{% trans "We have sent an email to you for verification. Follow the link provided to finalize the signup process." %}</p>
+                        
+                        <div class="alert alert-warning border-0 mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% trans "If you do not see the verification email in your main inbox, check your spam folder. Please contact us if you do not receive the verification email within a few minutes." %}
+                        </div>
+                    </div>
+                    
+                    <div class="steps-guide mt-4">
+                        <h5 class="text-center mb-4">{% trans "Next Steps:" %}</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4 text-center">
+                                <div class="step-item">
+                                    <div class="step-number bg-primary text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center">
+                                        <span>1</span>
+                                    </div>
+                                    <h6>{% trans "Check Email" %}</h6>
+                                    <small class="text-muted">{% trans "Look for our email" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="step-item">
+                                    <div class="step-number bg-primary text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center">
+                                        <span>2</span>
+                                    </div>
+                                    <h6>{% trans "Click Link" %}</h6>
+                                    <small class="text-muted">{% trans "Verify your email" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="step-item">
+                                    <div class="step-number bg-primary text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center">
+                                        <span>3</span>
+                                    </div>
+                                    <h6>{% trans "Start Journaling" %}</h6>
+                                    <small class="text-muted">{% trans "Begin your AI journey" %}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- Features Preview -->
+            <div class="card mt-4 border-0 bg-light" data-aos="fade-up" data-aos-delay="200">
+                <div class="card-body p-4">
+                    <h6 class="card-title text-center mb-3">
+                        <i class="fas fa-magic text-primary me-2"></i>
+                        {% trans "What awaits you after verification?" %}
+                    </h6>
+                    <div class="row g-3 text-center">
+                        <div class="col-4">
+                            <i class="fas fa-microphone fa-2x text-success mb-2"></i>
+                            <small class="d-block text-muted">{% trans "Voice Notes" %}</small>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-camera fa-2x text-info mb-2"></i>
+                            <small class="d-block text-muted">{% trans "Photo AI" %}</small>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
+                            <small class="d-block text-muted">{% trans "AI Insights" %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.email-icon {
+    animation: float 3s ease-in-out infinite;
+}
+
+.success-icon {
+    animation: bounceIn 1s ease-out;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.step-item {
+    transition: transform 0.3s ease;
+}
+
+.step-item:hover {
+    transform: translateY(-5px);
+}
+
+.verification-info {
+    border-left: 4px solid var(--primary-color);
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
+{% endblock %}

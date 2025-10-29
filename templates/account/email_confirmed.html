@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Email Confirmed" %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0" data-aos="fade-up">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <div class="success-icon mb-3">
+                        <i class="fas fa-check-circle fa-4x"></i>
+                    </div>
+                    <h1 class="card-title mb-0">{% trans "Email Confirmed!" %}</h1>
+                    <p class="mb-0 opacity-75">{% trans "Welcome to AI Personal Journal" %}</p>
+                </div>
+                
+                <div class="card-body p-5 text-center">
+                    <div class="success-animation mb-4">
+                        <div class="confetti">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-heart text-danger"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-success mb-3">{% trans "Congratulations!" %}</h3>
+                    <p class="lead mb-4">{% trans "Your email address has been successfully verified. You can now access all features of your AI Personal Journal." %}</p>
+                    
+                    <div class="welcome-features bg-light rounded p-4 mb-4">
+                        <h5 class="mb-3">{% trans "You can now:" %}</h5>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-book-open text-primary mb-2"></i>
+                                    <small class="d-block">{% trans "Create journal entries" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-microphone text-success mb-2"></i>
+                                    <small class="d-block">{% trans "Record voice notes" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-camera text-info mb-2"></i>
+                                    <small class="d-block">{% trans "Upload photos" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-robot text-warning mb-2"></i>
+                                    <small class="d-block">{% trans "Get AI insights" %}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'journal_home' %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-home me-2"></i>
+                            {% trans "Go to Your Journal" %}
+                        </a>
+                        {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            {% trans "Sign In to Your Journal" %}
+                        </a>
+                        <a href="{% url 'journal_home' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i>
+                            {% trans "Go to Homepage" %}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Welcome Message -->
+            <div class="card mt-4 border-0 bg-gradient-primary text-white" data-aos="fade-up" data-aos-delay="200">
+                <div class="card-body p-4 text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-sparkles me-2"></i>
+                        {% trans "Ready to start your AI-powered journaling journey?" %}
+                    </h5>
+                    <p class="mb-0 opacity-75">{% trans "Your memories, enhanced by artificial intelligence" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.success-icon {
+    animation: bounceIn 1s ease-out;
+}
+
+.confetti {
+    animation: confettiFall 2s ease-in-out;
+}
+
+.confetti i {
+    margin: 0 10px;
+    font-size: 1.5rem;
+    animation: rotate 1s linear infinite;
+}
+
+.feature-item {
+    padding: 10px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.feature-item:hover {
+    transform: translateY(-3px);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6c5ce7 100%);
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes confettiFall {
+    0% { transform: translateY(-20px); opacity: 0; }
+    50% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(20px); opacity: 0; }
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
