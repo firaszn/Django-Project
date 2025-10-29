@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Mood Analytics" %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card p-4">
+        <h3 class="mb-3">{% trans "Mood Analytics" %}</h3>
+        <p class="text-muted">{% blocktrans %}Last {{ chart_data.dates|length }} days{% endblocktrans %}</p>
+
+        <div class="chart-container" style="height:300px; background:#fff; border-radius:12px; padding:15px;">
+            <canvas id="moodChart"></canvas>
+        </div>
+
+        <h5 class="mt-4">{% trans "Data points" %}</h5>
+        <ul class="list-unstyled">
+            {% for d,m in zipped_chart %}
+            <li>{{ d }} — {{ m }}</li>
+            {% empty %}
+            <li>{% trans "No mood data available." %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Charger Chart.js en premier -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+function initializeChart() {
+    if (typeof Chart === 'undefined') {
+        // Réessayer après un court délai si Chart.js n'est pas encore chargé
+        setTimeout(initializeChart, 100);
+        return;
+    }
+    
+    const ctx = document.getElementById('moodChart');
+    if (!ctx) return;
+    
+    const dates = {{ chart_data.dates|safe }};
+    const moods = {{ chart_data.moods|safe }};
+    
+    const moodValues = moods.map(mood => {
+        const moodMap = {
+            'very_sad': 1, 'sad': 2, 'neutral': 3, 'happy': 4, 'very_happy': 5
+        };
+        return moodMap[mood] || 3;
+    });
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: '{% trans "Mood Level" %}',
+                data: moodValues,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 0, max: 6,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            const labels = {1: '{% trans "Very Sad" %}', 2: '{% trans "Sad" %}', 3: '{% trans "Neutral" %}', 4: '{% trans "Happy" %}', 5: '{% trans "Very Happy" %}'};
+                            return labels[value] || '';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Démarrer l'initialisation
+document.addEventListener('DOMContentLoaded', initializeChart);
+</script>
+{% endblock %}
