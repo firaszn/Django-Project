@@ -1,0 +1,574 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Statistics & Insights - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="statistics-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <i class="fas fa-chart-bar me-3"></i>
+                Statistics & Insights
+            </h1>
+            <p class="page-subtitle">Analyse des données et insights de journalisation</p>
+        </div>
+        <div class="header-actions">
+            <div class="date-filter">
+                <select class="form-select">
+                    <option>Last 7 days</option>
+                    <option>Last 30 days</option>
+                    <option>Last 90 days</option>
+                    <option selected>All time</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card primary">
+                <div class="stats-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ user_stats.total_entries }}</h3>
+                    <p>Total Entries</p>
+                </div>
+                <div class="stats-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>12%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card success">
+                <div class="stats-icon">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ user_stats.current_streak }}</h3>
+                    <p>Current Streak</p>
+                </div>
+                <div class="stats-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>5 days</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card info">
+                <div class="stats-icon">
+                    <i class="fas fa-smile"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ user_stats.average_mood|floatformat:2 }}</h3>
+                    <p>Avg Mood Score</p>
+                </div>
+                <div class="stats-trend">
+                    {% if user_stats.average_mood > 0.1 %}
+                    <i class="fas fa-arrow-up text-success"></i>
+                    <span class="text-success">Positive</span>
+                    {% elif user_stats.average_mood < -0.1 %}
+                    <i class="fas fa-arrow-down text-danger"></i>
+                    <span class="text-danger">Negative</span>
+                    {% else %}
+                    <i class="fas fa-minus text-warning"></i>
+                    <span class="text-warning">Neutral</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card warning">
+                <div class="stats-icon">
+                    <i class="fas fa-font"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ user_stats.average_word_count|floatformat:0 }}</h3>
+                    <p>Avg Words/Entry</p>
+                </div>
+                <div class="stats-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>8%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights Section -->
+    {% if weekly_insight %}
+    <div class="row g-4">
+        <!-- Weekly Insights -->
+        <div class="col-lg-6">
+            <div class="insight-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Weekly Insights
+                    </h4>
+                    <span class="badge bg-primary">This Week</span>
+                </div>
+                <div class="card-body">
+                    <div class="insight-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Entries Written</span>
+                            <span class="stat-value">{{ weekly_insight.insights.total_entries }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Average Mood</span>
+                            <span class="stat-value {{ weekly_insight.insights.average_mood|default:0|yesno:'positive,negative,neutral' }}">
+                                {{ weekly_insight.insights.average_mood }}
+                            </span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Words/Entry</span>
+                            <span class="stat-value">{{ weekly_insight.insights.average_word_count }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="insight-patterns mt-4">
+                        <h6>Detected Patterns:</h6>
+                        <ul class="patterns-list">
+                            {% for pattern in weekly_insight.patterns %}
+                            <li>{{ pattern }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="col-lg-6">
+            <div class="insight-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-magic me-2"></i>
+                        AI Recommendations
+                    </h4>
+                    <span class="badge bg-success">Personalized</span>
+                </div>
+                <div class="card-body">
+                    <div class="recommendations-list">
+                        {% for recommendation in weekly_insight.recommendations %}
+                        <div class="recommendation-item">
+                            <div class="recommendation-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="recommendation-content">
+                                <p>{{ recommendation }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <h3>No Data Available</h3>
+        <p>Start writing journal entries to see your statistics and insights.</p>
+        
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card p-4">
+                <h5 class="section-title">{% trans "Quick Actions" %}</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="{% url 'statistics_and_insights:mood_analytics' %}" class="action-card p-3 d-block text-center">
+                            <div class="action-icon mx-auto mb-2">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="fw-semibold">{% trans "Mood Analytics" %}</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+<style>
+/* Statistics Dashboard Styles */
+.statistics-dashboard {
+    padding: 20px 0;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    color: var(--gray-600);
+    font-size: 1.1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Stats Cards */
+.stats-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.stats-card.success::before {
+    background: linear-gradient(135deg, var(--secondary) 0%, #059669 100%);
+}
+
+.stats-card.info::before {
+    background: linear-gradient(135deg, var(--info) 0%, #1d4ed8 100%);
+}
+
+.stats-card.warning::before {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+}
+
+.stats-card .stats-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--primary);
+    margin-bottom: 16px;
+}
+
+.stats-card.success .stats-icon {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    color: var(--secondary);
+}
+
+.stats-card.info .stats-icon {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    color: var(--info);
+}
+
+.stats-card.warning .stats-icon {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    color: var(--warning);
+}
+
+.stats-content h3 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+    line-height: 1;
+}
+
+.stats-content p {
+    color: var(--gray-600);
+    font-weight: 600;
+    margin: 0;
+}
+
+.stats-trend {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--success);
+}
+
+/* Insight Cards */
+.insight-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.insight-card .card-header {
+    padding: 24px 24px 0;
+    border: none;
+    background: transparent;
+}
+
+.insight-card .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0;
+}
+
+.insight-card .card-body {
+    padding: 24px;
+}
+
+.insight-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: var(--gray-600);
+    font-weight: 600;
+}
+
+.stat-value {
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.stat-value.positive {
+    color: var(--secondary);
+}
+
+.stat-value.negative {
+    color: var(--danger);
+}
+
+.stat-value.neutral {
+    color: var(--warning);
+}
+
+.patterns-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.patterns-list li {
+    padding: 8px 0;
+    color: var(--gray-700);
+    position: relative;
+    padding-left: 20px;
+}
+
+.patterns-list li::before {
+    content: '•';
+    color: var(--primary);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.recommendation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+}
+
+.recommendation-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.recommendation-content p {
+    margin: 0;
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: var(--primary);
+    margin: 0 auto 24px;
+}
+
+.empty-state h3 {
+    color: var(--gray-900);
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.empty-state p {
+    color: var(--gray-600);
+    margin-bottom: 24px;
+    font-size: 1.1rem;
+}
+
+/* Quick Actions */
+.quick-actions {
+    background: white;
+    padding: 32px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 24px;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    background: var(--gray-50);
+    border-radius: 16px;
+    text-decoration: none;
+    color: var(--gray-700);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.action-card:hover {
+    background: white;
+    color: var(--primary);
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+}
+
+.action-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.action-card span {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .stats-content h3 {
+        font-size: 2rem;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

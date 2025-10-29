@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
     'reminder_and_goals',
+    'statistics_and_insights',
 ]
 
 MIDDLEWARE = [
