@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'journal.apps.JournalConfig',
     'reminder_and_goals',
     'TagsCat',
+    'statistics_and_insights',
 ]
 
 MIDDLEWARE = [
