@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:pk>/', views.memory_detail, name='memory_detail'),
     path('<int:pk>/delete/', views.memory_delete, name='memory_delete'),
     path('<int:pk>/photo/<int:photo_pk>/delete/', views.memory_photo_delete, name='memory_photo_delete'),
+    path('ai-suggest/', views.memory_ai_suggest, name='memory_ai_suggest'),
 ]

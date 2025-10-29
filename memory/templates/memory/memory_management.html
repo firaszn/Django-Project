@@ -106,7 +106,8 @@
 .memory-card { border-radius:12px; transition:transform .18s ease, box-shadow .18s ease; }
 .memory-card:hover { transform:translateY(-6px); box-shadow:0 18px 40px rgba(0,0,0,0.12); }
 .memory-thumb { height:160px; background-size:cover; background-position:center; }
-.tag-badge { display:inline-block; padding:6px 10px; border-radius:999px; color:#fff; font-weight:600; margin-right:6px; font-size:0.78rem; }
+    /* default visible badge color (fallback if JS fails) */
+    .tag-badge { display:inline-block; padding:6px 10px; border-radius:999px; color:#fff; background:#6c757d; font-weight:600; margin-right:6px; font-size:0.78rem; }
 
 @media (max-width:767px){ .memory-thumb { height:140px; } }
 </style>

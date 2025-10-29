@@ -7,6 +7,15 @@ from TagsCat.models.tag import Tag
 from .forms import MemoryForm
 from django.views.decorators.http import require_POST
 from django.http import HttpResponseForbidden
+from django.http import JsonResponse
+from django.conf import settings
+import os
+
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except Exception:
+    OPENAI_AVAILABLE = False
 
 
 @login_required
@@ -211,3 +220,89 @@ def memory_photo_delete(request, pk, photo_pk):
     photo.delete()
     messages.success(request, 'Photo supprimée')
     return redirect('memory:memory_edit', pk=memory.pk)
+
+
+@login_required
+def memory_ai_suggest(request):
+    """Return AI-based suggestions (title and tags) for a given description.
+
+    If OpenAI is configured (OPENAI_API_KEY in settings or env and openai library installed),
+    use it. Otherwise fall back to a simple heuristic.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+
+    description = request.POST.get('description') or request.POST.get('desc') or ''
+    if not description:
+        return JsonResponse({'error': 'Description manquante'}, status=400)
+
+    # Try OpenAI if available and key present
+    api_key = getattr(settings, 'OPENAI_API_KEY', None) or os.environ.get('OPENAI_API_KEY')
+    if OPENAI_AVAILABLE and api_key:
+        try:
+            openai.api_key = api_key
+            # Stronger system/user prompt to force clean JSON and short titles
+            system_msg = (
+                "You are a JSON-only generator. Read a user's memory description and produce a short, catchy title (3-6 words) and up to 6 relevant tags."
+                " Output ONLY valid JSON with two keys: \"title\" (string) and \"tags\" (array of strings)."
+                " Do not add any extra explanation, commentary or markdown. Keep tags short (single words) and in lowercase."
+            )
+            user_msg = "Description:\n" + description
+            resp = openai.ChatCompletion.create(
+                model=getattr(settings, 'OPENAI_MODEL', 'gpt-3.5-turbo'),
+                messages=[{'role': 'system', 'content': system_msg}, {'role': 'user', 'content': user_msg}],
+                max_tokens=150,
+                temperature=0.6,
+            )
+            text = resp['choices'][0]['message']['content']
+            # Attempt to parse JSON from the model output robustly
+            import json, re
+            m = re.search(r'\{[\s\S]*\}', text)
+            if m:
+                try:
+                    obj = json.loads(m.group(0))
+                    title = obj.get('title', '') or ''
+                    tags = obj.get('tags', []) or []
+                    if isinstance(tags, str):
+                        tags = [t.strip().lower() for t in tags.split(',') if t.strip()]
+                    tags = [t.lower() for t in tags][:6]
+                    # normalize title: trim to 6 words
+                    title = ' '.join(title.split()[:6]).strip()
+                    return JsonResponse({'title': title, 'tags': tags})
+                except Exception:
+                    # fallthrough to simpler parsing
+                    pass
+            # If parsing failed, try to extract a short line from the raw text
+            single_line = text.strip().split('\n')[0]
+            title_guess = ' '.join(single_line.split()[:6])
+            return JsonResponse({'title': title_guess, 'tags': []})
+        except Exception:
+            # fallback silently to heuristic below
+            pass
+
+    # Improved fallback heuristic: short title from first meaningful sentence, and tag extraction by simple frequency
+    import re
+    txt = description.strip()
+    # pick the first non-empty sentence-like fragment
+    parts = [p.strip() for p in re.split(r'[\.\n\!\?]+', txt) if p.strip()]
+    first_sent = parts[0] if parts else txt
+    words = re.findall(r"[\wÀ-ÿ'-]+", first_sent)
+    # build a readable title of up to 6 words
+    title = ' '.join(words[:6]).strip()
+
+    # tag candidates: take all words length>=4, lowercase, count frequency across whole description
+    tokens = [w.lower() for w in re.findall(r"[\wÀ-ÿ'-]{4,}", txt)]
+    # small bilingual stoplist
+    stop = set([ 'avec','les','une','des','le','la','et','que','pour','qui','ont','été',
+                 'that','this','have','from','will','your','about','there','their','what' ])
+    freq = {}
+    for t in tokens:
+        clean = t.strip("'\"")
+        if clean in stop: continue
+        freq[clean] = freq.get(clean, 0) + 1
+
+    # sort by frequency then length, pick top 6
+    sorted_tags = sorted(freq.items(), key=lambda x: (-x[1], -len(x[0])))
+    tags = [t for t,c in sorted_tags][:6]
+
+    return JsonResponse({'title': title, 'tags': tags})

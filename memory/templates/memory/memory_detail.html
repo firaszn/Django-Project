@@ -99,7 +99,8 @@
 .memory-detail-hero { background: linear-gradient(135deg,#f7f7fb 0%, #fff 100%); }
 .cover-photo { height:320px; background-size:cover; background-position:center; }
 .cover-photo.no-photo { height:320px; background:linear-gradient(180deg,#f0f0f5,#fafafa); color:#999; }
-.tag-badge { display:inline-block; padding:6px 10px; border-radius:999px; color:#fff; margin-right:6px; font-weight:600; }
+    /* default visible badge color (fallback if JS fails) */
+    .tag-badge { display:inline-block; padding:6px 10px; border-radius:999px; color:#fff; background:#6c757d; margin-right:6px; font-weight:600; }
 .photo-thumb { overflow:hidden; }
 .photo-thumb img.pointer { cursor:pointer; transition:transform .18s ease; }
 .photo-thumb img.pointer:hover { transform:scale(1.03); }

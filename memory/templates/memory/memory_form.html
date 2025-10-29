@@ -60,7 +60,9 @@
                             </div>
 
                             <div class="col-12 mb-3">
-                                <label class="form-label">Description</label>
+                                <label class="form-label">Description
+                                    <button type="button" id="ai-suggest-btn" class="btn btn-sm btn-outline-secondary ms-2">Suggestions IA</button>
+                                </label>
                                 {{ form.description|add_class:"form-control" }}
                             </div>
 
@@ -159,10 +161,19 @@
 .sidebar-card { border-radius:12px; }
 .photo-card { border-radius:10px; }
 
-.tag-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; color:#fff; font-size:0.9rem; }
+.tag-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; color:#fff; background:#6c757d; font-size:0.9rem; }
 .tag-badge .tag-remove { background:rgba(255,255,255,0.18); border:0; color:#fff; padding:0 6px; border-radius:6px; cursor:pointer; font-weight:600; }
 
 @media (max-width: 767px){ .memory-hero { padding-top:2rem; padding-bottom:2rem; } }
+
+/* Debug: ensure AI Suggest button is visible (helps confirm template is loaded) */
+#ai-suggest-btn{
+    display:inline-block !important;
+    visibility:visible !important;
+    background:#0d6efd !important; /* bootstrap primary */
+    color:#fff !important;
+    border-color:#0d6efd !important;
+}
 </style>
 
 <script>
@@ -279,6 +290,137 @@ document.addEventListener('DOMContentLoaded', function(){
 
     if(form){
         form.addEventListener('submit', function(){ updateHidden(); });
+    }
+});
+</script>
+
+<!-- AI suggestion modal and logic -->
+<div class="modal fade" id="aiSuggestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Suggestions IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ai-suggest-loading" class="text-center py-4">Génération en cours…</div>
+                <div id="ai-suggest-content" style="display:none">
+                    <div class="mb-3">
+                        <label class="form-label">Titre suggéré</label>
+                        <input id="ai-title" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Tags suggérés</label>
+                        <div id="ai-tags" class="d-flex flex-wrap gap-2"></div>
+                        <small class="text-muted">Cliquez sur un tag pour l'ajouter aux tags actuels, ou modifiez le champ ci-dessus.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" id="ai-apply" class="btn btn-primary">Appliquer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const aiBtn = document.getElementById('ai-suggest-btn');
+    const modalEl = document.getElementById('aiSuggestModal');
+    const aiModal = modalEl ? new bootstrap.Modal(modalEl) : null;
+    const loading = document.getElementById('ai-suggest-loading');
+    const content = document.getElementById('ai-suggest-content');
+    const aiTitle = document.getElementById('ai-title');
+    const aiTags = document.getElementById('ai-tags');
+    const applyBtn = document.getElementById('ai-apply');
+
+    function getCSRF(){
+        const el = document.querySelector('input[name=csrfmiddlewaretoken]');
+        return el ? el.value : '';
+    }
+
+    function clearAi(){ aiTitle.value=''; aiTags.innerHTML=''; }
+
+    function addTagBadgeToAi(name){
+            const span = document.createElement('span');
+            span.className = 'tag-badge';
+            span.textContent = name;
+            span.style.cursor = 'pointer';
+
+            // compute deterministic color and ensure readable text color
+            function stringToColor(s){
+                let hash = 0; for(let i=0;i<s.length;i++){ hash = s.charCodeAt(i) + ((hash<<5)-hash); }
+                const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+                return '#'+('00000'.substring(0, 6 - c.length) + c);
+            }
+            function hexToRgb(hex){
+                hex = hex.replace('#','');
+                const bigint = parseInt(hex,16);
+                return [(bigint>>16)&255, (bigint>>8)&255, bigint&255];
+            }
+            function readableTextColor(bgHex){
+                const [r,g,b] = hexToRgb(bgHex);
+                // relative luminance formula
+                const lum = (0.2126*r + 0.7152*g + 0.0722*b)/255;
+                return lum > 0.65 ? '#000' : '#fff';
+            }
+
+            const bg = stringToColor(name);
+            span.style.background = bg;
+            span.style.color = readableTextColor(bg);
+
+            span.addEventListener('click', ()=>{
+                // add tag to main tag-list
+                const tagInput = document.getElementById('tag-input');
+                if(tagInput){
+                    tagInput.focus();
+                    // simulate adding by invoking key handler
+                    tagInput.value = name;
+                    const ev = new KeyboardEvent('keydown', {key: 'Enter'});
+                    tagInput.dispatchEvent(ev);
+                }
+                // visually mark added
+                span.classList.add('opacity-50');
+            });
+            aiTags.appendChild(span);
+    }
+
+    if(aiBtn){
+        aiBtn.addEventListener('click', function(){
+            // open modal and start request
+            if(aiModal) aiModal.show();
+            clearAi();
+            loading.style.display = 'block'; content.style.display = 'none';
+            const desc = document.getElementById('id_description') || document.querySelector('textarea[name="description"]');
+            const description = desc ? desc.value : '';
+            fetch('{% url "memory:memory_ai_suggest" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRF(),
+                },
+                body: new URLSearchParams({description: description})
+            }).then(r=>r.json()).then(data=>{
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                aiTitle.value = data.title || '';
+                (data.tags || []).forEach(t => addTagBadgeToAi(t));
+            }).catch(err=>{
+                loading.textContent = 'Erreur lors de la génération';
+                console.error(err);
+            });
+        });
+    }
+
+    if(applyBtn){
+        applyBtn.addEventListener('click', ()=>{
+            // set title
+            const titleEl = document.getElementById('id_title') || document.querySelector('input[name="title"]');
+            if(titleEl) titleEl.value = aiTitle.value;
+            // click each ai tag to add it (simulate)
+            Array.from(aiTags.querySelectorAll('.tag-badge')).forEach(b=> b.click());
+            if(aiModal) aiModal.hide();
+        });
     }
 });
 </script>
