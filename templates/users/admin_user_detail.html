@@ -194,8 +194,80 @@
                 </div>
             </div>
             
-            <!-- Permissions -->
+            <!-- Fraud Detection Analysis -->
+            {% if fraud_data %}
             <div class="card details-card mt-4" data-aos="fade-left" data-aos-delay="300">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>{% trans "AI Fraud Detection Analysis" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Confidence Score Display -->
+                    <div class="confidence-score-display mb-4">
+                        <div class="confidence-score-circle {% if fraud_data.risk_level == 'high_risk' %}confidence-high-risk{% elif fraud_data.risk_level == 'suspicious' %}confidence-suspicious{% elif fraud_data.risk_level == 'normal' %}confidence-normal{% else %}confidence-trusted{% endif %}">
+                            <div class="confidence-score-value">{{ fraud_data.confidence_score }}</div>
+                            <div class="confidence-score-label">{% trans "Confidence Score" %}</div>
+                        </div>
+                        <div class="confidence-level-badge confidence-{{ fraud_data.risk_level }}">
+                            {% if fraud_data.risk_level == 'high_risk' %}
+                                <i class="fas fa-exclamation-triangle me-2"></i>{% trans "High Risk" %}
+                            {% elif fraud_data.risk_level == 'suspicious' %}
+                                <i class="fas fa-exclamation-circle me-2"></i>{% trans "Suspicious" %}
+                            {% elif fraud_data.risk_level == 'normal' %}
+                                <i class="fas fa-info-circle me-2"></i>{% trans "Normal" %}
+                            {% else %}
+                                <i class="fas fa-shield-check me-2"></i>{% trans "Trusted" %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Detected Factors -->
+                    {% if fraud_data.factors %}
+                    <div class="fraud-factors mb-4">
+                        <h6 class="mb-3"><i class="fas fa-list-ul me-2"></i>{% trans "Detected Risk Factors" %}</h6>
+                        <ul class="list-group">
+                            {% for factor in fraud_data.factors %}
+                            <li class="list-group-item d-flex align-items-start">
+                                <i class="fas fa-circle text-warning me-2 mt-1" style="font-size: 6px;"></i>
+                                <span>{{ factor }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- AI Analysis -->
+                    {% if fraud_data.ai_analysis %}
+                    <div class="ai-analysis mb-4">
+                        <h6 class="mb-3"><i class="fas fa-brain me-2"></i>{% trans "AI Analysis" %}</h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-robot me-2"></i>
+                            {{ fraud_data.ai_analysis }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Recommendations -->
+                    {% if fraud_data.recommendations %}
+                    <div class="fraud-recommendations">
+                        <h6 class="mb-3"><i class="fas fa-lightbulb me-2"></i>{% trans "Recommended Actions" %}</h6>
+                        <ul class="list-group">
+                            {% for recommendation in fraud_data.recommendations %}
+                            <li class="list-group-item d-flex align-items-start">
+                                <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                <span>{{ recommendation }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Permissions -->
+            <div class="card details-card mt-4" data-aos="fade-left" data-aos-delay="400">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-shield-alt me-2"></i>{% trans "Permissions" %}
@@ -411,5 +483,103 @@
         opacity: 0.5;
     }
 }
+
+/* Fraud Detection Styles */
+.confidence-score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.confidence-score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.confidence-score-circle.confidence-trusted {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    color: white;
+}
+
+.confidence-score-circle.confidence-normal {
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+    color: white;
+}
+
+.confidence-score-circle.confidence-suspicious {
+    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    color: white;
+}
+
+.confidence-score-circle.confidence-high-risk {
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+    color: white;
+}
+
+.confidence-score-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.confidence-score-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.confidence-level-badge {
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.confidence-level-badge.confidence-trusted {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.confidence-level-badge.confidence-normal {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.confidence-level-badge.confidence-suspicious {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.confidence-level-badge.confidence-high-risk {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.fraud-factors .list-group-item,
+.fraud-recommendations .list-group-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 8px;
+    border-radius: 8px;
+}
+
+.ai-analysis .alert {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+}
+
 </style>
 {% endblock dashboard_content %}

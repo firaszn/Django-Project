@@ -26,3 +26,6 @@ GOOGLE_OAUTH2_CLIENT_ID=your-google-client-id
 GOOGLE_OAUTH2_CLIENT_SECRET=your-google-client-secret
 
 
+# AI API Keys (Optional)
+GROQ_API_KEY=your-groq-api-key-here
+HUGGINGFACE_API_KEY=your-huggingface-api-key-here

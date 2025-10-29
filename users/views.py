@@ -7,8 +7,16 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import UpdateView, DetailView
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
+<<<<<<< HEAD
 from .forms import UserProfileForm
 from .models import CustomUser
+=======
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .forms import UserProfileForm
+from .models import CustomUser
+from .ai_services import BioGeneratorService, FraudDetectionService
+>>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
 
 class ProfileView(LoginRequiredMixin, DetailView):
     model = CustomUser
@@ -108,8 +116,23 @@ def admin_users_list(request):
     if role_filter:
         users = users.filter(role=role_filter)
     
+<<<<<<< HEAD
     # Pagination
     paginator = Paginator(users, 10)  # 10 utilisateurs par page
+=======
+    # Calculer les scores de confiance pour chaque utilisateur
+    users_with_confidence = []
+    for user in users:
+        fraud_data = FraudDetectionService.analyze_user(user)
+        users_with_confidence.append({
+            'user': user,
+            'confidence_score': fraud_data['confidence_score'],
+            'risk_level': fraud_data['risk_level']
+        })
+    
+    # Pagination
+    paginator = Paginator(users_with_confidence, 10)  # 10 utilisateurs par page
+>>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
     page_number = request.GET.get('page')
     users_page = paginator.get_page(page_number)
     
@@ -136,6 +159,12 @@ def admin_user_detail(request, user_id):
     """Détails d'un utilisateur"""
     user = CustomUser.objects.get(id=user_id)
     
+<<<<<<< HEAD
+=======
+    # Analyse de fraude/confiance
+    fraud_data = FraudDetectionService.analyze_user(user)
+    
+>>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
     # Statistiques pour la sidebar
     total_users = CustomUser.objects.exclude(id=request.user.id).count()
     active_users = CustomUser.objects.exclude(id=request.user.id).filter(is_active=True).count()
@@ -143,6 +172,10 @@ def admin_user_detail(request, user_id):
     
     context = {
         'viewed_user': user,
+<<<<<<< HEAD
+=======
+        'fraud_data': fraud_data,
+>>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
         'total_users': total_users,
         'active_users': active_users,
         'admin_users': admin_users,
@@ -161,4 +194,29 @@ def admin_user_toggle_status(request, user_id):
     status = _('activated') if user.is_active else _('deactivated')
     messages.success(request, _(f'User {user.email} has been {status}'))
     
+<<<<<<< HEAD
     return redirect('admin_users_list')
+=======
+    return redirect('admin_users_list')
+
+# Nouvelle vue pour générer une bio avec IA
+@login_required
+@require_http_methods(["POST"])
+def generate_bio_ai(request):
+    """Génère une bio avec l'IA pour l'utilisateur connecté"""
+    try:
+        keywords = request.POST.get('keywords', '').split(',')
+        keywords = [k.strip() for k in keywords if k.strip()]
+        
+        bio = BioGeneratorService.generate_bio(request.user, keywords)
+        
+        return JsonResponse({
+            'success': True,
+            'bio': bio
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+>>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e

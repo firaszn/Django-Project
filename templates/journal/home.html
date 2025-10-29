@@ -19,7 +19,11 @@
                         {% trans "Transform your memories into intelligent insights with our AI-powered journal. Document your life like never before." %}
                     </p>
                     <div class="hero-buttons d-flex gap-3 flex-wrap">
+<<<<<<< HEAD
                         <a href="#" class="btn btn-primary btn-lg pulse">
+=======
+                        <a href="{% url 'journal_create' %}" class="btn btn-primary btn-lg pulse">
+>>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
                             <i class="fas fa-plus me-2"></i>{% trans "New Entry" %}
                         </a>
                         <a href="{% url 'profile' %}" class="btn btn-outline-light btn-lg">
@@ -173,7 +177,11 @@
                 <p class="text-muted mb-4">
                     {% trans "Start your journey by creating your first journal entry." %}
                 </p>
+<<<<<<< HEAD
                 <a href="#" class="btn btn-primary">
+=======
+                <a href="{% url 'journal_create' %}" class="btn btn-primary">
+>>>>>>> ecdb9b019095c41a274895a0b0c6bd4521bd1f2e
                     <i class="fas fa-plus me-2"></i>{% trans "Create First Entry" %}
                 </a>
             </div>

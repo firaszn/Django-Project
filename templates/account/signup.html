@@ -4,6 +4,84 @@
 
 {% block title %}{% trans "Sign Up" %} - AI Personal Journal{% endblock %}
 
+
+{% block extra_css %}
+<style>
+    /* Styles pour les messages d'erreur en rouge */
+    .invalid-feedback {
+        color: #dc3545 !important;
+        font-weight: 500;
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+    }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+    
+    /* Messages d'erreur crispy forms */
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    /* Erreurs globales du formulaire */
+    .non-field-errors {
+        color: #dc3545 !important;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    /* Highlight des champs invalides */
+    .form-control:invalid {
+        border-color: #dc3545;
+    }
+    
+    .form-control:valid {
+        border-color: #28a745;
+    }
+    
+    /* Masquer les help_text (messages en gris) quand il y a une erreur */
+    .is-invalid ~ small.form-text,
+    .is-invalid ~ .form-text.text-muted {
+        display: none !important;
+    }
+    
+    /* Masquer tous les help_text en gris par défaut */
+    .form-text,
+    .form-text.text-muted,
+    small.form-text,
+    .help-block {
+        display: none !important;
+    }
+    
+    /* Afficher seulement les messages d'erreur */
+    .text-danger,
+    .invalid-feedback,
+    .alert-danger,
+    .errorlist,
+    .errorlist li {
+        display: block !important;
+        color: #dc3545 !important;
+        font-weight: 500 !important;
+    }
+    
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .errorlist li {
+        margin: 0.25rem 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -16,7 +94,10 @@
                 </div>
                 
                 <div class="card-body p-5">
+
                     <form class="signup" id="signup_form" method="POST" action="{% url 'account_signup' %}">
+
+                    <form class="signup" id="signup_form" method="POST" action="{% url 'account_signup' %}" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
                         
@@ -94,3 +175,82 @@
     </div>
 </div>
 {% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('signup_form');
+    
+    // Ne PAS appliquer les styles immédiatement, seulement après soumission
+    let formSubmitted = false;
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            formSubmitted = true;
+            
+            // Attendre que le serveur retourne les erreurs
+            setTimeout(function() {
+                applyErrorStyles();
+            }, 300);
+        });
+        
+        // Si des erreurs existent déjà au chargement (retour après soumission échouée)
+        if (document.querySelectorAll('.text-danger, .invalid-feedback').length > 0) {
+            applyErrorStyles();
+        }
+    }
+    
+    function applyErrorStyles() {
+        // Appliquer la classe is-invalid aux champs avec erreurs
+        const errorElements = document.querySelectorAll('.text-danger, .invalid-feedback, .alert-danger, .errorlist li');
+        
+        errorElements.forEach(function(errorElement) {
+            // S'assurer que les erreurs sont visibles et en rouge
+            errorElement.style.color = '#dc3545';
+            errorElement.style.fontWeight = '500';
+            errorElement.style.display = 'block';
+            
+            // Trouver le champ de formulaire associé
+            const field = errorElement.closest('.form-group')?.querySelector('input, select, textarea') ||
+                         errorElement.closest('.mb-3')?.querySelector('input, select, textarea');
+            
+            if (field && !field.classList.contains('is-invalid')) {
+                field.classList.add('is-invalid');
+                
+                // Ajouter un écouteur pour enlever la classe quand l'utilisateur corrige
+                field.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+                
+                field.addEventListener('change', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            }
+        });
+        
+        // Spécialement pour les erreurs d'email
+        const emailError = document.querySelector('#div_id_email .text-danger, #id_email + .text-danger');
+        if (emailError) {
+            emailError.style.color = '#dc3545';
+            const emailField = document.getElementById('id_email');
+            if (emailField) {
+                emailField.classList.add('is-invalid');
+            }
+        }
+    }
+    
+    // Pour les champs de date et autres champs spéciaux
+    document.querySelectorAll('input[type="date"]').forEach(function(dateField) {
+        dateField.addEventListener('change', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+});
+</script>
+{% endblock %}
+
