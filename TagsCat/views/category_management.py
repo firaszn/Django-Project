@@ -8,6 +8,7 @@ from django.db import models
 import json
 from ..models import Category, Tag
 from ..forms import CategoryForm, TagForm
+from ..ai_utils import suggest_tags_from_text
 
 @login_required
 def category_management(request):
@@ -33,6 +34,13 @@ def category_create(request):
             category = form.save(commit=False)
             category.user = request.user
             category.save()
+            # Sauvegarder les tags sélectionnés
+            form.save_m2m()
+            
+            # Incrémenter le compteur d'utilisation des tags
+            for tag in category.tags.all():
+                tag.increment_usage()
+            
             messages.success(request, f'Catégorie "{category.name}" créée avec succès!')
             return redirect('TagsCat:category_management')
     else:
@@ -49,9 +57,26 @@ def category_edit(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
     
     if request.method == 'POST':
+        # Sauvegarder les anciens tags pour comparaison
+        old_tags = set(category.tags.all())
+        
         form = CategoryForm(request.POST, instance=category, user=request.user)
         if form.is_valid():
             form.save()
+            
+            # Obtenir les nouveaux tags
+            new_tags = set(category.tags.all())
+            
+            # Décrementer les tags supprimés
+            removed_tags = old_tags - new_tags
+            for tag in removed_tags:
+                tag.decrement_usage()
+            
+            # Incrémenter les nouveaux tags
+            added_tags = new_tags - old_tags
+            for tag in added_tags:
+                tag.increment_usage()
+            
             messages.success(request, f'Catégorie "{category.name}" modifiée avec succès!')
             return redirect('TagsCat:category_management')
     else:
@@ -69,6 +94,10 @@ def category_delete(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
     
     if request.method == 'POST':
+        # Décrémenter le compteur d'utilisation des tags associés
+        for tag in category.tags.all():
+            tag.decrement_usage()
+        
         category_name = category.name
         entry_count = category.get_entry_count()
         category.delete()
@@ -100,6 +129,14 @@ def tag_management(request):
 def tag_create(request):
     """Créer un nouveau tag"""
     if request.method == 'POST':
+        # AJAX quick create support
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.content_type.startswith('application/json'):
+            data = json.loads(request.body.decode('utf-8'))
+            name = (data.get('name') or '').strip()
+            if not name:
+                return JsonResponse({'success': False, 'error': 'Nom requis'}, status=400)
+            tag, created = Tag.objects.get_or_create(user=request.user, name=name)
+            return JsonResponse({'success': True, 'created': created, 'tag': {'id': tag.id, 'name': tag.name, 'usage_count': getattr(tag, 'usage_count', 0)}})
         form = TagForm(request.POST, user=request.user)
         if form.is_valid():
             tag = form.save(commit=False)
@@ -114,6 +151,22 @@ def tag_create(request):
         'form': form,
         'title': 'Créer un tag'
     })
+
+@login_required
+@require_POST
+def tag_suggest(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        payload = {}
+    text = (payload.get('text') or request.POST.get('text') or '').strip()
+    tag_count = int(payload.get('tag_count', 2))
+    if not text:
+        return JsonResponse({'success': False, 'error': 'Texte requis'}, status=400)
+    if tag_count < 1 or tag_count > 3:
+        tag_count = 2
+    suggestions = suggest_tags_from_text(text, tag_count)
+    return JsonResponse({'success': True, 'tags': suggestions})
 
 @login_required
 def tag_edit(request, pk):
@@ -144,6 +197,14 @@ def tag_delete(request, pk):
         tag_name = tag.name
         entry_count = tag.entries.count()
         tag.delete()
+        # Réponse AJAX discrète
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'Tag "{tag_name}" supprimé avec succès!',
+                'detached_entries': entry_count,
+                'tag_id': pk,
+            })
         messages.success(request, f'Tag "{tag_name}" supprimé avec succès!')
         if entry_count > 0:
             messages.info(request, f'{entry_count} entrée(s) ont été déliées de ce tag.')

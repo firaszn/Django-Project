@@ -220,6 +220,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirection directe vers log
 # Configuration du formulaire d'inscription personnalisé
 ACCOUNT_FORMS = {
     'signup': 'users.forms.CustomSignupForm',
+    'login': 'users.forms.CustomLoginForm',
 }
 
 # Adaptateur personnalisé pour la redirection après login
@@ -267,6 +268,7 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+            'prompt': 'select_account',  # force le sélecteur de compte Google
         },
         'OAUTH_PKCE_ENABLED': True,
     }

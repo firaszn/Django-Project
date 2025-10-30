@@ -41,6 +41,21 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <!-- Category -->
+                    {% if journal.category %}
+                        <div class="mb-4">
+                            <h5>Category</h5>
+                            <div class="category-badge">
+                                <span class="badge" style="background-color: {{ journal.category.color }}; color: white; padding: 0.5rem 1rem; font-size: 1rem;">
+                                    {% if journal.category.icon %}
+                                        <i class="fas fa-{{ journal.category.icon }} me-2"></i>
+                                    {% endif %}
+                                    {{ journal.category.name }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <!-- Description -->
                     <div class="mb-4">
                         <h5>Description</h5>
@@ -103,6 +118,18 @@
                                         <li><strong>Created:</strong> {{ journal.created_at|date:"M d, Y H:i" }}</li>
                                         <li><strong>Updated:</strong> {{ journal.updated_at|date:"M d, Y H:i" }}</li>
                                         <li><strong>Word Count:</strong> {{ journal.description|wordcount }} words</li>
+                                        <li><strong>Category:</strong> 
+                                            {% if journal.category %}
+                                                <span class="badge" style="background-color: {{ journal.category.color }}; color: white; font-size: 0.8rem;">
+                                                    {% if journal.category.icon %}
+                                                        <i class="fas fa-{{ journal.category.icon }} me-1"></i>
+                                                    {% endif %}
+                                                    {{ journal.category.name }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">No category</span>
+                                            {% endif %}
+                                        </li>
                                         <li><strong>Related Goals:</strong> {{ journal.related_goals.count }}</li>
                                     </ul>
                                 </div>
@@ -114,4 +141,25 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.category-badge .badge {
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.category-badge .badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Badge dans les métadonnées */
+.list-unstyled .badge {
+    border-radius: 12px;
+    font-weight: 500;
+}
+</style>
 {% endblock %}

@@ -2,6 +2,8 @@ from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.urls import reverse
 from django.contrib import messages
+from allauth.exceptions import ImmediateHttpResponse
+from django.http import HttpResponseRedirect
 
 class CustomAccountAdapter(DefaultAccountAdapter):
     def get_login_redirect_url(self, request):
@@ -34,6 +36,24 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         """
         Appelé avant la connexion sociale pour personnaliser le processus
         """
+        # Valider l'email Google vérifié et (optionnel) le domaine autorisé
+        provider = getattr(sociallogin.account, 'provider', None)
+        extra = getattr(sociallogin.account, 'extra_data', {}) or {}
+
+        if provider == 'google':
+            email = extra.get('email') or sociallogin.user.email
+            email_verified = extra.get('email_verified', True)  # Google renvoie souvent ce flag
+
+            # Optionnel: restreindre à certains domaines
+            allowed_domains = getattr(request, 'allowed_social_domains', None)
+            if allowed_domains and email and not any(email.endswith('@' + d) for d in allowed_domains):
+                messages.error(request, "Ce domaine d'email n'est pas autorisé pour Google Sign-In.")
+                raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
+
+            if not email_verified:
+                messages.error(request, "Votre email Google n'est pas vérifié. Veuillez vérifier votre compte Google.")
+                raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
+
         # Si l'utilisateur existe déjà avec cet email, on le connecte
         if sociallogin.user.email:
             try:

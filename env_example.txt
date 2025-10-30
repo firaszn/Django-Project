@@ -28,3 +28,7 @@ GOOGLE_OAUTH2_CLIENT_SECRET=your-google-client-secret
 # AI API Keys (Optional)
 GROQ_API_KEY=your-groq-api-key-here
 HUGGINGFACE_API_KEY=your-huggingface-api-key-here
+
+# reCAPTCHA Configuration
+RECAPTCHA_SITE_KEY=your-recaptcha-site-key
+RECAPTCHA_SECRET_KEY=your-recaptcha-secret-key
