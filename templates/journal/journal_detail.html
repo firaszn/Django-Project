@@ -34,7 +34,18 @@
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="card-title mb-0">{{ journal.title }}</h4>
+                        <h4 class="card-title mb-0">
+                            {{ journal.title }}
+                            {% if journal.mood %}
+                                {% if journal.mood == 'happy' %}
+                                    <span class="badge bg-success ms-2" title="Mood: Happy">😊 Happy</span>
+                                {% elif journal.mood == 'sad' %}
+                                    <span class="badge bg-primary ms-2" title="Mood: Sad">😢 Sad</span>
+                                {% else %}
+                                    <span class="badge bg-secondary ms-2" title="Mood: Neutral">😐 Neutral</span>
+                                {% endif %}
+                            {% endif %}
+                        </h4>
                         <span class="text-muted">{{ journal.created_at|date:"F d, Y" }}</span>
                     </div>
                 </div>
@@ -42,7 +53,7 @@
                     <!-- Description -->
                     <div class="mb-4">
                         <h5>Description</h5>
-                        <p class="lead">{{ journal.description }}</p>
+                        <div class="lead">{{ journal.description|safe }}</div>
                     </div>
 
                     <!-- Images -->
@@ -96,7 +107,7 @@
                                     <ul class="list-unstyled mb-0">
                                         <li><strong>Created:</strong> {{ journal.created_at|date:"M d, Y H:i" }}</li>
                                         <li><strong>Updated:</strong> {{ journal.updated_at|date:"M d, Y H:i" }}</li>
-                                        <li><strong>Word Count:</strong> {{ journal.description|wordcount }} words</li>
+                                        <li><strong>Word Count:</strong> {{ journal.description|striptags|wordcount }} words</li>
                                         <li><strong>Related Goals:</strong> {{ journal.related_goals.count }}</li>
                                     </ul>
                                 </div>

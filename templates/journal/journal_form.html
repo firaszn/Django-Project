@@ -2,19 +2,22 @@
 
 {% block title %}{% if create %}New Entry{% else %}Edit Entry{% endif %} - AI Personal Journal{% endblock %}
 
+{% block extra_css %}
+    <!-- Quill editor styles -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
+    <div class="col-12">
+        <div class="card-header">
                     <h4 class="mb-0">{% if create %}Create New Journal Entry{% else %}Edit Journal Entry{% endif %}</h4>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            {{ form.title.label_tag }}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.title.label_tag }}
                             {{ form.title }}
                             {% if form.title.errors %}
                                 <div class="text-danger">{{ form.title.errors }}</div>
@@ -22,12 +25,36 @@
                         </div>
 
                         <div class="mb-3">
-                            {{ form.description.label_tag }}
-                            {{ form.description }}
-                            <div id="content-suggestions" class="list-group mt-1" style="position: absolute; z-index: 50; width: 100%; display: none;"></div>
-                            {% if form.description.errors %}
-                                <div class="text-danger">{{ form.description.errors }}</div>
-                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                {{ form.description.label_tag }}
+                                <button type="button" id="voice-record-btn" class="btn btn-sm btn-outline-primary" title="Voice recording">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
+                                        <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
+                                        <path d="M10 8a2 2 0 1 1-4 0V3a2 2 0 1 1 4 0v5zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3z"/>
+                                    </svg>
+                                    <span id="voice-status">Record</span>
+                                </button>
+                            </div>
+                            <!-- Quill rich-text editor: we'll keep the textarea for form binding but hide it and sync on submit -->
+                            <div id="quill-editor" style="min-height:200px; background:white; border-radius:8px;">
+                                <!-- Quill will initialize here -->
+                            </div>
+                            <!-- Hidden textarea: render the form field so the server receives description on submit -->
+                            <div style="display:none;">
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <!-- AI nudge status / loader -->
+                            <div id="ai-nudge-status" class="mt-2" style="display:none;">
+                                <div id="ai-nudge-loading" style="display:none;"> 
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <small>Thinking...</small>
+                                </div>
+                                
+                            </div>
+                           
                         </div>
 
                         <div class="row">
@@ -75,6 +102,343 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Quill JS and initialization -->
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+// Ensure CSRF hidden input exists for the main POST form (helps when template context or cookies are inconsistent)
+document.addEventListener('DOMContentLoaded', function(){
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    try{
+        const postForm = document.querySelector('form[method="post"]');
+        if(postForm && !postForm.querySelector('input[name="csrfmiddlewaretoken"]')){
+            const token = getCookie('csrftoken');
+            if(token){
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'csrfmiddlewaretoken'; inp.value = token;
+                postForm.insertBefore(inp, postForm.firstChild);
+            }
+        }
+    }catch(e){ console.warn('CSRF helper failed', e); }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    // Initialize Quill editor
+    var quillContainer = document.getElementById('quill-editor');
+    if(quillContainer){
+        var quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            placeholder: 'Write your thoughts here...',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'blockquote', 'code-block'],
+                    [{ list: 'ordered'}, { list: 'bullet' }],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Find the original textarea and hide it; sync on submit
+        var textarea = document.getElementById('id_description');
+        if(textarea){
+            // If the textarea already has content (e.g., editing), load it into Quill
+            if(textarea.value && textarea.value.trim().length > 0){
+                try{
+                    quill.root.innerHTML = textarea.value;
+                }catch(e){
+                    // fallback: set as text
+                    quill.setText(textarea.value);
+                }
+            }
+
+            // Hide the textarea visually but keep it in the DOM for form binding
+            textarea.style.display = 'none';
+
+            // On form submit, copy HTML from Quill into the textarea so the server receives it
+            var form = textarea.closest('form');
+            if(form){
+                form.addEventListener('submit', function(){
+                    textarea.value = quill.root.innerHTML;
+                });
+            }
+        }
+    // Expose quill instance globally so other scripts can access it
+    window._quill = quill;
+    // Ensure form submit always copies Quill HTML into the textarea (robust fallback)
+    try{
+        const theForm = document.querySelector('form[method="post"]');
+        const descriptionTextarea = document.getElementById('id_description');
+        if(theForm && descriptionTextarea){
+            theForm.addEventListener('submit', function(evt){
+                try{
+                    // copy HTML into textarea before submission
+                    if(window._quill && window._quill.root){
+                        descriptionTextarea.value = window._quill.root.innerHTML || descriptionTextarea.value || '';
+                    }
+                }catch(e){ console.warn('Failed to copy Quill content to textarea on submit', e); }
+            });
+        }
+    }catch(e){ console.warn('Form submit binding failed', e); }
+    }
+
+    // AI prompt mode: if the server provided ai_prompt/ai_invitation values, wire UI
+    const AI_PROMPT = "{{ ai_prompt|default:''|escapejs }}";
+    const AI_INVITATION = "{{ ai_invitation|default:''|escapejs }}";
+    try{
+        // If ai prompt provided, set the title and hide date/location
+        if(AI_PROMPT){
+            const titleInput = document.getElementById('id_title');
+            if(titleInput){ titleInput.value = AI_PROMPT; titleInput.readOnly = true; }
+            const dateRow = document.getElementById('id_entry_date');
+            const locRow = document.getElementById('id_location');
+            try{
+                if(dateRow){ const container = dateRow.closest('.col-md-6'); if(container) container.style.display = 'none'; }
+            }catch(e){ console.warn('Could not hide entry_date column', e); }
+            try{
+                if(locRow){ const container = locRow.closest('.col-md-6'); if(container) container.style.display = 'none'; }
+            }catch(e){ console.warn('Could not hide location column', e); }
+
+            // Show transformed invitation above editor when available
+            if(AI_INVITATION){
+                const editor = document.getElementById('quill-editor');
+                if(editor && editor.parentNode){
+                    const box = document.createElement('div');
+                    box.className = 'alert alert-light small mb-2';
+                    box.textContent = AI_INVITATION;
+                    editor.parentNode.insertBefore(box, editor);
+                }
+            }
+        }
+    }catch(e){ console.error('AI prompt UI error', e); }
+});
+</script>
+<script>
+// Quill enter -> AI nudge
+document.addEventListener('DOMContentLoaded', function(){
+    const quillContainer = document.getElementById('quill-editor');
+    if(!quillContainer) return;
+    const quill = window._quill || null;
+    if(!quill) return;
+
+    // basic getCookie helper (CSRF token)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    let lastNudgeAt = 0;
+    const NUDGE_DEBOUNCE_MS = 800;
+
+    // status elements
+    const aiStatus = document.getElementById('ai-nudge-status');
+    const aiLoading = document.getElementById('ai-nudge-loading');
+    const aiLog = document.getElementById('ai-nudge-log');
+
+    function showLoading(){ console.debug('AI nudge: showLoading'); if(aiStatus){ aiStatus.style.display='block'; } if(aiLoading){ aiLoading.style.display='inline-block'; } }
+    function hideLoading(){ console.debug('AI nudge: hideLoading'); if(aiLoading){ aiLoading.style.display='none'; } }
+    function logLine(line){ console.debug('AI nudge log:', line); if(!aiLog) return; const ts = new Date().toISOString(); aiLog.textContent = ts + ' - ' + line + '\n' + aiLog.textContent; if(aiStatus) aiStatus.style.display='block'; }
+
+    // Helper: get the current paragraph text where the caret is
+    function getCurrentParagraphText(quill){
+        try{
+            const sel = quill.getSelection(true);
+            const full = quill.getText(); // includes trailing newline
+            if(!sel) return full.trim();
+            const index = sel.index;
+            // find previous newline before index
+            let start = full.lastIndexOf('\n', Math.max(0, index-1));
+            start = start === -1 ? 0 : start + 1;
+            // find next newline after index
+            let end = full.indexOf('\n', index);
+            end = end === -1 ? full.length : end;
+            const para = full.substring(start, end).trim();
+            return para;
+        }catch(e){ console.warn('Could not compute paragraph text', e); return '' }
+    }
+
+    // Helper to send nudge requests for a paragraph
+    function sendNudge(paragraphText){
+        if(!paragraphText) return;
+        const now = Date.now();
+        if(now - lastNudgeAt < NUDGE_DEBOUNCE_MS) return;
+        lastNudgeAt = now;
+
+        showLoading();
+        logLine('REQUEST: ' + paragraphText.slice(0, 200).replace(/\n/g, ' '));
+        console.debug('AI nudge: sending request to server', paragraphText.slice(0,200));
+        fetch('{% url "journal_ai_nudge" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ text: paragraphText })
+        }).then(r=>{
+            if(!r.ok){
+                // show user-visible message for server errors
+                showToast('Server error: ' + r.status + ' ' + r.statusText, 3000);
+                return r.text().then(t=>{ try{ return JSON.parse(t); }catch(e){ return { __text: t }; } });
+            }
+            return r.json().catch(()=>({}));
+        }).then(data=>{
+            hideLoading();
+            logLine('RESPONSE: ' + (data ? JSON.stringify(data).slice(0,600) : '(no JSON)'));
+            const nudge = (data && data.nudge) ? data.nudge.trim() : '';
+            if(nudge){
+                // Insert the nudge immediately after the current paragraph
+                const sel = quill.getSelection(true) || { index: quill.getLength() };
+                const full = quill.getText();
+                let end = full.indexOf('\n', sel.index);
+                if(end === -1) end = quill.getLength();
+                quill.insertText(end, '\n' + nudge + '\n', { 'italic': true });
+                logLine('INSERTED nudge');
+            } else {
+                logLine('AI nudge empty');
+            }
+        }).catch(err=>{
+            hideLoading();
+            console.error('AI nudge failed', err);
+            logLine('ERROR: ' + (err && err.message ? err.message : String(err)));
+            // show friendly toast when the server is unreachable
+            showToast('Could not reach nudge server — is the dev server running?', 3500);
+        });
+    }
+
+    // Bind Enter key via Quill keyboard (skip if shiftKey)
+    quill.keyboard.addBinding({ key: 13 }, function(range, context){
+        try{
+            const evt = context && context.event;
+            if(evt && evt.shiftKey){ return true; }
+            const paragraphText = getCurrentParagraphText(quill) || '';
+            if(!paragraphText || paragraphText.length < 4){ return true; }
+            sendNudge(paragraphText);
+        }catch(e){ console.error('Nudge handler error', e); }
+        return true;
+    });
+
+    // Also listen for raw Enter on the editor root as a robust fallback
+    try{
+        quill.root.addEventListener('keydown', function(e){
+            if(e.key === 'Enter' && !e.shiftKey){
+                // Don't prevent Quill default behavior; just trigger nudge
+                const paragraphText = getCurrentParagraphText(quill) || '';
+                if(paragraphText && paragraphText.length >= 4){ sendNudge(paragraphText); }
+            }
+        });
+    }catch(e){ console.warn('Could not attach raw keydown to quill root', e); }
+
+    // Wire test button to send current paragraph as nudge (manual trigger)
+    const testBtn = document.getElementById('ai-nudge-test-btn');
+    if(testBtn){
+        testBtn.addEventListener('click', function(){
+            try{
+                const paragraphText = getCurrentParagraphText(quill) || '';
+                if(!paragraphText){ logLine('TEST: no paragraph text to nudge'); return; }
+                sendNudge(paragraphText);
+            }catch(e){ console.error('Test nudge failed', e); }
+        });
+    }
+
+    // Add a visible floating nudge button (FAB) so user can click to trigger nudges
+    try{
+        const editorWrapper = quill.root.parentNode;
+        if(editorWrapper){
+            // Ensure the parent is positioned so absolute FAB can align
+            editorWrapper.style.position = editorWrapper.style.position || 'relative';
+
+            const fab = document.createElement('button');
+            fab.type = 'button';
+            fab.id = 'ai-nudge-fab';
+            fab.title = 'Send nudge (Enter)';
+            fab.className = 'btn btn-primary btn-sm';
+            fab.style.position = 'absolute';
+            fab.style.right = '12px';
+            fab.style.bottom = '12px';
+            fab.style.zIndex = 60;
+            fab.style.padding = '6px 8px';
+            fab.innerHTML = '&#128161;'; // lightbulb icon
+
+            fab.addEventListener('click', function(e){
+                e.preventDefault();
+                const paragraphText = getCurrentParagraphText(quill) || '';
+                if(!paragraphText){ logLine('FAB: nothing to nudge'); return; }
+                sendNudge(paragraphText);
+                showToast('Nudge sent');
+            });
+
+            editorWrapper.appendChild(fab);
+        }
+    }catch(e){ console.warn('Failed to add FAB nudge button', e); }
+
+    // Small toast helper (visible in-page feedback since console may be hidden)
+    function showToast(msg, timeout=1800){
+        try{
+            let t = document.getElementById('ai-nudge-toast');
+            if(!t){
+                t = document.createElement('div');
+                t.id = 'ai-nudge-toast';
+                t.style.position = 'absolute';
+                t.style.right = '12px';
+                t.style.bottom = '56px';
+                t.style.zIndex = 70;
+                t.style.padding = '6px 10px';
+                t.style.background = 'rgba(0,0,0,0.75)';
+                t.style.color = '#fff';
+                t.style.borderRadius = '6px';
+                t.style.fontSize = '12px';
+                t.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+                const editorWrapper = quill.root.parentNode;
+                if(editorWrapper) editorWrapper.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(()=>{ try{ t.style.display='none'; }catch(e){} }, timeout);
+        }catch(e){ /* ignore */ }
+    }
+
+    // Global key handler as robust fallback when editor is focused
+    document.addEventListener('keydown', function(e){
+        try{
+            if(e.key === 'Enter' && !e.shiftKey){
+                // Only when quill has focus
+                if(typeof quill.hasFocus === 'function' && quill.hasFocus()){
+                    const paragraphText = getCurrentParagraphText(quill) || '';
+                    if(paragraphText && paragraphText.length >= 4){
+                        // Slight debounce to avoid double-send
+                        setTimeout(()=>{ sendNudge(paragraphText); showToast('Nudge sent'); }, 10);
+                    }
+                }
+            }
+        }catch(e){ /* ignore */ }
+    }, true);
+});
+</script>
 <script>
 // Simple debounce
 function debounce(fn, wait){
@@ -182,18 +546,116 @@ document.addEventListener('DOMContentLoaded', function(){
         });
 
         document.addEventListener('click', function(e){
-            if(!contentSug.contains(e.target) && e.target !== contentInput){
-                contentSug.style.display = 'none';
-            }
-        });
+                if(!contentSug) return;
+                if(!contentSug.contains(e.target) && e.target !== contentInput){
+                    contentSug.style.display = 'none';
+                }
+            });
     }
 
     // Close suggestions when clicking outside
     document.addEventListener('click', function(e){
+        if(!sugBox) return;
         if(!sugBox.contains(e.target) && e.target !== locInput){
             sugBox.style.display = 'none';
         }
     });
+
+    // Voice Recording for Content
+    const voiceBtn = document.getElementById('voice-record-btn');
+    const voiceStatus = document.getElementById('voice-status');
+    const voiceFeedback = document.getElementById('voice-feedback');
+    const descriptionInput = document.getElementById('id_description');
+
+    if(voiceBtn && descriptionInput && 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US'; // Change to your preferred language
+        
+        let isRecording = false;
+        let finalTranscript = '';
+
+        recognition.onstart = function(){
+            isRecording = true;
+            voiceBtn.classList.remove('btn-outline-primary');
+            voiceBtn.classList.add('btn-danger');
+            voiceStatus.textContent = 'Recording...';
+            voiceFeedback.style.display = 'block';
+            voiceFeedback.textContent = 'Listening... Speak now';
+            voiceFeedback.className = 'text-primary';
+        };
+
+        recognition.onresult = function(event){
+            let interimTranscript = '';
+            
+            for(let i = event.resultIndex; i < event.results.length; i++){
+                const transcript = event.results[i][0].transcript;
+                if(event.results[i].isFinal){
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            // Show interim results as feedback
+            if(interimTranscript){
+                voiceFeedback.textContent = 'Recognizing: ' + interimTranscript;
+            }
+        };
+
+        recognition.onend = function(){
+            if(isRecording){
+                // Insert the final transcript at cursor position
+                if(finalTranscript.trim()){
+                    insertAtCursor(descriptionInput, finalTranscript);
+                    voiceFeedback.textContent = 'Added: ' + finalTranscript.substring(0, 50) + (finalTranscript.length > 50 ? '...' : '');
+                    voiceFeedback.className = 'text-success';
+                    setTimeout(() => {
+                        voiceFeedback.style.display = 'none';
+                    }, 3000);
+                }
+                finalTranscript = '';
+            }
+            
+            isRecording = false;
+            voiceBtn.classList.remove('btn-danger');
+            voiceBtn.classList.add('btn-outline-primary');
+            voiceStatus.textContent = 'Record';
+        };
+
+        recognition.onerror = function(event){
+            console.error('Speech recognition error:', event.error);
+            voiceFeedback.textContent = 'Error: ' + event.error;
+            voiceFeedback.className = 'text-danger';
+            voiceFeedback.style.display = 'block';
+            
+            isRecording = false;
+            voiceBtn.classList.remove('btn-danger');
+            voiceBtn.classList.add('btn-outline-primary');
+            voiceStatus.textContent = 'Record';
+            
+            setTimeout(() => {
+                voiceFeedback.style.display = 'none';
+            }, 3000);
+        };
+
+        voiceBtn.addEventListener('click', function(){
+            if(!isRecording){
+                finalTranscript = '';
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        });
+    } else if(voiceBtn) {
+        // Browser doesn't support speech recognition
+        voiceBtn.disabled = true;
+        voiceBtn.title = 'Speech recognition not supported in this browser';
+        voiceStatus.textContent = 'Not supported';
+    }
 });
 </script>
 {% endblock %}

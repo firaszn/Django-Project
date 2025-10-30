@@ -21,30 +21,90 @@
     
     <style>
         :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f39c12;
-            --accent-color: #e74c3c;
+            --primary-color: #f4a582;
+            --secondary-color: #ffb88c;
+            --accent-color: #ffd89b;
+            --pink-accent: #ff9ec5;
+            --text-dark: #3d2817;
+            --text-light: #ffffff;
         }
         
         body {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            background: linear-gradient(-45deg, #ff9ec5, #f4a582, #ffb88c, #ffd89b, #f4a582, #ff9ec5);
+            background-size: 400% 400%;
+            animation: softGradientShift 15s ease infinite;
+            color: var(--text-dark);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        @keyframes softGradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(244, 165, 130, 0.2);
         }
         
         .navbar-brand {
             font-weight: bold;
-            color: var(--primary-color) !important;
+            color: var(--text-light) !important;
+        }
+        
+        .navbar .nav-link {
+            color: var(--text-light) !important;
+            transition: color 0.3s ease;
+        }
+        
+        .navbar .nav-link:hover {
+            color: var(--pink-accent) !important;
+        }
+        
+        .navbar .nav-link.active {
+            color: var(--pink-accent) !important;
+            font-weight: bold;
+        }
+        
+        .dropdown-menu {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(244, 165, 130, 0.2);
+        }
+        
+        .dropdown-item {
+            color: var(--text-dark);
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(244, 165, 130, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .navbar-toggler {
+            border-color: var(--text-light);
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
         }
         
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
+            color: white;
+            transition: all 0.3s ease;
         }
         
         .btn-primary:hover {
-            background-color: #357abd;
-            border-color: #357abd;
+            background-color: var(--pink-accent);
+            border-color: var(--pink-accent);
+            box-shadow: 0 4px 12px rgba(255, 158, 197, 0.3);
         }
         
         .main-content {
@@ -56,18 +116,52 @@
         .footer {
             margin-top: 60px;
             padding: 2rem 0;
-            background-color: #f8f9fa;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: rgba(244, 165, 130, 0.15);
+            border-top: 1px solid rgba(244, 165, 130, 0.2);
+            color: var(--text-dark);
         }
         
         .card {
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(244, 165, 130, 0.2);
+            color: var(--text-dark);
         }
         
         .card:hover {
             transform: translateY(-5px);
+        }
+        
+        .alert {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(244, 165, 130, 0.3);
+            color: var(--text-dark);
+        }
+        
+        .alert-success {
+            background-color: rgba(212, 237, 218, 0.8);
+            border-color: rgba(25, 135, 84, 0.3);
+            color: #155724;
+        }
+        
+        .alert-danger, .alert-error {
+            background-color: rgba(248, 215, 218, 0.8);
+            border-color: rgba(220, 53, 69, 0.3);
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background-color: rgba(255, 243, 205, 0.8);
+            border-color: rgba(255, 193, 7, 0.3);
+            color: #856404;
+        }
+        
+        .alert-info {
+            background-color: rgba(209, 231, 247, 0.8);
+            border-color: rgba(23, 162, 184, 0.3);
+            color: #0c5460;
         }
         
         .profile-picture {
@@ -79,14 +173,15 @@
         }
         
         .nav-link.active {
-            color: var(--primary-color) !important;
+            color: var(--pink-accent) !important;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
     <!-- Navbar Exceptionnelle -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+    <!-- Increased navbar transparency and updated gradient colors -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{% url 'journal_home' %}" data-aos="fade-right">
                 <div class="logo-icon me-2">
@@ -107,10 +202,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-plus me-1"></i>{% trans "New Entry" %}
+                            <a class="nav-link" href="{% url 'journal_list' %}">
+                                <i class="fas fa-book me-2"></i>Journals
                             </a>
                         </li>
+                        
 
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'statistics_and_insights:dashboard' %}">
@@ -129,11 +225,7 @@
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'journal_list' %}">
-                                <i class="fas fa-book me-2"></i>Journals
-                            </a>
-                        </li>
+                        
 
                          <li class="nav-item">
                             <a class="nav-link" href="{% url 'TagsCat:category_management' %}">
@@ -145,6 +237,11 @@
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
+                     <li class="nav-item">
+                            <a class="nav-link" href="{% url 'journal_create' %}">
+                                <i class="fas fa-plus me-1"></i>{% trans "New Entry" %}
+                            </a>
+                        </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -212,6 +309,28 @@
         </div>
     {% endif %}
 
+    <!-- Calendar drawer trigger (compact) -->
+    <button id="open-calendar-btn" class="btn btn-primary" style="position:fixed; right:18px; bottom:18px; z-index:1050; border-radius:50%; width:56px; height:56px; display:flex; align-items:center; justify-content:center;"> 
+        <i class="fas fa-calendar-day"></i>
+    </button>
+
+    <!-- Calendar Drawer -->
+    <div id="calendar-drawer" style="position:fixed; right:18px; bottom:90px; width:320px; max-width:90%; background:rgba(255,255,255,0.95); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:12px; z-index:1050; display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong id="calendar-title"></strong>
+            <div>
+                <button id="cal-prev" class="btn btn-sm btn-outline-secondary me-1">&lt;</button>
+                <button id="cal-next" class="btn btn-sm btn-outline-secondary">&gt;</button>
+            </div>
+        </div>
+        <div id="calendar-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px;">
+            <!-- day cells injected by JS -->
+        </div>
+        <div id="calendar-encouragement" class="mt-2 small text-muted"></div>
+    </div>
+
+  
+
     <!-- Main Content -->
     <main class="main-content">
         {% block content %}{% endblock %}
@@ -231,6 +350,136 @@
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}"></script>
     
+    <!-- Calendar drawer script -->
+    <script>
+        (function(){
+            const btn = document.getElementById('open-calendar-btn');
+            const drawer = document.getElementById('calendar-drawer');
+            const grid = document.getElementById('calendar-grid');
+            const title = document.getElementById('calendar-title');
+            const enc = document.getElementById('calendar-encouragement');
+            const prev = document.getElementById('cal-prev');
+            const next = document.getElementById('cal-next');
+
+            let current = new Date();
+
+            function formatTitle(d){
+                return d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+            }
+
+            function buildGrid(year, month, daysObj){
+                grid.innerHTML = '';
+                // show weekday headers
+                const weekNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                for(let i=0;i<7;i++){
+                    const h = document.createElement('div');
+                    h.style.fontWeight='600';
+                    h.style.textAlign='center';
+                    h.style.fontSize='12px';
+                    h.textContent = weekNames[i];
+                    grid.appendChild(h);
+                }
+
+                const first = new Date(year, month-1, 1);
+                const lastDay = new Date(year, month, 0).getDate();
+                const startWeekday = first.getDay();
+
+                // fill blanks
+                for(let i=0;i<startWeekday;i++){
+                    const blank = document.createElement('div');
+                    grid.appendChild(blank);
+                }
+
+                for(let day=1; day<=lastDay; day++){
+                    const cell = document.createElement('button');
+                    cell.type = 'button';
+                    cell.className = 'btn btn-sm';
+                    cell.style.padding = '8px';
+                    cell.style.minHeight = '36px';
+                    cell.style.display = 'flex';
+                    cell.style.flexDirection = 'column';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                    cell.style.fontSize = '13px';
+                    cell.textContent = day;
+
+                    const key = String(day);
+
+                    // navigate to create page with entry_date when clicking any day
+                    cell.addEventListener('click', function(){
+                        try{
+                            const yyyy = String(year);
+                            const mm = String(month).padStart(2,'0');
+                            const dd = String(day).padStart(2,'0');
+                            const url = '{% url "journal_create" %}';
+                            window.location.href = url + '?entry_date=' + yyyy + '-' + mm + '-' + dd;
+                        }catch(e){ console.error('Calendar navigation error', e); }
+                    });
+
+                    if(daysObj && daysObj[key]){
+                        const mood = daysObj[key];
+                        const happy = mood.happy || 0;
+                        const sad = mood.sad || 0;
+                        const neutral = mood.neutral || 0;
+                        let emoji = '😐';
+                        if(happy >= sad && happy >= neutral && (happy||sad||neutral)) emoji = '😊';
+                        else if(sad > happy && sad >= neutral && (happy||sad||neutral)) emoji = '😢';
+                        else if(neutral > happy && neutral > sad && (happy||sad||neutral)) emoji = '😐';
+
+                        const badge = document.createElement('div');
+                        badge.textContent = emoji;
+                        badge.style.fontSize = '14px';
+                        badge.style.marginTop = '4px';
+                        cell.appendChild(badge);
+                        cell.style.background = 'linear-gradient(180deg, rgba(11,119,255,0.04), rgba(11,119,255,0.02))';
+                        cell.style.border = '1px solid rgba(0,0,0,0.06)';
+                    } else {
+                        cell.style.background = 'transparent';
+                        cell.style.border = '1px solid rgba(0,0,0,0.04)';
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+
+            function fetchCalendar(year, month){
+                fetch(`{% url 'journal_calendar_data' %}?year=${year}&month=${month}`)
+                    .then(r=>r.json())
+                    .then(data=>{
+                        title.textContent = new Date(data.year, data.month-1, 1).toLocaleString(undefined,{month:'long', year:'numeric'});
+                        const daysObj = {};
+                        // each item now contains { day, happy, sad, neutral }
+                        (data.days || []).forEach(it=>{ daysObj[String(it.day)] = it; });
+                        buildGrid(data.year, data.month, daysObj);
+                        enc.textContent = data.message || '';
+                    })
+                    .catch(err=>{
+                        title.textContent = formatTitle(current);
+                        grid.innerHTML = '<div class="text-muted small">Unable to load calendar</div>';
+                        enc.textContent = '';
+                    });
+            }
+
+            btn.addEventListener('click', function(){
+                if(drawer.style.display === 'none' || !drawer.style.display){
+                    drawer.style.display = 'block';
+                    fetchCalendar(current.getFullYear(), current.getMonth()+1);
+                } else {
+                    drawer.style.display = 'none';
+                }
+            });
+
+            prev.addEventListener('click', function(){
+                current.setMonth(current.getMonth() - 1);
+                fetchCalendar(current.getFullYear(), current.getMonth()+1);
+            });
+
+            next.addEventListener('click', function(){
+                current.setMonth(current.getMonth() + 1);
+                fetchCalendar(current.getFullYear(), current.getMonth()+1);
+            });
+        })();
+    </script>
     <script>
         // Initialize AOS animations
         AOS.init({

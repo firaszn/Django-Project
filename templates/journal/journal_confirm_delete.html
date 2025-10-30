@@ -1,25 +1,26 @@
 {% extends 'base.html' %}
 
-{% block title %}Delete Entry - AI Personal Journal{% endblock %}
+{% block title %}Confirm Delete - {{ journal.title }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <div class="row">
-        <div class="col-8 offset-2">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Confirm Delete</h4>
-                </div>
-                <div class="card-body">
-                    <p>Are you sure you want to permanently delete the journal entry "<strong>{{ journal.title }}</strong>"?</p>
-                    <form method="post">
-                        {% csrf_token %}
-                        <button class="btn btn-danger" type="submit">Yes, delete</button>
-                        <a href="{% url 'journal_detail' journal.id %}" class="btn btn-outline-secondary">Cancel</a>
-                    </form>
-                </div>
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <h4>Move to Deleted (Trash)</h4>
+          <p>Are you sure you want to move the journal entry "<strong>{{ journal.title }}</strong>" to Deleted? You can restore it later from the Deleted list.</p>
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-flex gap-2">
+              <button class="btn btn-danger" type="submit">Move to Deleted</button>
+              <a href="{% url 'journal_detail' journal.id %}" class="btn btn-outline-secondary">Cancel</a>
             </div>
+          </form>
         </div>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
+        {% endblock %}

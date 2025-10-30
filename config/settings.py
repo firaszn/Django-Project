@@ -90,7 +90,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3308',
+        'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -98,7 +98,7 @@ DATABASES = {
     }
 }
 GEMINI_API_KEY = 'AIzaSyCIReSYkG37uyIV-VvU87LObnhPzEJSN9M'
-GEMINI_MODEL="models/text-bison-001"
+#GEMINI_MODEL="models/text-bison-001"
 
 
 # Désactiver les messages de validation de mot de passe

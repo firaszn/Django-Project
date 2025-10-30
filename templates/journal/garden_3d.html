@@ -1,0 +1,431 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="garden-3d-container" style="height:75vh;">
+  <div id="garden3d" style="width:100%; height:100%;"></div>
+    <div id="gardenControls" style="position:fixed; top:1rem; right:1rem; z-index:9999;">
+      
+    </div>
+</div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+// Enhanced Ghibli-style Three.js garden with grass, vibrant flowers, and decorative plants
+// Fetches /journals/garden-data/ and creates a field of animated flowers
+
+const container = document.getElementById('garden3d');
+let scene, camera, renderer, controls;
+let flowers = [];
+
+// Raycaster and mouse for hover + click interactions
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+// Tooltip element (shows entry title on hover)
+let tooltip = document.getElementById('gardenTooltip');
+if(!tooltip){
+  tooltip = document.createElement('div');
+  tooltip.id = 'gardenTooltip';
+  tooltip.style.position = 'absolute';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.display = 'none';
+  tooltip.style.background = 'rgba(0,0,0,0.75)';
+  tooltip.style.color = '#fff';
+  tooltip.style.padding = '6px 8px';
+  tooltip.style.borderRadius = '4px';
+  tooltip.style.zIndex = 9999;
+  tooltip.style.fontSize = '0.9rem';
+  document.body.appendChild(tooltip);
+}
+let bloomingFlowers = new Set();
+
+function initScene() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
+  scene.fog = new THREE.Fog(0x87ceeb, 80, 120);
+
+  camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+  camera.position.set(0, 12, 35);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowShadowMap;
+  container.innerHTML = '';
+  container.appendChild(renderer.domElement);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.5;
+
+  const hemi = new THREE.HemisphereLight(0xfff5e6, 0xd4c5b9, 1.2);
+  hemi.position.set(0, 200, 0);
+  scene.add(hemi);
+
+  const dir = new THREE.DirectionalLight(0xffe8cc, 0.9);
+  dir.position.set(15, 20, 10);
+  dir.castShadow = true;
+  dir.shadow.mapSize.width = 2048;
+  dir.shadow.mapSize.height = 2048;
+  dir.shadow.camera.far = 100;
+  dir.shadow.camera.left = -50;
+  dir.shadow.camera.right = 50;
+  dir.shadow.camera.top = 50;
+  dir.shadow.camera.bottom = -50;
+  scene.add(dir);
+
+  const fill = new THREE.DirectionalLight(0xd4e4d8, 0.4);
+  fill.position.set(-10, 15, -20);
+  scene.add(fill);
+
+  const gmat = new THREE.MeshStandardMaterial({ 
+    color: 0x6b9d5c,
+    roughness: 0.9,
+    metalness: 0
+  });
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), gmat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.5;
+  ground.receiveShadow = true;
+  scene.add(ground);
+}
+
+function colorForMood(mood){
+  const map = {
+    'happy': 0xffd166,      // warm gold
+    'sad': 0xb8d4e8,        // soft blue
+    'neutral': 0xd4c5b9,    // warm taupe
+    'angry': 0xff6b6b,      // bright red
+    'anxious': 0xe6c9f0,    // soft lavender
+    'excited': 0xff6b9d,    // vibrant pink
+    'grateful': 0xd4e4d8,   // pale sage
+    'reflective': 0xc9b8a8, // muted taupe
+    'loved': 0xff69b4,      // hot pink
+    'peaceful': 0x87ceeb,   // sky blue
+    'creative': 0xff8c42    // bright orange
+  };
+  if(!mood) return 0xd4c5b9;
+  const key = mood.toLowerCase();
+  return map[key] || 0xd4e4d8;
+}
+
+function makeTree(x, z) {
+  const g = new THREE.Group();
+  
+  // Trunk
+  const trunkGeom = new THREE.CylinderGeometry(0.3, 0.4, 3, 8);
+  const trunkMat = new THREE.MeshStandardMaterial({ 
+    color: 0x5a4a3a,
+    roughness: 0.8,
+    metalness: 0
+  });
+  const trunk = new THREE.Mesh(trunkGeom, trunkMat);
+  trunk.position.y = 1.5;
+  trunk.castShadow = true;
+  trunk.receiveShadow = true;
+  g.add(trunk);
+  
+  // Foliage (multiple spheres for organic shape)
+  const foliageMat = new THREE.MeshStandardMaterial({ 
+    color: 0x4a7c59,
+    roughness: 0.7,
+    metalness: 0
+  });
+  
+  const foliagePositions = [
+    { pos: [0, 3.5, 0], scale: 1.5 },
+    { pos: [-0.8, 3, 0.5], scale: 1.2 },
+    { pos: [0.8, 3, -0.5], scale: 1.2 },
+    { pos: [0, 2.5, 0.8], scale: 1 }
+  ];
+  
+  foliagePositions.forEach(f => {
+    const foliageGeom = new THREE.SphereGeometry(1, 8, 8);
+    const foliage = new THREE.Mesh(foliageGeom, foliageMat);
+    foliage.position.set(...f.pos);
+    foliage.scale.set(f.scale, f.scale, f.scale);
+    foliage.castShadow = true;
+    foliage.receiveShadow = true;
+    g.add(foliage);
+  });
+  
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function makeBush(x, z) {
+  const g = new THREE.Group();
+  
+  const bushMat = new THREE.MeshStandardMaterial({ 
+    color: 0x5a9b6f,
+    roughness: 0.8,
+    metalness: 0
+  });
+  
+  const bushGeom = new THREE.SphereGeometry(0.8, 8, 8);
+  const bush = new THREE.Mesh(bushGeom, bushMat);
+  bush.scale.set(1.2, 0.9, 1.2);
+  bush.castShadow = true;
+  bush.receiveShadow = true;
+  g.add(bush);
+  
+  g.position.set(x, 0.4, z);
+  return g;
+}
+
+function makeFlower(entry){
+  const g = new THREE.Group();
+
+  const stemGeom = new THREE.CylinderGeometry(0.04, 0.05, 2.2, 6);
+  const stemMat = new THREE.MeshStandardMaterial({ 
+    color: 0x4a7c59,
+    roughness: 0.7,
+    metalness: 0
+  });
+  const stem = new THREE.Mesh(stemGeom, stemMat);
+  stem.position.y = 1.1;
+  stem.castShadow = true;
+  stem.receiveShadow = true;
+  g.add(stem);
+
+  const petalColor = colorForMood(entry.mood);
+  const petalMat = new THREE.MeshStandardMaterial({ 
+    color: petalColor,
+    metalness: 0.1,
+    roughness: 0.6,
+    emissive: petalColor,
+    emissiveIntensity: 0.1
+  });
+
+  const petalCount = 8;
+  for(let i = 0; i < petalCount; i++){
+    // Create petal with better shape (elongated)
+    const petalGeom = new THREE.SphereGeometry(0.2, 10, 8);
+    const petal = new THREE.Mesh(petalGeom, petalMat);
+    
+    const angle = i / petalCount * Math.PI * 2;
+    const r = 0.4;
+    petal.position.set(Math.cos(angle) * r, 2.0, Math.sin(angle) * r);
+    petal.scale.set(1.2, 0.7, 0.5);
+    petal.rotation.z = angle;
+    petal.castShadow = true;
+    petal.receiveShadow = true;
+    g.add(petal);
+  }
+
+  const centerGeom = new THREE.SphereGeometry(0.25, 12, 10);
+  const centerMat = new THREE.MeshStandardMaterial({ 
+    color: 0xffe27a,
+    metalness: 0.2,
+    roughness: 0.5,
+    emissive: 0xffd700,
+    emissiveIntensity: 0.3
+  });
+  const center = new THREE.Mesh(centerGeom, centerMat);
+  center.position.y = 2.0;
+  center.castShadow = true;
+  center.receiveShadow = true;
+  g.add(center);
+
+  const leafMat = new THREE.MeshStandardMaterial({ 
+    color: 0x5a9b6f,
+    roughness: 0.7,
+    metalness: 0
+  });
+  for(let i = 0; i < 2; i++){
+    const leafGeom = new THREE.SphereGeometry(0.15, 8, 6);
+    const leaf = new THREE.Mesh(leafGeom, leafMat);
+    leaf.position.set((i === 0 ? -0.3 : 0.3), 1.2, 0);
+    leaf.scale.set(0.6, 1.2, 0.3);
+    leaf.rotation.z = (i === 0 ? 0.4 : -0.4);
+    leaf.castShadow = true;
+    leaf.receiveShadow = true;
+    g.add(leaf);
+  }
+
+  const wc = (entry.word_count || 10);
+  const s = Math.min(2.2, Math.max(0.8, 0.8 + (wc / 200)));
+  g.scale.set(s, s, s);
+
+  // metadata for interaction
+  g.userData = { id: entry.id, title: entry.title, isNew: true };
+  g.castShadow = true;
+  return g;
+}
+
+function placeFlowers(entries){
+  flowers.forEach(f => scene.remove(f));
+  flowers = [];
+  bloomingFlowers.clear();
+
+  const cols = Math.ceil(Math.sqrt(entries.length || 1));
+  const spacing = 1.6; // tighter spacing to fit more flora
+  entries.forEach((e, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = (col - cols / 2) * spacing + (Math.random() - 0.5) * 1.2;
+    const z = (row - cols / 2) * spacing + (Math.random() - 0.5) * 1.2;
+    // Always render entries as flowers (no trees/bushes replacing entries)
+    const flower = makeFlower(e);
+    flower.position.set(x, 0, z);
+    flower.scale.set(0, 0, 0); // Start at zero for bloom animation
+    scene.add(flower);
+    flowers.push(flower);
+    bloomingFlowers.add(flower);
+  });
+
+  // Add clustered trees around the edges
+  const edgeCount = Math.min(20, Math.floor(entries.length / 3) + 6);
+  for(let i=0;i<edgeCount;i++){
+    const angle = (i / edgeCount) * Math.PI * 2;
+    const radius = 28 + Math.random() * 8;
+    const x = Math.cos(angle) * radius + (Math.random()-0.5) * 6;
+    const z = Math.sin(angle) * radius + (Math.random()-0.5) * 6;
+    const tree = makeTree(x, z);
+    scene.add(tree);
+  }
+
+  // Add scattered bushes for undergrowth
+  const bushCount = Math.min(30, Math.floor(entries.length / 2) + 6);
+  for(let i=0;i<bushCount;i++){
+    const x = (Math.random() - 0.5) * cols * spacing * 1.6;
+    const z = (Math.random() - 0.5) * cols * spacing * 1.6;
+    const bush = makeBush(x, z);
+    scene.add(bush);
+    flowers.push(bush);
+  }
+
+  // Small grass clumps around random positions (decorative, not interactive)
+  const grassCount = Math.min(80, Math.floor(entries.length) + 10);
+  for(let i=0;i<grassCount;i++){
+    const x = (Math.random() - 0.5) * cols * spacing * 1.8;
+    const z = (Math.random() - 0.5) * cols * spacing * 1.8;
+    const g = new THREE.Group();
+    const bladeMat = new THREE.MeshStandardMaterial({ color: 0x4a7c59, roughness: 0.9 });
+    for(let b=0;b<3;b++){
+      const blade = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.4, 5), bladeMat);
+      blade.position.set((Math.random()-0.5)*0.15, 0.15, (Math.random()-0.5)*0.15);
+      blade.rotation.z = (Math.random()-0.5) * 0.5;
+      blade.rotation.x = -0.2 - Math.random()*0.4;
+      blade.castShadow = true;
+      g.add(blade);
+    }
+    g.position.set(x, 0.05, z);
+    g.scale.set(0.8 + Math.random()*0.6, 0.8 + Math.random()*0.6, 0.8 + Math.random()*0.6);
+    scene.add(g);
+  }
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t = performance.now() * 0.001;
+  
+  flowers.forEach((f, idx) => {
+    if(bloomingFlowers.has(f)){
+      const targetScale = f.userData.targetScale || 1;
+      const currentScale = f.scale.x;
+      if(currentScale < targetScale){
+        const newScale = Math.min(targetScale, currentScale + 0.02);
+        f.scale.set(newScale, newScale, newScale);
+        if(newScale >= targetScale){
+          bloomingFlowers.delete(f);
+        }
+      }
+    }
+
+    const sway = Math.sin(t * 0.8 + idx * 0.3) * 0.05;
+    const sway2 = Math.cos(t * 0.6 + idx * 0.5) * 0.03;
+    f.rotation.z = sway;
+    f.rotation.x = sway2;
+    
+    // Subtle vertical bob
+    const bob = Math.sin(t * 0.5 + idx) * 0.08;
+    f.position.y = bob;
+  });
+  
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+async function loadData(){
+  const urlBase = '{% url "journal_garden_data" %}';
+  const resp = await fetch(urlBase);
+  const data = await resp.json();
+  placeFlowers(data);
+}
+
+function onResize(){
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+}
+
+initScene();
+loadData();
+animate();
+window.addEventListener('resize', onResize);
+
+document.getElementById('refreshGarden').addEventListener('click', async () => {
+  await loadData();
+});
+
+container.addEventListener('click', (ev) => {
+  if(!renderer) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  const x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+  const y = - ((ev.clientY - rect.top) / rect.height) * 2 + 1;
+  mouse.set(x, y);
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(flowers, true);
+  if(intersects.length){
+    let obj = intersects[0].object;
+    while(obj && !obj.userData?.id) obj = obj.parent;
+    if(obj && obj.userData?.id){
+      const id = obj.userData.id;
+      window.location.href = `/journals/${id}/`;
+    }
+  }
+});
+
+// Pointer move to show hover tooltip with title
+container.addEventListener('pointermove', (ev) => {
+  if(!renderer) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  const x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+  const y = - ((ev.clientY - rect.top) / rect.height) * 2 + 1;
+  mouse.set(x, y);
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(flowers, true);
+  if(intersects.length){
+    let obj = intersects[0].object;
+    while(obj && !obj.userData?.id) obj = obj.parent;
+    if(obj && obj.userData?.title){
+      tooltip.textContent = obj.userData.title;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (ev.clientX + 12) + 'px';
+      tooltip.style.top = (ev.clientY + 12) + 'px';
+      return;
+    }
+  }
+  tooltip.style.display = 'none';
+});
+
+container.addEventListener('pointerleave', () => {
+  tooltip.style.display = 'none';
+});
+</script>
+
+{% endblock %}
