@@ -1,62 +1,7 @@
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
-import base64
-import os
-from decouple import config
-
- 
-# Load environment variables from a local .env file if present
-try:
-    from dotenv import load_dotenv, find_dotenv  # type: ignore
-    _env_file = find_dotenv()
-    if _env_file:
-        load_dotenv(_env_file)
-except Exception:
-    # Fallback minimal loader: parse KEY=VALUE lines in .env at project root
-    try:
-        _base_dir = Path(__file__).resolve().parent.parent
-        _fallback_env = _base_dir / '.env'
-        if _fallback_env.exists():
-            for _line in _fallback_env.read_text(encoding='utf-8').splitlines():
-                _line = _line.strip()
-                if not _line or _line.startswith('#') or '=' not in _line:
-                    continue
-                _k, _v = _line.split('=', 1)
-                os.environ.setdefault(_k.strip(), _v.strip())
-    except Exception:
-        pass
-
-
-ENCRYPTION_KEY = b'3YIQyb4cb-oImwuwsxOwqua6xgFc67pavrIipzinrMw='
-
-# Apple CalDAV settings
-APPLE_CALDAV_SERVER = "https://caldav.icloud.com"
-
-# Logging
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': 'apple_reminders.log',
-        },
-    },
-    'loggers': {
-        'reminder_and_goals': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-}
-
-# AI Goal Suggestions
-# Configure Gemini for high-quality suggestions. Put values in your .env file.
-GOAL_GEMINI_API_KEY = os.getenv('GOAL_GEMINI_API_KEY')
-GOAL_GEMINI_MODEL = os.getenv('GOAL_GEMINI_MODEL', 'gemini-latest')
+from decouple import config, Csv
 
 # Import de la configuration email
 try:
@@ -292,3 +237,7 @@ GROQ_API_KEY = config('GROQ_API_KEY', default='')
 
 # HuggingFace API (Optionnel - fallback)
 HUGGINGFACE_API_KEY = config('HUGGINGFACE_API_KEY', default=None)  # Optionnel : clé HuggingFace si vous en avez une
+
+# reCAPTCHA Configuration
+RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
+RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
