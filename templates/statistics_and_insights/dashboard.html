@@ -5,400 +5,574 @@
 {% block title %}Statistics & Insights - AI Personal Journal{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="statistics-dashboard">
-    <!-- Header -->
-    <div class="dashboard-header">
-        <div class="header-content">
-            <h1 class="page-title">
-                <i class="fas fa-chart-bar me-3"></i>
-                Statistics & Insights
-            </h1>
-            <p class="page-subtitle">Analyse des données et insights de journalisation</p>
-        </div>
-        <div class="header-actions">
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="dashboard-header mb-5">
+        <br><br>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="page-title mb-2">
+                    <i class="fas fa-chart-line me-2"></i>
+                    {% trans "Statistics & Insights" %}
+                </h1>
+                <p class="page-subtitle text-muted mb-0">
+                    {% trans "Discover patterns and insights from your journaling journey" %}
+                </p>
+            </div>
             <div class="date-filter">
-                <select class="form-select">
-                    <option>Last 7 days</option>
-                    <option>Last 30 days</option>
-                    <option>Last 90 days</option>
-                    <option selected>All time</option>
+                <select class="form-select" id="timeRangeFilter">
+                    <option value="7">{% trans "Last 7 days" %}</option>
+                    <option value="30">{% trans "Last 30 days" %}</option>
+                    <option value="90">{% trans "Last 90 days" %}</option>
+                    <option value="all" selected>{% trans "All time" %}</option>
                 </select>
             </div>
         </div>
     </div>
 
-    
-    <!-- Statistics Cards -->
-    <div class="row g-4 mb-5">
+    <!-- Key Metrics Cards -->
+    <div class="row g-3 mb-5">
         <div class="col-xl-3 col-md-6">
-            <div class="stats-card primary">
-                <div class="stats-icon">
-                    <i class="fas fa-book"></i>
+            <div class="metric-card">
+                <div class="metric-icon journal-entries">
+                    <i class="fas fa-book-open"></i>
                 </div>
-                <div class="stats-content">
-                    <h3>{{ user_stats.total_entries }}</h3>
-                    <p>Total Entries</p>
+                <div class="metric-content">
+                    <h3 class="metric-value">{{ user_stats.total_entries|default:"0" }}</h3>
+                    <p class="metric-label">{% trans "Total Entries" %}</p>
                 </div>
-                <div class="stats-trend">
+                <div class="metric-trend positive">
                     <i class="fas fa-arrow-up"></i>
-                    <span>12%</span>
+                    <span>{% trans "Consistent" %}</span>
                 </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6">
-            <div class="stats-card success">
-                <div class="stats-icon">
+            <div class="metric-card">
+                <div class="metric-icon streak">
                     <i class="fas fa-fire"></i>
                 </div>
-                <div class="stats-content">
-                    <h3>{{ user_stats.current_streak }}</h3>
-                    <p>Current Streak</p>
+                <div class="metric-content">
+                    <h3 class="metric-value">{{ user_stats.current_streak|default:"0" }}</h3>
+                    <p class="metric-label">{% trans "Current Streak" %}</p>
                 </div>
-                <div class="stats-trend">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>5 days</span>
+                <div class="metric-trend {% if user_stats.current_streak > 3 %}positive{% else %}neutral{% endif %}">
+                    <i class="fas {% if user_stats.current_streak > 3 %}fa-arrow-up{% else %}fa-minus{% endif %}"></i>
+                    <span>{% if user_stats.current_streak > 3 %}{% trans "Growing" %}{% else %}{% trans "Start now" %}{% endif %}</span>
                 </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6">
-            <div class="stats-card info">
-                <div class="stats-icon">
+            <div class="metric-card">
+                <div class="metric-icon mood">
                     <i class="fas fa-smile"></i>
                 </div>
-                <div class="stats-content">
-                    <h3>{{ user_stats.average_mood|floatformat:2 }}</h3>
-                    <p>Avg Mood Score</p>
+                <div class="metric-content">
+                    <h3 class="metric-value">{{ user_stats.average_mood|default:"0"|floatformat:1 }}</h3>
+                    <p class="metric-label">{% trans "Avg Mood" %}</p>
                 </div>
-                <div class="stats-trend">
-                    {% if user_stats.average_mood > 0.1 %}
-                    <i class="fas fa-arrow-up text-success"></i>
-                    <span class="text-success">Positive</span>
-                    {% elif user_stats.average_mood < -0.1 %}
-                    <i class="fas fa-arrow-down text-danger"></i>
-                    <span class="text-danger">Negative</span>
-                    {% else %}
-                    <i class="fas fa-minus text-warning"></i>
-                    <span class="text-warning">Neutral</span>
-                    {% endif %}
+                <div class="metric-trend 
+                    {% if user_stats.average_mood > 0.1 %}positive
+                    {% elif user_stats.average_mood < -0.1 %}negative
+                    {% else %}neutral{% endif %}">
+                    <i class="fas 
+                        {% if user_stats.average_mood > 0.1 %}fa-arrow-up
+                        {% elif user_stats.average_mood < -0.1 %}fa-arrow-down
+                        {% else %}fa-minus{% endif %}">
+                    </i>
+                    <span>
+                        {% if user_stats.average_mood > 0.1 %}{% trans "Positive" %}
+                        {% elif user_stats.average_mood < -0.1 %}{% trans "Needs attention" %}
+                        {% else %}{% trans "Stable" %}{% endif %}
+                    </span>
                 </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6">
-            <div class="stats-card warning">
-                <div class="stats-icon">
+            <div class="metric-card">
+                <div class="metric-icon words">
                     <i class="fas fa-font"></i>
                 </div>
-                <div class="stats-content">
-                    <h3>{{ user_stats.average_word_count|floatformat:0 }}</h3>
-                    <p>Avg Words/Entry</p>
+                <div class="metric-content">
+                    <h3 class="metric-value">{{ user_stats.average_word_count|default:"0"|floatformat:0 }}</h3>
+                    <p class="metric-label">{% trans "Avg Words" %}</p>
                 </div>
-                <div class="stats-trend">
+                <div class="metric-trend positive">
                     <i class="fas fa-arrow-up"></i>
-                    <span>8%</span>
+                    <span>{% trans "Detailed" %}</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Insights Section -->
-    {% if weekly_insight %}
-    <div class="row g-4">
+    <!-- Insights & AI Recommendations Section -->
+    {% if weekly_insight and weekly_insight.insights %}
+    <div class="row g-4 mb-5">
         <!-- Weekly Insights -->
         <div class="col-lg-6">
-            <div class="insight-card">
-                <div class="card-header">
-                    <h4 class="card-title">
-                        <i class="fas fa-lightbulb me-2"></i>
-                        Weekly Insights
+            <div class="insight-section">
+                <div class="section-header">
+                    <h4 class="section-title">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        {% trans "Weekly Insights" %}
                     </h4>
-                    <span class="badge bg-primary">This Week</span>
+                    <span class="insight-badge">{% trans "This Week" %}</span>
                 </div>
-                <div class="card-body">
-                    <div class="insight-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Entries Written</span>
-                            <span class="stat-value">{{ weekly_insight.insights.total_entries }}</span>
+                <div class="insight-content">
+                    <div class="insight-metrics">
+                        <div class="insight-metric">
+                            <span class="metric-name">{% trans "Entries Written" %}</span>
+                            <span class="metric-value">{{ weekly_insight.insights.total_entries|default:"0" }}</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Average Mood</span>
-                            <span class="stat-value {{ weekly_insight.insights.average_mood|default:0|yesno:'positive,negative,neutral' }}">
-                                {{ weekly_insight.insights.average_mood }}
+                        <div class="insight-metric">
+                            <span class="metric-name">{% trans "Average Mood" %}</span>
+                            <span class="metric-value mood-{{ weekly_insight.insights.average_mood|default:"0"|floatformat:0 }}">
+                                {{ weekly_insight.insights.average_mood|default:"0"|floatformat:1 }}
                             </span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Words/Entry</span>
-                            <span class="stat-value">{{ weekly_insight.insights.average_word_count }}</span>
+                        <div class="insight-metric">
+                            <span class="metric-name">{% trans "Words per Entry" %}</span>
+                            <span class="metric-value">{{ weekly_insight.insights.average_word_count|default:"0" }}</span>
                         </div>
                     </div>
                     
-                    <div class="insight-patterns mt-4">
-                        <h6>Detected Patterns:</h6>
+                    {% if weekly_insight.patterns %}
+                    <div class="patterns-section mt-4">
+                        <h6 class="patterns-title">{% trans "Detected Patterns" %}</h6>
                         <ul class="patterns-list">
                             {% for pattern in weekly_insight.patterns %}
-                            <li>{{ pattern }}</li>
+                            <li class="pattern-item">
+                                <i class="fas fa-bullseye me-2"></i>
+                                {{ pattern }}
+                            </li>
                             {% endfor %}
                         </ul>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Recommendations -->
+        <!-- AI Recommendations -->
         <div class="col-lg-6">
-            <div class="insight-card">
-                <div class="card-header">
-                    <h4 class="card-title">
-                        <i class="fas fa-magic me-2"></i>
-                        AI Recommendations
+            <div class="insight-section">
+                <div class="section-header">
+                    <h4 class="section-title">
+                        <i class="fas fa-robot me-2"></i>
+                        {% trans "AI Recommendations" %}
                     </h4>
-                    <span class="badge bg-success">Personalized</span>
+                    <span class="insight-badge personalized">{% trans "Personalized" %}</span>
                 </div>
-                <div class="card-body">
+                <div class="insight-content">
+                    {% if weekly_insight.recommendations %}
                     <div class="recommendations-list">
                         {% for recommendation in weekly_insight.recommendations %}
                         <div class="recommendation-item">
                             <div class="recommendation-icon">
-                                <i class="fas fa-star"></i>
+                                <i class="fas fa-lightbulb"></i>
                             </div>
-                            <div class="recommendation-content">
+                            <div class="recommendation-text">
                                 <p>{{ recommendation }}</p>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="empty-recommendations text-center py-4">
+                        <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">{% trans "Write more entries to get personalized recommendations" %}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
     {% else %}
     <!-- Empty State -->
-    <div class="empty-state">
-        <div class="empty-icon">
-            <i class="fas fa-chart-bar"></i>
+    <div class="empty-insights text-center py-5">
+        <div class="empty-icon mb-4">
+            <i class="fas fa-chart-bar fa-3x text-muted"></i>
         </div>
-        <h3>No Data Available</h3>
-        <p>Start writing journal entries to see your statistics and insights.</p>
-        
+        <h4 class="mb-3">{% trans "No Insights Yet" %}</h4>
+        <p class="text-muted mb-4">{% trans "Start writing journal entries to unlock personalized insights and recommendations." %}</p>
+        <a href="{% url 'journal:entry_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>
+            {% trans "Write First Entry" %}
+        </a>
     </div>
     {% endif %}
 
-    <!-- Quick Actions -->
+    <!-- Action Buttons Section -->
     <div class="row mt-5">
         <div class="col-12">
-            <div class="card p-4">
-                <h5 class="section-title">{% trans "Quick Actions" %}</h5>
-                <div class="row g-3">
+            <div class="action-buttons-section">
+                <div class="row g-3 justify-content-center">
+                    <!-- Navigation Buttons -->
                     <div class="col-md-4">
-                        <a href="{% url 'statistics_and_insights:mood_analytics' %}" class="action-card p-3 d-block text-center">
-                            <div class="action-icon mx-auto mb-2">
+                        <a href="{% url 'statistics_and_insights:mood_analytics' %}" class="action-button-card">
+                            <div class="action-icon">
                                 <i class="fas fa-heartbeat"></i>
                             </div>
-                            <div class="fw-semibold">{% trans "Mood Analytics" %}</div>
+                            <div class="action-content">
+                                <h6>{% trans "Mood Analytics" %}</h6>
+                                <p class="text-muted small mb-0">{% trans "Track your emotional journey" %}</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'statistics_and_insights:ai_reports_list' %}" class="action-button-card">
+                            <div class="action-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>{% trans "AI Reports" %}</h6>
+                                <p class="text-muted small mb-0">{% trans "View all AI analysis reports" %}</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- AI Report Generation Buttons -->
+                <div class="row g-3 mt-4 justify-content-center">
+                    <div class="col-md-5">
+                        <a href="javascript:void(0)" onclick="generateAIReport('weekly_auto')" class="action-button-card generate-report">
+                            <div class="action-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>{% trans "Weekly AI Report" %}</h6>
+                                <p class="text-muted small mb-0">{% trans "Automatic weekly analysis" %}</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-5">
+                        <a href="javascript:void(0)" onclick="generateAIReport('monthly_auto')" class="action-button-card generate-report">
+                            <div class="action-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>{% trans "Monthly AI Report" %}</h6>
+                                <p class="text-muted small mb-0">{% trans "Monthly overview insights" %}</p>
+                            </div>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    </div>
+</div>
 
-<style>
-/* Statistics Dashboard Styles */
-.statistics-dashboard {
-    padding: 20px 0;
+<script>
+// Time range filter functionality
+document.getElementById('timeRangeFilter').addEventListener('change', function() {
+    // Implement time range filtering logic here
+    console.log('Time range changed to:', this.value);
+    // You would typically reload data or make an AJAX call here
+});
+
+// Function to generate AI report
+function generateAIReport(reportType) {
+    const button = event.currentTarget;
+    const originalContent = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = `
+        <div class="action-icon">
+            <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <div class="action-content">
+            <h6>{% trans "Generating..." %}</h6>
+            <p class="text-muted small mb-0">{% trans "Please wait" %}</p>
+        </div>
+    `;
+    button.style.opacity = '0.7';
+    button.style.pointerEvents = 'none';
+    
+    // Get CSRF token
+    const csrftoken = getCookie('csrftoken');
+    
+    // Make AJAX request
+    fetch("{% url 'statistics_and_insights:generate_ai_report' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrftoken
+        },
+        body: `report_type=${reportType}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showAlert('success', data.message || 'Report generated successfully!');
+            
+            // Redirect to the new report after a short delay
+            setTimeout(() => {
+                window.location.href = "{% url 'statistics_and_insights:ai_report_detail' 0 %}".replace('0', data.report_id);
+            }, 1500);
+        } else {
+            // Show error message
+            showAlert('error', data.error || 'Failed to generate report. Please try again.');
+            
+            // Restore button
+            button.innerHTML = originalContent;
+            button.style.opacity = '1';
+            button.style.pointerEvents = 'auto';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'Network error. Please check your connection and try again.');
+        
+        // Restore button
+        button.innerHTML = originalContent;
+        button.style.opacity = '1';
+        button.style.pointerEvents = 'auto';
+    });
 }
 
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Helper function to show alerts
+function showAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.custom-alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Create alert element
+    const alert = document.createElement('div');
+    alert.className = `custom-alert alert alert-${type} alert-dismissible fade show`;
+    alert.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+/* Main Dashboard Styles */
 .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 40px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 1.5rem;
 }
 
 .page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 8px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
 }
 
 .page-subtitle {
-    color: var(--gray-600);
     font-size: 1.1rem;
+    color: #6c757d;
 }
 
-.header-actions {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
-/* Stats Cards */
-.stats-card {
+/* Metric Cards */
+.metric-card {
     background: white;
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     transition: all 0.3s ease;
+    height: 100%;
 }
 
-.stats-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
-.stats-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-}
-
-.stats-card.success::before {
-    background: linear-gradient(135deg, var(--secondary) 0%, #059669 100%);
-}
-
-.stats-card.info::before {
-    background: linear-gradient(135deg, var(--info) 0%, #1d4ed8 100%);
-}
-
-.stats-card.warning::before {
-    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
-}
-
-.stats-card .stats-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    color: var(--primary);
-    margin-bottom: 16px;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
 }
 
-.stats-card.success .stats-icon {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-    color: var(--secondary);
+.metric-icon.journal-entries {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.stats-card.info .stats-icon {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-    color: var(--info);
+.metric-icon.streak {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.stats-card.warning .stats-icon {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-    color: var(--warning);
+.metric-icon.mood {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
-.stats-content h3 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--gray-900);
-    margin-bottom: 4px;
+.metric-icon.words {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
     line-height: 1;
 }
 
-.stats-content p {
-    color: var(--gray-600);
-    font-weight: 600;
-    margin: 0;
+.metric-label {
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0;
+    font-size: 0.9rem;
 }
 
-.stats-trend {
-    position: absolute;
-    top: 24px;
-    right: 24px;
+.metric-trend {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--success);
-}
-
-/* Insight Cards */
-.insight-card {
-    background: white;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
     border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    overflow: hidden;
 }
 
-.insight-card .card-header {
-    padding: 24px 24px 0;
-    border: none;
-    background: transparent;
+.metric-trend.positive {
+    background: #d4edda;
+    color: #155724;
 }
 
-.insight-card .card-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--gray-900);
-    margin: 0;
+.metric-trend.negative {
+    background: #f8d7da;
+    color: #721c24;
 }
 
-.insight-card .card-body {
-    padding: 24px;
+.metric-trend.neutral {
+    background: #fff3cd;
+    color: #856404;
 }
 
-.insight-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+/* Insight Sections */
+.insight-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    height: 100%;
 }
 
-.stat-item {
+.section-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid #e9ecef;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--gray-200);
 }
 
-.stat-item:last-child {
-    border-bottom: none;
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0;
 }
 
-.stat-label {
-    color: var(--gray-600);
+.insight-badge {
+    background: #007bff;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
     font-weight: 600;
 }
 
-.stat-value {
-    font-weight: 800;
-    font-size: 1.1rem;
+.insight-badge.personalized {
+    background: #28a745;
 }
 
-.stat-value.positive {
-    color: var(--secondary);
+.insight-content {
+    padding: 1.5rem;
 }
 
-.stat-value.negative {
-    color: var(--danger);
+.insight-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.stat-value.neutral {
-    color: var(--warning);
+.insight-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.insight-metric:last-child {
+    border-bottom: none;
+}
+
+.metric-name {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.metric-value.mood-1 { color: #dc3545; }
+.metric-value.mood-2 { color: #e74c3c; }
+.metric-value.mood-3 { color: #f39c12; }
+.metric-value.mood-4 { color: #3498db; }
+.metric-value.mood-5 { color: #2ecc71; }
+
+.patterns-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
 }
 
 .patterns-list {
@@ -407,167 +581,192 @@
     margin: 0;
 }
 
-.patterns-list li {
-    padding: 8px 0;
-    color: var(--gray-700);
-    position: relative;
-    padding-left: 20px;
+.pattern-item {
+    padding: 0.5rem 0;
+    color: #495057;
+    font-size: 0.9rem;
 }
 
-.patterns-list li::before {
-    content: '•';
-    color: var(--primary);
-    font-weight: bold;
-    position: absolute;
-    left: 0;
+.pattern-item i {
+    color: #007bff;
 }
 
+/* Recommendations */
 .recommendations-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 1rem;
 }
 
 .recommendation-item {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-    background: var(--gray-50);
-    border-radius: 12px;
-    border-left: 4px solid var(--primary);
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
 }
 
 .recommendation-icon {
     width: 32px;
     height: 32px;
-    background: var(--primary);
-    border-radius: 8px;
+    background: #007bff;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 14px;
+    font-size: 0.8rem;
     flex-shrink: 0;
+    margin-top: 0.125rem;
 }
 
-.recommendation-content p {
+.recommendation-text p {
     margin: 0;
-    color: var(--gray-700);
-    font-weight: 500;
+    color: #495057;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 80px 40px;
+/* Action Buttons Section */
+.action-buttons-section {
     background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
 }
 
-.empty-icon {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
-    border-radius: 20px;
+.action-button-card {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    color: var(--primary);
-    margin: 0 auto 24px;
-}
-
-.empty-state h3 {
-    color: var(--gray-900);
-    margin-bottom: 12px;
-    font-weight: 700;
-}
-
-.empty-state p {
-    color: var(--gray-600);
-    margin-bottom: 24px;
-    font-size: 1.1rem;
-}
-
-/* Quick Actions */
-.quick-actions {
-    background: white;
-    padding: 32px;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--gray-900);
-    margin-bottom: 24px;
-}
-
-.actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.action-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px;
-    background: var(--gray-50);
-    border-radius: 16px;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
     text-decoration: none;
-    color: var(--gray-700);
+    color: inherit;
+    border: 1px solid transparent;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
+    height: 100%;
+    text-align: left;
 }
 
-.action-card:hover {
+.action-button-card:hover {
     background: white;
-    color: var(--primary);
-    border-color: var(--primary);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+    border-color: #007bff;
+    color: inherit;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
 }
 
 .action-icon {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    border-radius: 16px;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 24px;
-    margin-bottom: 12px;
+    font-size: 1.5rem;
+    flex-shrink: 0;
 }
 
-.action-card span {
+/* Navigation buttons icons */
+.action-button-card:nth-child(1) .action-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.action-button-card:nth-child(2) .action-icon {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* AI Report generation buttons icons */
+.action-button-card.generate-report:nth-child(1) .action-icon {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+
+.action-button-card.generate-report:nth-child(2) .action-icon {
+    background: linear-gradient(135deg, #a55eea 0%, #8854d0 100%);
+}
+
+.action-content h6 {
     font-weight: 600;
-    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
 }
 
-/* Responsive */
+.action-content p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Empty States */
+.empty-insights {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.empty-recommendations {
+    padding: 2rem 1rem;
+}
+
+/* Custom Alerts */
+.custom-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .dashboard-header {
-        flex-direction: column;
-        gap: 16px;
-    }
-    
     .page-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
     }
     
-    .stats-content h3 {
-        font-size: 2rem;
+    .metric-card {
+        padding: 1.25rem;
     }
     
-    .actions-grid {
-        grid-template-columns: 1fr;
+    .metric-value {
+        font-size: 1.75rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .action-button-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.25rem;
+    }
+    
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .action-buttons-section {
+        padding: 1.5rem;
+    }
+    
+    .action-button-card {
+        margin-bottom: 1rem;
     }
 }
 </style>

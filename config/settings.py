@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from dotenv import load_dotenv
+
 
 # Import de la configuration email
 try:
@@ -22,6 +24,16 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+# Charger les variables d'environnement
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# Gemini AI Configuration
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+print(f"🔍 GEMINI_API_KEY loaded: {bool(GEMINI_API_KEY)}")
+if GEMINI_API_KEY:
+    print(f"🔍 Key preview: {GEMINI_API_KEY[:10]}...")
 
 # Application definition
 INSTALLED_APPS = [

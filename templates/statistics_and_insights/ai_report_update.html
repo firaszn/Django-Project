@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Edit AI Report" %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="dashboard-header mb-5">
+        <br><br>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="page-title mb-2">
+                    <i class="fas fa-edit me-2"></i>
+                    {% trans "Edit AI Report" %}
+                </h1>
+                <p class="page-subtitle text-muted mb-0">
+                    {% trans "Modify AI report information and settings" %}
+                </p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'statistics_and_insights:ai_report_detail' report.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Report" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form Section -->
+    <div class="insight-section">
+        <div class="section-header">
+            <h4 class="section-title">
+                <i class="fas fa-cog me-2"></i>
+                {% trans "Report Settings" %}
+            </h4>
+        </div>
+        <div class="insight-content">
+            <form method="post" class="form-container">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="title" class="form-label">
+                        <i class="fas fa-heading me-2"></i>{% trans "Report Title" %}
+                    </label>
+                    <input type="text" id="title" name="title" class="form-input" 
+                           value="{{ report.title }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="report_type" class="form-label">
+                        <i class="fas fa-chart-line me-2"></i>{% trans "Report Type" %}
+                    </label>
+                    <select id="report_type" name="report_type" class="form-select" required>
+                        <option value="weekly_auto" {% if report.report_type == 'weekly_auto' %}selected{% endif %}>
+                            {% trans "Weekly Automatic Report" %}
+                        </option>
+                        <option value="monthly_auto" {% if report.report_type == 'monthly_auto' %}selected{% endif %}>
+                            {% trans "Monthly Automatic Report" %}
+                        </option>
+                        <option value="mood_analysis" {% if report.report_type == 'mood_analysis' %}selected{% endif %}>
+                            {% trans "AI Mood Analysis" %}
+                        </option>
+                        <option value="writing_insights" {% if report.report_type == 'writing_insights' %}selected{% endif %}>
+                            {% trans "AI Writing Insights" %}
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confidence_score" class="form-label">
+                        <i class="fas fa-bullseye me-2"></i>{% trans "Confidence Score" %}
+                    </label>
+                    <div class="input-with-info">
+                        <input type="number" id="confidence_score" name="confidence_score" 
+                               class="form-input" min="0" max="1" step="0.01"
+                               value="{{ report.confidence_score }}" required>
+                        <div class="confidence-visual mt-2">
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: {{ report.confidence_score|default:0|floatformat:2 }}%"></div>
+                            </div>
+                            <small class="confidence-value">{{ report.confidence_score|default:0|floatformat:2 }}</small>
+                        </div>
+                    </div>
+                    <small class="form-text">{% trans "AI confidence score for this report (0.0 - 1.0)" %}</small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>{% trans "Save Changes" %}
+                    </button>
+                    <a href="{% url 'statistics_and_insights:ai_report_detail' report.pk %}" 
+                       class="btn btn-secondary">{% trans "Cancel" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary-color: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --secondary-color: #f59e0b;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --dark-color: #1f2937;
+    --light-color: #f8fafc;
+    --muted-color: #6b7280;
+    --border-color: #e5e7eb;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Reuse dashboard styles */
+.dashboard-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted-color);
+}
+
+.insight-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.insight-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+}
+
+.insight-section:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.section-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--light-color);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.insight-content {
+    padding: 1.5rem;
+}
+
+/* Form Styles */
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--dark-color);
+    font-size: 0.95rem;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: white;
+    color: var(--dark-color);
+}
+
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--muted-color);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+/* Button Styles */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border-color: transparent;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+    color: white;
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--muted-color);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--light-color);
+    color: var(--dark-color);
+    border-color: var(--muted-color);
+    transform: translateY(-1px);
+}
+
+/* Confidence Score Visual */
+.confidence-visual {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.confidence-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-color), #34d399);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.confidence-value {
+    font-weight: 600;
+    color: var(--dark-color);
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .dashboard-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .insight-content {
+        padding: 1.25rem;
+    }
+    
+    .confidence-visual {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .confidence-value {
+        text-align: left;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.insight-section {
+    animation: fadeIn 0.5s ease-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confidenceInput = document.getElementById('confidence_score');
+    const confidenceFill = document.querySelector('.confidence-fill');
+    const confidenceValue = document.querySelector('.confidence-value');
+    
+    function updateConfidenceVisual() {
+        const value = parseFloat(confidenceInput.value) || 0;
+        const percentage = Math.min(Math.max(value * 100, 0), 100);
+        
+        confidenceFill.style.width = percentage + '%';
+        confidenceValue.textContent = value.toFixed(2);
+        
+        // Update color based on confidence level
+        if (value >= 0.7) {
+            confidenceFill.style.background = 'linear-gradient(90deg, var(--success-color), #34d399)';
+        } else if (value >= 0.4) {
+            confidenceFill.style.background = 'linear-gradient(90deg, var(--warning-color), #f59e0b)';
+        } else {
+            confidenceFill.style.background = 'linear-gradient(90deg, var(--danger-color), #ef4444)';
+        }
+    }
+    
+    confidenceInput.addEventListener('input', updateConfidenceVisual);
+    confidenceInput.addEventListener('change', updateConfidenceVisual);
+    
+    // Initialize on load
+    updateConfidenceVisual();
+});
+</script>
+{% endblock %}
