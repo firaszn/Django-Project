@@ -163,6 +163,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirection directe vers log
 # Configuration du formulaire d'inscription personnalisé
 ACCOUNT_FORMS = {
     'signup': 'users.forms.CustomSignupForm',
+    'login': 'users.forms.CustomLoginForm',
 }
 
 # Adaptateur personnalisé pour la redirection après login
@@ -210,6 +211,7 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+            'prompt': 'select_account',  # force le sélecteur de compte Google
         },
         'OAUTH_PKCE_ENABLED': True,
     }
@@ -233,3 +235,7 @@ GROQ_API_KEY = config('GROQ_API_KEY', default='')
 
 # HuggingFace API (Optionnel - fallback)
 HUGGINGFACE_API_KEY = config('HUGGINGFACE_API_KEY', default=None)  # Optionnel : clé HuggingFace si vous en avez une
+
+# reCAPTCHA Configuration
+RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
+RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
