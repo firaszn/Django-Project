@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from decouple import config, Csv
 
 # Import de la configuration email
 try:
@@ -47,9 +48,10 @@ INSTALLED_APPS = [
     # Local apps
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
-    'reminder_and_goals',
     'TagsCat',
     'statistics_and_insights',
+    'reminder_and_goals.apps.ReminderAndGoalsConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -88,15 +90,16 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3308',
+        'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
         }
     }
 }
+
 GEMINI_API_KEY = 'AIzaSyCIReSYkG37uyIV-VvU87LObnhPzEJSN9M'
 GEMINI_MODEL="models/text-bison-001"
 
@@ -162,6 +165,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirection directe vers log
 # Configuration du formulaire d'inscription personnalisé
 ACCOUNT_FORMS = {
     'signup': 'users.forms.CustomSignupForm',
+    'login': 'users.forms.CustomLoginForm',
 }
 
 # Adaptateur personnalisé pour la redirection après login
@@ -209,6 +213,7 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+            'prompt': 'select_account',  # force le sélecteur de compte Google
         },
         'OAUTH_PKCE_ENABLED': True,
     }
@@ -223,3 +228,16 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 
 # Adapter pour les comptes sociaux
 SOCIALACCOUNT_ADAPTER = 'users.adapter.CustomSocialAccountAdapter'
+
+# Configuration API IA (Génération de bio)
+# Groq API - Gratuit et rapide : https://console.groq.com/
+# IMPORTANT: Ne pas mettre la clé directement dans le code !
+# Utilisez la variable d'environnement GROQ_API_KEY ou un fichier .env
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
+
+# HuggingFace API (Optionnel - fallback)
+HUGGINGFACE_API_KEY = config('HUGGINGFACE_API_KEY', default=None)  # Optionnel : clé HuggingFace si vous en avez une
+
+# reCAPTCHA Configuration
+RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
+RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')

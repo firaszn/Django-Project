@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-3">AI Goal Suggestions</h2>
+  
+  {% if object_list %}
+  <form method="post" action="{% url 'goal_suggestion_accept_multiple' %}" id="suggestions-form">
+    {% csrf_token %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="select-all">Select All</button>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="deselect-all">Deselect All</button>
+      </div>
+      <button type="submit" class="btn btn-success" name="accept_selected">
+        <i class="fas fa-check-circle me-1"></i>Accept Selected
+      </button>
+    </div>
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th width="40">
+            <input type="checkbox" id="master-checkbox">
+          </th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Confidence</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in object_list %}
+        <tr>
+          <td>
+            {% if s.status == 'pending' %}
+            <input type="checkbox" name="suggestion_ids" value="{{ s.id }}" class="suggestion-checkbox">
+            {% endif %}
+          </td>
+          <td>{{ s.title }}</td>
+          <td>{{ s.description|default:'-' }}</td>
+          <td>{{ s.category|default:'-' }}</td>
+          <td>{{ s.confidence|floatformat:2 }}</td>
+          <td>
+            {% if s.status == 'pending' %}
+            <form method="post" action="{% url 'goal_suggestion_accept' s.id %}" class="d-inline">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-primary">Accept</button>
+            </form>
+            {% else %}
+            <span class="text-success"><i class="fas fa-check"></i> Accepted</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
+  {% else %}
+  <div class="alert alert-info">No suggestions yet. Generate some from your journals.</div>
+  {% endif %}
+</div>
+
+<style>
+.suggestion-checkbox {
+  transform: scale(1.2);
+}
+#master-checkbox {
+  transform: scale(1.2);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const masterCheckbox = document.getElementById('master-checkbox');
+  const checkboxes = document.querySelectorAll('.suggestion-checkbox');
+  const selectAllBtn = document.getElementById('select-all');
+  const deselectAllBtn = document.getElementById('deselect-all');
+  const form = document.getElementById('suggestions-form');
+
+  // Master checkbox functionality
+  masterCheckbox.addEventListener('change', function() {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+    });
+  });
+
+  // Select All button
+  selectAllBtn.addEventListener('click', function() {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+    masterCheckbox.checked = true;
+  });
+
+  // Deselect All button
+  deselectAllBtn.addEventListener('click', function() {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    masterCheckbox.checked = false;
+  });
+
+  // Update master checkbox when individual checkboxes change
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+      
+      masterCheckbox.checked = allChecked;
+      masterCheckbox.indeterminate = anyChecked && !allChecked;
+    });
+  });
+
+  // Form submission validation
+  form.addEventListener('submit', function(e) {
+    const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+    if (checkedBoxes.length === 0) {
+      e.preventDefault();
+      alert('Please select at least one suggestion to accept.');
+    }
+  });
+});
+</script>
+{% endblock %}

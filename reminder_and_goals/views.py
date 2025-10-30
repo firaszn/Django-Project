@@ -1,21 +1,82 @@
-from django.shortcuts import render
-from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, View, DetailView  
 from .models import Reminder, Goal 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import ReminderForm, GoalForm
-from django.shortcuts import redirect
 from django.urls import reverse
-from journal.models import Journal
+from django.contrib import messages
 
+from django.shortcuts import render, redirect ,get_object_or_404
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
+from django.utils import timezone
+from .forms import ReminderForm, GoalForm
+from .models import GoalSuggestion
+from .services.ai_goal_recommender import generate_suggestions_for_journal
+from journal.models import Journal
+from users.models import UserProfile
+
+
+@login_required
+def connect_apple_account(request):
+    if request.method == 'POST':
+        apple_username = request.POST.get('apple_username')
+        apple_password = request.POST.get('apple_password')
+        
+        # Validate credentials by testing connection
+        from .services.apple_reminders_service import AppleRemindersService
+        service = AppleRemindersService(apple_username, apple_password)
+        
+        if service.connect():
+            # Save credentials using the proper encryption method
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+            profile.apple_username = apple_username
+            # Use the encryption method instead of direct assignment
+            profile.set_apple_password(apple_password)  # This encrypts and stores in encrypted_apple_password
+            profile.is_apple_connected = True
+            profile.save()
+            
+            # Verify it was saved
+            print(f"Saved - Username: {profile.apple_username}, Password encrypted: {bool(profile.encrypted_apple_password)}")
+            
+            messages.success(request, "Successfully connected to Apple Reminders!")
+            return redirect('reminder_list')
+        else:
+            messages.error(request, "Failed to connect to Apple. Please check your credentials.")
+    
+    return render(request, 'reminder_and_goals/connect_apple.html')
 
 class ReminderListView(LoginRequiredMixin, ListView):
     model = Reminder
     template_name = 'reminder_and_goals/reminder_list.html'
 
     def get_queryset(self):
-        return Reminder.objects.filter(user=self.request.user)
+        queryset = Reminder.objects.filter(user=self.request.user)
+        
+        # Search functionality
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(title__icontains=search_query)
+        
+        # Status filter
+        status_filter = self.request.GET.get('status')
+        if status_filter == 'active':
+            queryset = queryset.filter(status=True)
+        elif status_filter == 'inactive':
+            queryset = queryset.filter(status=False)
+        
+        return queryset
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_reminders = Reminder.objects.filter(user=self.request.user)
+        
+        # Statistics
+        context['total_reminders'] = user_reminders.count()
+        context['active_reminders'] = user_reminders.filter(status=True).count()
+        context['inactive_reminders'] = user_reminders.filter(status=False).count()
+        
+        return context
+    
 class ReminderCreateView(LoginRequiredMixin, CreateView):
     model = Reminder
     form_class = ReminderForm
@@ -24,8 +85,19 @@ class ReminderCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        print("Form is valid. User:", self.request.user)  # Debugging log
-        return super().form_valid(form)
+        
+        # Save the instance first
+        response = super().form_valid(form)
+        
+        # The signal will handle the Apple sync automatically
+        # You can check if it worked
+        if hasattr(self.object, 'is_synced_with_apple') and self.object.is_synced_with_apple:
+            messages.success(self.request, "Reminder created and synced with Apple!")
+        else:
+            messages.warning(self.request, "Reminder created locally. Connect Apple account to sync with iPhone.")
+        
+        return response
+    
 
 class ReminderUpdateView(LoginRequiredMixin, UpdateView):
     model = Reminder
@@ -38,17 +110,50 @@ class ReminderDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'reminder_and_goals/reminder_confirm_delete.html'
     success_url = reverse_lazy('reminder_list')
 
+
+# In reminder_and_goals/views.py
 class GoalListView(LoginRequiredMixin, ListView):
     model = Goal
     template_name = 'reminder_and_goals/goal_list.html'
 
     def get_queryset(self):
-        return Goal.objects.filter(user=self.request.user)
+        queryset = Goal.objects.filter(user=self.request.user)
+        
+        # Search functionality
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(title__icontains=search_query) | 
+                models.Q(description__icontains=search_query)
+            )
+        
+        # Status filter
+        status_filter = self.request.GET.get('status')
+        if status_filter == 'completed':
+            queryset = queryset.filter(is_completed=True)
+        elif status_filter == 'in-progress':
+            queryset = queryset.filter(progress__gt=0, is_completed=False)
+        elif status_filter == 'not-started':
+            queryset = queryset.filter(progress=0, is_completed=False)
+        
+        return queryset
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        goals = Goal.objects.filter(user=self.request.user)
+        
+        # Statistics - use database queries for efficiency
+        context['total_goals'] = goals.count()
+        context['completed_goals'] = goals.filter(is_completed=True).count()
+        context['in_progress_goals'] = goals.filter(progress__gt=0, is_completed=False).count()
+        context['not_started_goals'] = goals.filter(progress=0, is_completed=False).count()
+        
+        return context
 
-class GoalCreateView(CreateView):
+# In reminder_and_goals/views.py
+class GoalCreateView(LoginRequiredMixin, CreateView):
     model = Goal
-    fields = ['title', 'description', 'target', 'start_date', 'end_date']
+    form_class = GoalForm
     template_name = 'reminder_and_goals/goal_form.html'
 
     def get_context_data(self, **kwargs):
@@ -72,7 +177,13 @@ class GoalCreateView(CreateView):
             try:
                 journal = Journal.objects.get(id=journal_id, user=self.request.user)
                 journal.related_goals.add(self.object)
+                print(f"Successfully linked goal '{self.object.title}' to journal '{journal.title}'")
+                
+                # 🚨 CRITICAL: Update progress after linking the journal
+                self.object.update_progress_from_journals()
+                
             except Journal.DoesNotExist:
+                print(f"Journal with id {journal_id} not found for user {self.request.user}")
                 pass
         
         return response
@@ -82,6 +193,8 @@ class GoalCreateView(CreateView):
         if journal_id:
             return reverse('journal_detail', kwargs={'journal_id': journal_id})
         return reverse('goal_list')
+    
+
 class GoalUpdateView(LoginRequiredMixin, UpdateView):
     model = Goal
     fields = ['title', 'description', 'target', 'progress', 'start_date', 'end_date']
@@ -95,3 +208,244 @@ class GoalDeleteView(LoginRequiredMixin, DeleteView):
 
 
 
+
+class GoalSuggestionListView(LoginRequiredMixin, ListView):
+    model = GoalSuggestion
+    template_name = 'reminder_and_goals/goal_suggestions.html'
+
+    def get_queryset(self):
+        qs = GoalSuggestion.objects.filter(user=self.request.user).order_by('-created_at')
+        journal_id = self.request.GET.get('journal_id')
+        if journal_id:
+            qs = qs.filter(journal_id=journal_id)
+        return qs
+
+    def get(self, request, *args, **kwargs):
+        journal_id = request.GET.get('journal_id')
+        if journal_id:
+            try:
+                j = Journal.objects.get(id=journal_id, user=request.user)
+                # Always refresh suggestions: clear previous pending ones for this journal
+                GoalSuggestion.objects.filter(user=request.user, journal=j, status='pending').delete()
+                generate_suggestions_for_journal(request.user, j)
+            except Journal.DoesNotExist:
+                pass
+        return super().get(request, *args, **kwargs)
+
+
+class AcceptGoalSuggestionView(LoginRequiredMixin, View):
+    def post(self, request, suggestion_id):
+        try:
+            suggestion = GoalSuggestion.objects.get(id=suggestion_id, user=request.user)
+        except GoalSuggestion.DoesNotExist:
+            return HttpResponseForbidden("Not found or not allowed")
+
+        if suggestion.status == 'accepted':
+            messages.info(request, "Suggestion already accepted")
+            return redirect('goal_suggestions')
+
+        # Create a Goal from the suggestion
+        goal = Goal.objects.create(
+            user=request.user,
+            title=suggestion.title,
+            description=suggestion.description or '',
+            target=5,
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timezone.timedelta(days=30),
+        )
+
+        # Link to journal if exists
+        if suggestion.journal:
+            suggestion.journal.related_goals.add(goal)
+
+        # Optionally, auto-create a supporting reminder at 09:00
+        try:
+            from datetime import time
+            Reminder.objects.create(
+                user=request.user,
+                title=suggestion.title,
+                description=suggestion.description or '',
+                reminder_time=time(9, 0, 0),
+                status=True,
+            )
+        except Exception:
+            pass
+
+        suggestion.status = 'accepted'
+        suggestion.save(update_fields=['status'])
+
+        messages.success(request, "Suggestion accepted and goal created.")
+        return redirect('goal_list')
+
+
+def api_list_goal_suggestions(request):
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden()
+    rows = GoalSuggestion.objects.filter(user=request.user).order_by('-created_at')
+    data = [
+        {
+            'id': s.id,
+            'title': s.title,
+            'description': s.description,
+            'category': s.category,
+            'confidence': s.confidence,
+            'status': s.status,
+            'journal_id': s.journal_id,
+            'created_at': s.created_at.isoformat(),
+        }
+        for s in rows
+    ]
+    return JsonResponse({'results': data})
+
+
+def api_accept_goal_suggestion(request, suggestion_id):
+    if request.method != 'POST':
+        return HttpResponseBadRequest('POST required')
+    view = AcceptGoalSuggestionView.as_view()
+    return view(request, suggestion_id=suggestion_id)
+
+
+
+class AcceptMultipleGoalSuggestionsView(LoginRequiredMixin, View):
+    def post(self, request):
+        suggestion_ids = request.POST.getlist('suggestion_ids')
+        
+        if not suggestion_ids:
+            messages.warning(request, "No suggestions selected.")
+            return redirect('goal_suggestions')
+        
+        accepted_count = 0
+        for suggestion_id in suggestion_ids:
+            try:
+                suggestion = GoalSuggestion.objects.get(id=suggestion_id, user=request.user)
+                
+                if suggestion.status == 'accepted':
+                    continue
+                
+                # Create a Goal from the suggestion
+                goal = Goal.objects.create(
+                    user=request.user,
+                    title=suggestion.title,
+                    description=suggestion.description or '',
+                    target=5,
+                    start_date=timezone.now().date(),
+                    end_date=timezone.now().date() + timezone.timedelta(days=30),
+                )
+
+                # Link to journal if exists
+                if suggestion.journal:
+                    suggestion.journal.related_goals.add(goal)
+
+                # Auto-create a supporting reminder at 09:00
+                try:
+                    from datetime import time
+                    Reminder.objects.create(
+                        user=request.user,
+                        title=suggestion.title,
+                        description=suggestion.description or '',
+                        reminder_time=time(9, 0, 0),
+                        status=True,
+                    )
+                except Exception:
+                    pass
+
+                suggestion.status = 'accepted'
+                suggestion.save(update_fields=['status'])
+                accepted_count += 1
+                
+            except GoalSuggestion.DoesNotExist:
+                continue
+        
+        if accepted_count > 0:
+            messages.success(request, f"Successfully accepted {accepted_count} suggestion(s).")
+        else:
+            messages.info(request, "No new suggestions were accepted.")
+        
+        return redirect('goal_list')
+    
+
+
+class GoalDetailView(LoginRequiredMixin, DetailView):
+    model = Goal
+    template_name = 'reminder_and_goals/goal_detail.html'
+    
+    def get_queryset(self):
+        return Goal.objects.filter(user=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        goal = self.object
+        
+        # Get linked journals
+        context['related_journals'] = goal.journals.all()
+        
+        # Debug: Print all user's journals
+        all_user_journals = Journal.objects.filter(user=self.request.user)
+        print(f"DEBUG: User has {all_user_journals.count()} total journals")
+        
+        # Get available journals (not linked to this goal)
+        available_journals = Journal.objects.filter(
+            user=self.request.user
+        ).exclude(
+            id__in=goal.journals.values_list('id', flat=True)
+        ).order_by('-created_at')
+        
+        print(f"DEBUG: Found {available_journals.count()} available journals")
+        
+        context['available_journals'] = available_journals
+        
+        return context
+    
+
+@login_required
+def goal_add_journal(request, goal_id, journal_id):
+    goal = get_object_or_404(Goal, id=goal_id, user=request.user)
+    journal = get_object_or_404(Journal, id=journal_id, user=request.user)
+    
+    if goal.is_achieved():
+        messages.warning(request, "Cannot add journals to a completed goal.")
+    else:
+        goal.journals.add(journal)
+        goal.update_progress_from_journals()
+        messages.success(request, f"Journal '{journal.title}' added to goal.")
+    
+    return redirect('goal_detail', pk=goal_id)
+
+@login_required
+def goal_remove_journal(request, goal_id, journal_id):
+    goal = get_object_or_404(Goal, id=goal_id, user=request.user)
+    journal = get_object_or_404(Journal, id=journal_id, user=request.user)
+    
+    goal.journals.remove(journal)
+    goal.update_progress_from_journals()
+    messages.success(request, f"Journal '{journal.title}' removed from goal.")
+    
+    return redirect('goal_detail', pk=goal_id)
+
+@login_required
+def goal_add_multiple_journals(request, goal_id):
+    goal = get_object_or_404(Goal, id=goal_id, user=request.user)
+    
+    if goal.is_achieved():
+        messages.warning(request, "Cannot add journals to a completed goal.")
+        return redirect('goal_detail', pk=goal_id)
+    
+    if request.method == 'POST':
+        journal_ids = request.POST.getlist('journal_ids')
+        added_count = 0
+        
+        for journal_id in journal_ids:
+            try:
+                journal = Journal.objects.get(id=journal_id, user=request.user)
+                goal.journals.add(journal)
+                added_count += 1
+            except Journal.DoesNotExist:
+                continue
+        
+        if added_count > 0:
+            goal.update_progress_from_journals()
+            messages.success(request, f"Added {added_count} journals to goal.")
+        else:
+            messages.warning(request, "No journals were added.")
+    
+    return redirect('goal_detail', pk=goal_id)

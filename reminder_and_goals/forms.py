@@ -1,5 +1,6 @@
 from django import forms
 from .models import Reminder, Goal
+from django.utils import timezone
 
 class ReminderForm(forms.ModelForm):
     class Meta:
@@ -8,6 +9,7 @@ class ReminderForm(forms.ModelForm):
         widgets = {
             'reminder_time': forms.TimeInput(attrs={'type': 'time'}),
         }
+
 
 class GoalForm(forms.ModelForm):
     class Meta:
