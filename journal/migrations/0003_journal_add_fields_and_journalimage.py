@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('journal', '0001_initial'),
+        ('journal', '0002_journal_delete_journalentry'),
     ]
 
     operations = [
@@ -37,3 +37,5 @@ class Migration(migrations.Migration):
             ],
         ),
     ]
+
+

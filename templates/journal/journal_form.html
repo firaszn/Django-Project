@@ -45,6 +45,17 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.category.label_tag }}
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger">{{ form.category.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Choose a category to organize your entry</small>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="id_images">Images</label>
                             <input type="file" name="images" id="id_images" multiple class="form-control">
@@ -72,6 +83,22 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Category Select */
+.form-select {
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}

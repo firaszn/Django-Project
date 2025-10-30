@@ -40,6 +40,12 @@ class Category(models.Model):
         blank=True,
         help_text="Optional description of this category"
     )
+    tags = models.ManyToManyField(
+        'Tag',
+        blank=True,
+        related_name='categories',
+        help_text="Tags associated with this category"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
