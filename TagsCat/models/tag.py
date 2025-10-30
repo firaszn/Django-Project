@@ -17,6 +17,11 @@ class Tag(models.Model):
         max_length=50,
         help_text="Tag name (e.g., 'Travel', 'Friends')"
     )
+    color = models.CharField(
+        max_length=7,
+        blank=True,
+        help_text="Hex color code (auto-generated if empty)"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     usage_count = models.IntegerField(
@@ -48,6 +53,19 @@ class Tag(models.Model):
     
     def save(self, *args, **kwargs):
         self.clean()
+        
+        # Générer automatiquement une couleur si elle n'existe pas
+        if not self.color:
+            try:
+                from TagsCat.ai_utils import generate_tag_color
+                self.color = generate_tag_color(self.name)
+            except ImportError:
+                # Fallback si l'import échoue
+                import hashlib
+                colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD']
+                hash_val = int(hashlib.md5(self.name.encode()).hexdigest()[:8], 16)
+                self.color = colors[hash_val % len(colors)]
+        
         super().save(*args, **kwargs)
     
     def increment_usage(self):

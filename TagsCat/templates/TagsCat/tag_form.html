@@ -27,22 +27,48 @@
                     {% csrf_token %}
                     
                     <!-- Tag Name -->
-                    <div class="form-group-modern mb-4">
-                        <label for="{{ form.name.id_for_label }}" class="form-label-modern">
-                            <i class="fas fa-tag me-2"></i>{{ form.name.label }}
-                        </label>
-                        <div class="input-wrapper">
-                            {{ form.name }}
-                            <div class="input-border"></div>
-                        </div>
-                        {% if form.name.errors %}
-                            <div class="error-message">
-                                {% for error in form.name.errors %}
-                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
-                                {% endfor %}
+                    <div class="row">
+                        <!-- Tag Name -->
+                        <div class="col-md-8">
+                            <div class="form-group-modern mb-4">
+                                <label for="{{ form.name.id_for_label }}" class="form-label-modern">
+                                    <i class="fas fa-tag me-2"></i>{{ form.name.label }}
+                                </label>
+                                <div class="input-wrapper">
+                                    {{ form.name }}
+                                    <div class="input-border"></div>
+                                </div>
+                                {% if form.name.errors %}
+                                    <div class="error-message">
+                                        {% for error in form.name.errors %}
+                                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-hint">{% trans "Choose a descriptive name for your tag" %}</small>
                             </div>
-                        {% endif %}
-                        <small class="form-hint">{% trans "Choose a descriptive name for your tag" %}</small>
+                        </div>
+                        
+                        <!-- Tag Color -->
+                        <div class="col-md-4">
+                            <div class="form-group-modern mb-4">
+                                <label for="{{ form.color.id_for_label }}" class="form-label-modern">
+                                    <i class="fas fa-palette me-2"></i>{{ form.color.label }}
+                                </label>
+                                <div class="color-picker-wrapper">
+                                    {{ form.color }}
+                                    <div class="color-preview" id="colorPreview"></div>
+                                </div>
+                                {% if form.color.errors %}
+                                    <div class="error-message">
+                                        {% for error in form.color.errors %}
+                                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-hint">{{ form.color.help_text }}</small>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Preview Card -->
@@ -187,6 +213,32 @@
     border-left: 3px solid #f56565;
 }
 
+/* Color Picker */
+.color-picker-wrapper {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.color-picker-wrapper input[type="color"] {
+    width: 60px;
+    height: 40px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.color-preview {
+    flex: 1;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
 /* Preview Card */
 .preview-card {
     background: linear-gradient(135deg, #667eea08, #764ba208);
@@ -287,13 +339,43 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const nameInput = document.querySelector('input[name="name"]');
+    const colorInput = document.querySelector('input[name="color"]');
     const previewName = document.getElementById('previewName');
+    const previewTag = document.getElementById('previewTag');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    // Fonction pour mettre à jour les couleurs
+    function updateColorPreview(color) {
+        if (colorPreview) {
+            colorPreview.style.background = `linear-gradient(135deg, ${color}dd, ${color})`;
+        }
+        
+        if (previewTag) {
+            previewTag.style.background = `linear-gradient(135deg, ${color}, ${color}dd)`;
+        }
+    }
     
     // Update name preview
     if (nameInput) {
         nameInput.addEventListener('input', function() {
             previewName.textContent = this.value || '{% trans "Tag Name" %}';
         });
+    }
+    
+    // Update color preview
+    if (colorInput) {
+        colorInput.addEventListener('input', function() {
+            updateColorPreview(this.value);
+        });
+        
+        colorInput.addEventListener('change', function() {
+            updateColorPreview(this.value);
+        });
+        
+        // Initialiser avec la couleur existante
+        if (colorInput.value) {
+            updateColorPreview(colorInput.value);
+        }
     }
     
     // Initialize with existing values if editing

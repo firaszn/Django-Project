@@ -88,7 +88,7 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-                                <small class="form-hint">{% trans "e.g., home, work, heart, star, book, music" %}</small>
+                                <small class="form-hint">{{ form.icon.help_text }}</small>
                             </div>
                         </div>
                     </div>
@@ -426,6 +426,92 @@
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.querySelector('input[name="color"]');
+    const iconInput = document.querySelector('input[name="icon"]');
+    const colorPreview = document.getElementById('colorPreview');
+    const iconPreview = document.getElementById('iconPreview');
+    
+    // Fonction pour normaliser le nom de l'icône
+    function normalizeIconName(iconName) {
+        if (!iconName) return 'folder';
+        
+        // Supprimer les préfixes s'ils existent
+        let cleanName = iconName.toLowerCase().trim();
+        const prefixes = ['fas fa-', 'far fa-', 'fab fa-', 'fa-', 'fa '];
+        
+        for (const prefix of prefixes) {
+            if (cleanName.startsWith(prefix)) {
+                cleanName = cleanName.substring(prefix.length);
+                break;
+            }
+        }
+        
+        return cleanName || 'folder';
+    }
+    
+    // Fonction pour mettre à jour les couleurs
+    function updateColorPreview(color) {
+        if (colorPreview) {
+            colorPreview.style.background = `linear-gradient(135deg, ${color}dd, ${color})`;
+        }
+        
+        if (iconPreview) {
+            iconPreview.style.background = `linear-gradient(135deg, ${color}dd, ${color})`;
+        }
+    }
+    
+    // Fonction pour mettre à jour l'icône
+    function updateIconPreview(iconName) {
+        if (iconPreview) {
+            const iconElement = iconPreview.querySelector('i');
+            if (iconElement) {
+                // Normaliser le nom de l'icône
+                const cleanIconName = normalizeIconName(iconName);
+                
+                // Mettre à jour les classes de l'icône
+                iconElement.className = `fas fa-${cleanIconName}`;
+            }
+        }
+    }
+    
+    // Écouter les changements de couleur
+    if (colorInput) {
+        colorInput.addEventListener('input', function() {
+            updateColorPreview(this.value);
+        });
+        
+        colorInput.addEventListener('change', function() {
+            updateColorPreview(this.value);
+        });
+        
+        // Initialiser avec la couleur existante
+        if (colorInput.value) {
+            updateColorPreview(colorInput.value);
+        }
+    }
+    
+    // Écouter les changements d'icône
+    if (iconInput) {
+        iconInput.addEventListener('input', function() {
+            updateIconPreview(this.value);
+        });
+        
+        iconInput.addEventListener('change', function() {
+            updateIconPreview(this.value);
+        });
+        
+        // Initialiser avec l'icône existante
+        if (iconInput.value) {
+            updateIconPreview(iconInput.value);
+        } else {
+            updateIconPreview('folder'); // Icône par défaut
+        }
+    }
+});
+</script>
 
 {% endblock %}
 
