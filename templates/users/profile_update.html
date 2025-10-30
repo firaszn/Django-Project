@@ -243,7 +243,26 @@ textarea.form-control {
                             {% trans "Basic Information" %}
                         </div>
                         {{ form.profilePicture|as_crispy_field }}
-                        {{ form.bio|as_crispy_field }}
+                        
+                        <!-- Bio avec IA -->
+                        <div class="bio-ai-section mb-3">
+                            <label for="id_bio" class="form-label">{% trans "Bio" %}</label>
+                            <div class="input-group">
+                                {{ form.bio }}
+                                <button type="button" class="btn btn-outline-primary" id="generate-bio-btn" style="white-space: nowrap;">
+                                    <i class="fas fa-magic me-2"></i>{% trans "Generate with AI" %}
+                                </button>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                {% trans "Click 'Generate with AI' to create a professional bio automatically" %}
+                            </small>
+                            <div id="bio-keywords-section" class="mt-2" style="display: none;">
+                                <label for="bio-keywords" class="form-label small">{% trans "Keywords (optional, separated by commas)" %}</label>
+                                <input type="text" id="bio-keywords" class="form-control form-control-sm" 
+                                       placeholder='{% trans "e.g., développeur, passionné, créatif" %}'>
+                            </div>
+                        </div>
+                        
                         {{ form.birth_date|as_crispy_field }}
                         {{ form.phone_number|as_crispy_field }}
                     </div>
@@ -287,7 +306,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const profilePictureInput = document.querySelector('input[type="file"]');
     const previewContainer = document.getElementById('preview-container');
     const previewImage = document.getElementById('preview-image');
+    const generateBioBtn = document.getElementById('generate-bio-btn');
+    const bioField = document.getElementById('id_bio');
+    const keywordsSection = document.getElementById('bio-keywords-section');
+    const keywordsInput = document.getElementById('bio-keywords');
     
+    // Preview de l'image de profil
     if (profilePictureInput) {
         profilePictureInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -299,6 +323,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 reader.readAsDataURL(file);
             }
+        });
+    }
+    
+    // Génération de bio avec IA
+    if (generateBioBtn && bioField) {
+        generateBioBtn.addEventListener('click', function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            // Afficher la section keywords
+            keywordsSection.style.display = 'block';
+            
+            // Désactiver le bouton et afficher loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Generating..." %}';
+            
+            // Récupérer les mots-clés
+            const keywords = keywordsInput.value || '';
+            
+            // Préparer les données pour la requête
+            const formData = new FormData();
+            if (keywords) {
+                formData.append('keywords', keywords);
+            }
+            
+            // Envoyer la requête AJAX
+            fetch('{% url "generate_bio_ai" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bioField.value = data.bio;
+                    // Animation pour montrer que la bio a été générée
+                    bioField.style.background = '#d4edda';
+                    setTimeout(() => {
+                        bioField.style.background = '';
+                    }, 2000);
+                } else {
+                    alert('{% trans "Error generating bio. Please try again." %}');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{% trans "Error generating bio. Please try again." %}');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
         });
     }
 });

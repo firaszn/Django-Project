@@ -254,7 +254,7 @@ def journal_update(request, journal_id):
     journal = get_object_or_404(Journal, user=request.user, id=journal_id)
 
     if request.method == 'POST':
-        form = JournalForm(request.POST, request.FILES, instance=journal)
+        form = JournalForm(request.POST, request.FILES, instance=journal, user=request.user)
         if form.is_valid():
             journal = form.save(commit=False)
             # If no entry_date provided, keep existing or use today
@@ -292,7 +292,7 @@ def journal_update(request, journal_id):
             messages.success(request, 'Journal entry updated.')
             return redirect('journal_detail', journal_id=journal.id)
     else:
-        form = JournalForm(instance=journal)
+        form = JournalForm(instance=journal, user=request.user)
 
     return render(request, 'journal/journal_form.html', {'form': form, 'create': False, 'journal': journal})
 

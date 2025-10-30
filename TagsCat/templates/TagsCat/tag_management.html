@@ -52,6 +52,93 @@
                 </div>
             </div>
 
+            <!-- AI Suggestion -->
+            <div class="modern-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Générer des tags avec IA</h5>
+                </div>
+                <div class="card-body">
+            <div class="mb-3">
+                <textarea id="aiText" class="form-control" rows="3" placeholder="Collez votre texte ici..."></textarea>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="tagCount" class="form-label">
+                        <i class="fas fa-hashtag me-2"></i>Nombre de tags par phrase
+                    </label>
+                    <select id="tagCount" class="form-select">
+                        <option value="1">1 tag (le plus important)</option>
+                        <option value="2" selected>2 tags (les plus importants)</option>
+                        <option value="3">3 tags (les plus importants)</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button id="btnSuggest" class="btn-modern btn-primary" type="button">
+                        <i class="fas fa-wand-sparkles me-2"></i>Générer des tags
+                    </button>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+                <button id="btnValidate" class="btn-modern btn-success" type="button" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>Valider la sélection (<span id="selectedCount">0</span>)
+                </button>
+            </div>
+                    <div id="aiResults" class="d-flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="modern-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Recherche et Filtres
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Search Bar -->
+                        <div class="col-md-6">
+                            <div class="search-wrapper">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="searchTags" class="form-control search-input" placeholder="Rechercher des tags...">
+                                <button type="button" id="clearSearch" class="clear-search" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Usage Filter -->
+                        <div class="col-md-3">
+                            <select id="usageFilter" class="form-select">
+                                <option value="">Tous les usages</option>
+                                <option value="unused">Non utilisés (0)</option>
+                                <option value="low">Peu utilisés (1-5)</option>
+                                <option value="medium">Moyennement utilisés (6-15)</option>
+                                <option value="high">Très utilisés (16+)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Sort Options -->
+                        <div class="col-md-3">
+                            <select id="sortTags" class="form-select">
+                                <option value="usage">Trier par usage</option>
+                                <option value="name">Trier par nom</option>
+                                <option value="date">Trier par date</option>
+                                <option value="color">Trier par couleur</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Info -->
+                    <div class="search-results-info mt-3" id="searchResults" style="display: none;">
+                        <span class="badge bg-primary" id="resultsCount">0 résultats</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="resetFilters">
+                            <i class="fas fa-undo me-1"></i>Réinitialiser
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tags List -->
             <div class="modern-card">
                 <div class="card-header">
@@ -63,22 +150,22 @@
                     {% if tags %}
                         <div class="tags-grid">
                             {% for tag in tags %}
-                                <div class="tag-item">
+                                <div class="tag-item" style="border-left: 4px solid {{ tag.color|default:'#667eea' }};">
                                     <div class="tag-content">
                                         <div class="tag-name">
-                                            <i class="fas fa-tag me-2"></i>{{ tag.name }}
+                                            <i class="fas fa-tag me-2" style="color: {{ tag.color|default:'#667eea' }};"></i>{{ tag.name }}
                                         </div>
                                         <div class="tag-stats">
-                                            <span class="usage-count">{{ tag.usage_count }} utilisation{{ tag.usage_count|pluralize }}</span>
+                                            <span class="usage-count" style="background: {{ tag.color|default:'#667eea' }};">{{ tag.usage_count }} utilisation{{ tag.usage_count|pluralize }}</span>
                                         </div>
                                     </div>
                                     <div class="tag-actions">
                                         <a href="{% url 'TagsCat:tag_edit' tag.pk %}" class="btn-action btn-edit" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{% url 'TagsCat:tag_delete' tag.pk %}" class="btn-action btn-delete" title="Supprimer">
+                                        <button type="button" class="btn-action btn-delete" title="Supprimer" data-delete-url="{% url 'TagsCat:tag_delete' tag.pk %}" data-tag-id="{{ tag.pk }}">
                                             <i class="fas fa-trash"></i>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -289,6 +376,79 @@
     color: white;
 }
 
+/* Search and Filter Styles */
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    color: #a0aec0;
+    z-index: 2;
+}
+
+.search-input {
+    padding-left: 3rem;
+    padding-right: 3rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.clear-search {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #a0aec0;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.clear-search:hover {
+    color: #667eea;
+    background: #f7fafc;
+}
+
+.form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-results-info {
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.tag-item.hidden {
+    display: none !important;
+}
+
+.tag-item.highlight {
+    border-color: #667eea !important;
+    background: #f0f4ff;
+    transform: scale(1.02);
+}
+
 .empty-state {
     text-align: center;
     padding: 3rem 2rem;
@@ -359,4 +519,467 @@
     }
 }
 </style>
+ 
+<script>
+// CSRF helper
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+document.addEventListener('click', async function(e) {
+    const btn = e.target.closest('button.btn-delete[data-delete-url]');
+    if (!btn) return;
+    e.preventDefault();
+    
+    const url = btn.getAttribute('data-delete-url');
+    const tagItem = btn.closest('.tag-item');
+    
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+        if (data.success) {
+            tagItem?.parentNode?.removeChild(tagItem);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Erreur lors de la suppression du tag.');
+    }
+});
+
+// AI Suggestion handlers
+const aiText = document.getElementById('aiText');
+const aiResults = document.getElementById('aiResults');
+const btnSuggest = document.getElementById('btnSuggest');
+const btnValidate = document.getElementById('btnValidate');
+const selectedCount = document.getElementById('selectedCount');
+
+async function createTagQuick(name) {
+    const res = await fetch('{% url "TagsCat:tag_create" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ name })
+    });
+    if (!res.ok) throw new Error('create failed');
+    return res.json();
+}
+
+async function deleteTagQuick(tagId) {
+    const res = await fetch(`{% url "TagsCat:tag_delete" 0 %}`.replace('0', tagId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    });
+    if (!res.ok) throw new Error('delete failed');
+    return res.json();
+}
+
+function updateSelectedCount() {
+    const selectedTags = document.querySelectorAll('#aiResults button[data-is-added="true"]');
+    const count = selectedTags.length;
+    selectedCount.textContent = count;
+    btnValidate.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+
+function addTagsToList(tags) {
+    const tagsGrid = document.querySelector('.tags-grid');
+    if (!tagsGrid) return;
+    
+    tags.forEach(tagData => {
+        // Vérifier si le tag n'existe pas déjà
+        const existingTag = tagsGrid.querySelector(`[data-tag-id="${tagData.id}"]`);
+        if (existingTag) return;
+        
+        // Créer l'élément de tag
+        const tagItem = document.createElement('div');
+        tagItem.className = 'tag-item';
+        tagItem.setAttribute('data-tag-id', tagData.id);
+        
+        // Ajouter la couleur au style
+        tagItem.style.borderLeft = `4px solid ${tagData.color || '#667eea'}`;
+        
+        tagItem.innerHTML = `
+            <div class="tag-content">
+                <div class="tag-name">
+                    <i class="fas fa-tag me-2" style="color: ${tagData.color || '#667eea'};"></i>${tagData.name}
+                </div>
+                <div class="tag-stats">
+                    <span class="usage-count" style="background: ${tagData.color || '#667eea'};">${tagData.usage_count || 0} utilisation${(tagData.usage_count || 0) > 1 ? 's' : ''}</span>
+                </div>
+            </div>
+            <div class="tag-actions">
+                <a href="{% url 'TagsCat:tag_edit' 0 %}" class="btn-action btn-edit" title="Modifier" data-tag-id="${tagData.id}">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <button type="button" class="btn-action btn-delete" title="Supprimer" data-delete-url="{% url 'TagsCat:tag_delete' 0 %}" data-tag-id="${tagData.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        // Remplacer les URLs avec l'ID du tag
+        const editLink = tagItem.querySelector('a[data-tag-id]');
+        const deleteBtn = tagItem.querySelector('button[data-tag-id]');
+        
+        if (editLink) {
+            editLink.href = editLink.href.replace('0', tagData.id);
+        }
+        if (deleteBtn) {
+            deleteBtn.setAttribute('data-delete-url', deleteBtn.getAttribute('data-delete-url').replace('0', tagData.id));
+        }
+        
+        // Ajouter l'animation d'apparition
+        tagItem.style.opacity = '0';
+        tagItem.style.transform = 'translateY(20px)';
+        tagsGrid.appendChild(tagItem);
+        
+        // Animation d'apparition
+        setTimeout(() => {
+            tagItem.style.transition = 'all 0.3s ease';
+            tagItem.style.opacity = '1';
+            tagItem.style.transform = 'translateY(0)';
+        }, 100);
+    });
+}
+
+function updateUsageCounts(tags) {
+    tags.forEach(tagData => {
+        const existingTag = document.querySelector(`[data-tag-id="${tagData.id}"]`);
+        if (existingTag) {
+            const usageCountElement = existingTag.querySelector('.usage-count');
+            if (usageCountElement) {
+                usageCountElement.textContent = `${tagData.usage_count || 0} utilisation${(tagData.usage_count || 0) > 1 ? 's' : ''}`;
+            }
+        }
+    });
+}
+
+btnValidate.addEventListener('click', async () => {
+    const selectedTags = document.querySelectorAll('#aiResults button[data-is-added="true"]');
+    if (selectedTags.length === 0) return;
+    
+    btnValidate.disabled = true;
+    btnValidate.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validation...';
+    
+    let successCount = 0;
+    let errorCount = 0;
+    const newTags = [];
+    
+    for (const tag of selectedTags) {
+        try {
+            const res = await createTagQuick(tag.dataset.tagName);
+            if (res.success) {
+                successCount++;
+                tag.className = 'btn btn-sm btn-success';
+                tag.innerHTML = '<i class="fas fa-check me-1"></i>' + (res.tag?.name || tag.dataset.tagName);
+                tag.dataset.tagId = res.tag?.id || '';
+                
+                // Ajouter à la liste des nouveaux tags pour l'affichage
+                if (res.tag) {
+                    newTags.push(res.tag);
+                }
+            }
+        } catch (e) {
+            errorCount++;
+            tag.className = 'btn btn-sm btn-danger';
+            tag.innerHTML = '<i class="fas fa-times me-1"></i>Erreur';
+        }
+    }
+    
+    // Ajouter les nouveaux tags à la liste principale
+    if (newTags.length > 0) {
+        addTagsToList(newTags);
+    }
+    
+    // Mettre à jour le compteur d'utilisation des tags existants
+    updateUsageCounts(newTags);
+    
+    
+    btnValidate.disabled = false;
+    btnValidate.innerHTML = '<i class="fas fa-check-circle me-2"></i>Valider la sélection (<span id="selectedCount">0</span>)';
+    updateSelectedCount();
+});
+
+btnSuggest.addEventListener('click', async () => {
+    const text = (aiText.value || '').trim();
+    const tagCount = parseInt(document.getElementById('tagCount').value) || 2;
+    if (!text) return;
+    btnSuggest.disabled = true;
+    btnSuggest.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération...';
+    aiResults.innerHTML = '';
+    try {
+        const resp = await fetch('{% url "TagsCat:tag_suggest" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ text, tag_count: tagCount })
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'Erreur IA');
+        (data.tags || []).forEach(tag => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'btn btn-sm btn-outline-primary';
+            chip.textContent = tag;
+            chip.dataset.tagName = tag;
+            chip.dataset.isAdded = 'false';
+            
+            chip.addEventListener('click', async () => {
+                if (chip.disabled) return;
+                
+                const isAdded = chip.dataset.isAdded === 'true';
+                const tagId = chip.dataset.tagId;
+                
+                chip.disabled = true;
+                
+                try {
+                    if (isAdded && tagId) {
+                        // Supprimer le tag
+                        await deleteTagQuick(tagId);
+                        chip.className = 'btn btn-sm btn-outline-primary';
+                        chip.innerHTML = tag;
+                        chip.dataset.isAdded = 'false';
+                        chip.dataset.tagId = '';
+                    } else {
+                        // Ajouter le tag
+                        const res = await createTagQuick(tag);
+                        chip.className = 'btn btn-sm btn-success';
+                        chip.innerHTML = '<i class="fas fa-check me-1"></i>' + (res.tag?.name || tag);
+                        chip.dataset.isAdded = 'true';
+                        chip.dataset.tagId = res.tag?.id || '';
+                        
+                        // Ajouter à la liste principale si c'est un nouveau tag
+                        if (res.tag && res.created) {
+                            addTagsToList([res.tag]);
+                        } else if (res.tag) {
+                            // Mettre à jour le compteur d'utilisation du tag existant
+                            updateUsageCounts([res.tag]);
+                        }
+                    }
+                } catch (e) {
+                    chip.className = 'btn btn-sm btn-danger';
+                    chip.innerHTML = '<i class="fas fa-times me-1"></i>Erreur';
+                } finally {
+                    chip.disabled = false;
+                    updateSelectedCount();
+                }
+            });
+            aiResults.appendChild(chip);
+        });
+        updateSelectedCount();
+    } catch (e) {
+        aiResults.innerHTML = '<span class="text-danger">Erreur lors de la génération des tags.</span>';
+    } finally {
+        btnSuggest.disabled = false;
+        btnSuggest.innerHTML = '<i class="fas fa-wand-sparkles me-2"></i>Générer des tags';
+    }
+});
+
+// Search and Filter functionality
+const searchInput = document.getElementById('searchTags');
+const clearSearchBtn = document.getElementById('clearSearch');
+const usageFilter = document.getElementById('usageFilter');
+const sortSelect = document.getElementById('sortTags');
+const searchResults = document.getElementById('searchResults');
+const resultsCount = document.getElementById('resultsCount');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+let allTags = [];
+
+// Initialize tags data
+function initializeTagsData() {
+    const tagItems = document.querySelectorAll('.tag-item');
+    allTags = Array.from(tagItems).map(item => {
+        const nameElement = item.querySelector('.tag-name');
+        const usageElement = item.querySelector('.usage-count');
+        const name = nameElement ? nameElement.textContent.replace('🏷️', '').trim() : '';
+        const usageText = usageElement ? usageElement.textContent : '0';
+        const usage = parseInt(usageText.match(/\d+/)?.[0] || '0');
+        
+        return {
+            element: item,
+            name: name.toLowerCase(),
+            usage: usage,
+            visible: true
+        };
+    });
+}
+
+// Fuzzy search function
+function fuzzySearch(needle, haystack) {
+    const needleLower = needle.toLowerCase();
+    const haystackLower = haystack.toLowerCase();
+    
+    if (haystackLower.includes(needleLower)) return true;
+    
+    // Simple fuzzy matching
+    let needleIndex = 0;
+    for (let i = 0; i < haystackLower.length && needleIndex < needleLower.length; i++) {
+        if (haystackLower[i] === needleLower[needleIndex]) {
+            needleIndex++;
+        }
+    }
+    return needleIndex === needleLower.length;
+}
+
+// Filter tags based on search and filters
+function filterTags() {
+    const searchTerm = searchInput.value.trim();
+    const usageFilterValue = usageFilter.value;
+    
+    let visibleCount = 0;
+    
+    allTags.forEach(tag => {
+        let visible = true;
+        
+        // Search filter
+        if (searchTerm && !fuzzySearch(searchTerm, tag.name)) {
+            visible = false;
+        }
+        
+        // Usage filter
+        if (usageFilterValue) {
+            switch (usageFilterValue) {
+                case 'unused':
+                    if (tag.usage !== 0) visible = false;
+                    break;
+                case 'low':
+                    if (tag.usage < 1 || tag.usage > 5) visible = false;
+                    break;
+                case 'medium':
+                    if (tag.usage < 6 || tag.usage > 15) visible = false;
+                    break;
+                case 'high':
+                    if (tag.usage < 16) visible = false;
+                    break;
+            }
+        }
+        
+        // Apply visibility
+        if (visible) {
+            tag.element.classList.remove('hidden');
+            tag.element.classList.add('highlight');
+            visibleCount++;
+        } else {
+            tag.element.classList.add('hidden');
+            tag.element.classList.remove('highlight');
+        }
+        
+        tag.visible = visible;
+    });
+    
+    // Update results info
+    updateResultsInfo(visibleCount, searchTerm || usageFilterValue);
+    
+    // Show/hide clear button
+    clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
+}
+
+// Sort tags
+function sortTags() {
+    const sortValue = sortSelect.value;
+    const container = document.querySelector('.tags-grid');
+    
+    const sortedTags = [...allTags].sort((a, b) => {
+        switch (sortValue) {
+            case 'name':
+                return a.name.localeCompare(b.name);
+            case 'usage':
+                return b.usage - a.usage;
+            case 'date':
+                // Assuming newer tags are at the end
+                return Array.from(container.children).indexOf(b.element) - 
+                       Array.from(container.children).indexOf(a.element);
+            case 'color':
+                const aColor = a.element.style.borderLeftColor || '#667eea';
+                const bColor = b.element.style.borderLeftColor || '#667eea';
+                return aColor.localeCompare(bColor);
+            default:
+                return b.usage - a.usage;
+        }
+    });
+    
+    // Reorder elements
+    sortedTags.forEach(tag => {
+        container.appendChild(tag.element);
+    });
+}
+
+// Update results info
+function updateResultsInfo(count, hasFilters) {
+    if (hasFilters) {
+        searchResults.style.display = 'block';
+        resultsCount.textContent = `${count} résultat${count !== 1 ? 's' : ''}`;
+    } else {
+        searchResults.style.display = 'none';
+    }
+}
+
+// Reset all filters
+function resetFilters() {
+    searchInput.value = '';
+    usageFilter.value = '';
+    sortSelect.value = 'usage';
+    
+    allTags.forEach(tag => {
+        tag.element.classList.remove('hidden', 'highlight');
+        tag.visible = true;
+    });
+    
+    clearSearchBtn.style.display = 'none';
+    searchResults.style.display = 'none';
+    
+    sortTags();
+}
+
+// Event listeners
+if (searchInput) {
+    searchInput.addEventListener('input', filterTags);
+}
+
+if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        filterTags();
+    });
+}
+
+if (usageFilter) {
+    usageFilter.addEventListener('change', filterTags);
+}
+
+if (sortSelect) {
+    sortSelect.addEventListener('change', sortTags);
+}
+
+if (resetFiltersBtn) {
+    resetFiltersBtn.addEventListener('click', resetFilters);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        initializeTagsData();
+        sortTags();
+    }, 100);
+});
+
+</script>
 {% endblock %}

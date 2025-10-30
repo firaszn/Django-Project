@@ -7,8 +7,21 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import UpdateView, DetailView
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 from .forms import UserProfileForm
 from .models import CustomUser
+from .ai_services import BioGeneratorService, FraudDetectionService
+from allauth.account.views import LoginView as AllauthLoginView
+from django.conf import settings
+
+class CustomLoginView(AllauthLoginView):
+    """Custom login view to add reCAPTCHA site key to context"""
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['recaptcha_site_key'] = settings.RECAPTCHA_SITE_KEY
+        return context
 
 class ProfileView(LoginRequiredMixin, DetailView):
     model = CustomUser
@@ -108,8 +121,18 @@ def admin_users_list(request):
     if role_filter:
         users = users.filter(role=role_filter)
     
+    # Calculer les scores de confiance pour chaque utilisateur
+    users_with_confidence = []
+    for user in users:
+        fraud_data = FraudDetectionService.analyze_user(user)
+        users_with_confidence.append({
+            'user': user,
+            'confidence_score': fraud_data['confidence_score'],
+            'risk_level': fraud_data['risk_level']
+        })
+    
     # Pagination
-    paginator = Paginator(users, 10)  # 10 utilisateurs par page
+    paginator = Paginator(users_with_confidence, 10)  # 10 utilisateurs par page
     page_number = request.GET.get('page')
     users_page = paginator.get_page(page_number)
     
@@ -136,6 +159,9 @@ def admin_user_detail(request, user_id):
     """Détails d'un utilisateur"""
     user = CustomUser.objects.get(id=user_id)
     
+    # Analyse de fraude/confiance
+    fraud_data = FraudDetectionService.analyze_user(user)
+    
     # Statistiques pour la sidebar
     total_users = CustomUser.objects.exclude(id=request.user.id).count()
     active_users = CustomUser.objects.exclude(id=request.user.id).filter(is_active=True).count()
@@ -143,6 +169,7 @@ def admin_user_detail(request, user_id):
     
     context = {
         'viewed_user': user,
+        'fraud_data': fraud_data,
         'total_users': total_users,
         'active_users': active_users,
         'admin_users': admin_users,
@@ -152,13 +179,62 @@ def admin_user_detail(request, user_id):
 
 @login_required
 @user_passes_test(is_admin)
-def admin_user_toggle_status(request, user_id):
-    """Activer/Désactiver un utilisateur"""
-    user = CustomUser.objects.get(id=user_id)
-    user.is_active = not user.is_active
-    user.save()
-    
-    status = _('activated') if user.is_active else _('deactivated')
-    messages.success(request, _(f'User {user.email} has been {status}'))
+def admin_user_delete(request, user_id):
+    """Supprimer définitivement un utilisateur de la base de données"""
+    if request.method == 'POST':
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            
+            # Ne pas permettre de supprimer soi-même
+            if user.id == request.user.id:
+                messages.error(request, _('You cannot delete your own account.'))
+                return redirect('admin_users_list')
+            
+            # Ne pas permettre de supprimer d'autres admins
+            if user.role == 'admin':
+                messages.error(request, _('Cannot delete admin accounts.'))
+                return redirect('admin_users_list')
+            
+            user_email = user.email
+            
+            # Désactiver temporairement le signal pour éviter les erreurs
+            from django.db.models.signals import post_save
+            from users import signals
+            
+            # Désactiver le signal qui crée/met à jour le profil
+            post_save.disconnect(signals.save_user_profile, sender=CustomUser)
+            
+            try:
+                user.delete()
+                messages.success(request, _(f'User {user_email} has been permanently deleted.'))
+            finally:
+                # Réactiver le signal
+                post_save.connect(signals.save_user_profile, sender=CustomUser)
+                
+        except CustomUser.DoesNotExist:
+            messages.error(request, _('User not found.'))
+        except Exception as e:
+            messages.error(request, _(f'Error deleting user: {str(e)}'))
     
     return redirect('admin_users_list')
+
+# Nouvelle vue pour générer une bio avec IA
+@login_required
+@require_http_methods(["POST"])
+def generate_bio_ai(request):
+    """Génère une bio avec l'IA pour l'utilisateur connecté"""
+    try:
+        keywords = request.POST.get('keywords', '').split(',')
+        keywords = [k.strip() for k in keywords if k.strip()]
+        
+        bio = BioGeneratorService.generate_bio(request.user, keywords)
+        
+        return JsonResponse({
+            'success': True,
+            'bio': bio
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

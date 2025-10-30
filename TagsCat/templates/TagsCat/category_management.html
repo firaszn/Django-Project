@@ -17,9 +17,17 @@
                         </h1>
                         <p class="lead text-muted mb-0">{% trans "Organize your thoughts with beautiful categories" %}</p>
                     </div>
-                    <a href="{% url 'TagsCat:category_create' %}" class="btn btn-gradient btn-lg shadow-lg">
-                        <i class="fas fa-plus-circle me-2"></i>{% trans "Create Category" %}
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'TagsCat:tag_management' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-tags me-2"></i>{% trans "Manage Tags" %}
+                        </a>
+                        <a href="{% url 'TagsCat:tag_create' %}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>{% trans "Create Tag" %}
+                        </a>
+                        <a href="{% url 'TagsCat:category_create' %}" class="btn btn-gradient btn-lg shadow-lg">
+                            <i class="fas fa-plus-circle me-2"></i>{% trans "Create Category" %}
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -102,6 +110,16 @@
                                             {{ category.created_at|date:"d M Y" }}
                                         </span>
                                     </div>
+                                    
+                                    {% if category.tags.all %}
+                                        <div class="category-tags">
+                                            {% for tag in category.tags.all %}
+                                                <span class="tag-badge" style="background: {{ tag.color|default:'#667eea' }}; border: 1px solid {{ tag.color|default:'#667eea' }};">
+                                                    <i class="fas fa-tag me-1"></i>{{ tag.name }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 
                                 <div class="category-footer">
@@ -329,6 +347,25 @@
     color: #a0aec0;
 }
 
+.category-tags {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
 .category-footer {
     display: flex;
     border-top: 1px solid #e2e8f0;
@@ -415,3 +452,5 @@
 }
 </style>
 {% endblock %}
+
+

@@ -111,8 +111,14 @@
                 </a>
 
 
-
-
+                <!-- Statistics & Insights -->
+                <a href="{% url 'statistics_and_insights:backoffice_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'statistics_and_insights:backoffice_dashboard' %}active{% endif %}">
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span class="nav-text">Statistics & Insights</span>
+                    <div class="nav-indicator"></div>
+                </a>
 
                 
             </div>
@@ -579,6 +585,8 @@ body {
     .content-wrapper {
         padding: 16px;
     }
+
+    
 }
 </style>
 

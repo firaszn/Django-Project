@@ -3,6 +3,14 @@
 {% load static %}
 
 {% block content %}
+
+<div class="alert alert-warning mt-3">
+    <h6>Debug Info:</h6>
+    <p>User: {{ user.username }}</p>
+    <p>Apple Connected: {{ user.profile.is_apple_connected }}</p>
+    <p>Apple Username: {{ user.profile.apple_username }}</p>
+</div>
+
 <div class="container py-5">
     <!-- Header Section -->
     <div class="row justify-content-center mb-5">
@@ -90,6 +98,26 @@
                             </a>
                         </div>
                     </form>
+<!-- Add this section after the status field in your reminder_form.html -->
+<div class="alert alert-info mt-4">
+    <div class="d-flex align-items-center">
+        <i class="fab fa-apple fa-lg me-3"></i>
+        <div>
+            <h6 class="fw-bold mb-1">Apple Reminders Sync</h6>
+            <p class="mb-0 small">
+                {% if user.profile.is_apple_connected %}
+                    <i class="fas fa-check-circle text-success me-1"></i>
+                    Connected to Apple Reminders - This reminder will sync to your iPhone
+                {% else %}
+                    <a href="{% url 'connect_apple' %}" class="text-decoration-none">
+                        Connect your Apple account to sync reminders with iPhone
+                    </a>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
                 </div>
             </div>
         </div>

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load socialaccount %}
+{% load static %}
 
 {% block title %}{% trans "Sign In" %} - AI Personal Journal{% endblock %}
 
@@ -16,6 +17,9 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    padding: 0.625rem 1rem; /* ~10px 16px */
+    font-size: 0.95rem;
+    border-radius: 12px;
 }
 
 .btn-google:hover {
@@ -34,12 +38,15 @@
 }
 
 .btn-google i {
-    font-size: 20px;
+    font-size: 18px;
     background: linear-gradient(45deg, #ea4335, #fbbc05, #34a853, #1a73e8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+/* Constrain button width on large screens */
+.btn-google.w-100 { max-width: 420px; margin-left: auto; margin-right: auto; }
 
 /* Divider Styling */
 .divider-container {
@@ -111,7 +118,7 @@
                         <div class="text-center mb-4">
                             {% for provider in socialaccount_providers %}
                                 {% if provider.id == "google" %}
-                                    <a href="{% provider_login_url 'google' %}" class="btn btn-google btn-lg w-100 py-3 mb-3">
+                                    <a href="{% provider_login_url 'google' %}" class="btn btn-google w-100 py-2 mb-3">
                                         <i class="fab fa-google me-3"></i>
                                         <strong>{% trans "Continue with Google" %}</strong>
                                     </a>
@@ -125,16 +132,25 @@
                         </div>
                     {% endif %}
                     
-                    <form class="login" method="POST" action="{% url 'account_login' %}">
+                    <form class="login" method="POST" action="{% url 'account_login' %}" id="loginForm">
                         {% csrf_token %}
-                        {{ form|crispy }}
+                        {{ form.login|as_crispy_field }}
+                        {{ form.password|as_crispy_field }}
+                        
+                        <!-- reCAPTCHA Widget -->
+                        {% if recaptcha_site_key %}
+                        <div class="mb-3">
+                            <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                            <input type="hidden" name="recaptcha_token" id="recaptchaToken">
+                        </div>
+                        {% endif %}
                         
                         {% if redirect_field_value %}
                             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
                         {% endif %}
                         
                         <div class="d-grid gap-2 mt-4">
-                            <button class="btn btn-primary btn-lg py-3" type="submit">
+                            <button class="btn btn-primary py-2" type="submit">
                                 <i class="fas fa-sign-in-alt me-2"></i>
                                 <strong>{% trans "Sign In" %}</strong>
                             </button>
@@ -179,4 +195,31 @@
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if recaptcha_site_key %}
+<!-- reCAPTCHA Script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<script>
+// Get reCAPTCHA site key from settings
+var recaptchaSiteKey = '{{ recaptcha_site_key }}';
+
+// Handle form submission with reCAPTCHA
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    var recaptchaResponse = grecaptcha.getResponse();
+    
+    if (recaptchaResponse.length === 0 && recaptchaSiteKey) {
+        e.preventDefault();
+        alert('{% trans "Please complete the reCAPTCHA verification." %}');
+        return false;
+    }
+    
+    // Set the hidden field with the reCAPTCHA response
+    document.getElementById('recaptchaToken').value = recaptchaResponse;
+});
+</script>
+{% endif %}
 {% endblock %}

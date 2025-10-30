@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Goal Header -->
+            <div class="card border-0 shadow-lg mb-4">
+                <div class="card-body p-5">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="display-6 fw-bold text-dark mb-3">{{ goal.title }}</h1>
+                            <p class="text-muted fs-5 mb-4">{{ goal.description|default:"No description" }}</p>
+                            
+                            <!-- Progress Section -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="fw-bold mb-0">Progress</h5>
+                                    <h4 class="fw-bold text-primary mb-0">{{ goal.progress_percentage|floatformat:0 }}%</h4>
+                                </div>
+                                <div class="progress" style="height: 12px;">
+                                    <div class="progress-bar {% if goal.is_achieved %}bg-success{% else %}bg-primary{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ goal.progress_percentage }}%"
+                                         aria-valuenow="{{ goal.progress_percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <small class="text-muted">{{ goal.progress }}/{{ goal.target }} journals completed</small>
+                                    {% if goal.is_achieved %}
+                                    <small class="text-success fw-bold"><i class="fas fa-check me-1"></i>Goal Achieved!</small>
+                                    {% else %}
+                                    <small class="text-primary fw-bold">{{ goal.get_missing_count }} more journals needed</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="goal-status-card p-4 rounded-3 bg-light">
+                                <div class="mb-3">
+                                    {% if goal.is_achieved %}
+                                    <i class="fas fa-trophy fa-3x text-success"></i>
+                                    {% else %}
+                                    <i class="fas fa-bullseye fa-3x text-primary"></i>
+                                    {% endif %}
+                                </div>
+                                <h5 class="fw-bold">{{ goal.get_progress_status }}</h5>
+                                <p class="text-muted small">{{ goal.days_remaining }} days remaining</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linked Journals Section -->
+            <div class="card border-0 shadow-lg mb-4">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0 fw-bold text-dark">
+                            <i class="fas fa-book me-2 text-primary"></i>
+                            Linked Journals ({{ related_journals.count }})
+                        </h3>
+                        {% if not goal.is_achieved %}
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addJournalsModal">
+                            <i class="fas fa-plus me-1"></i>Add Journals
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if related_journals %}
+                    <div class="list-group">
+                        {% for journal in related_journals %}
+                        <div class="list-group-item border-0 mb-3 rounded-3 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">{{ journal.title }}</h6>
+                                    <p class="text-muted mb-2">{{ journal.description|truncatewords:30 }}</p>
+                                    <small class="text-muted">Created: {{ journal.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <div class="d-flex gap-2 ms-3">
+                                    <a href="{% url 'journal_detail' journal.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                    {% if not goal.is_achieved %}
+                                    <form method="post" action="{% url 'goal_remove_journal' goal.id journal.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                onclick="return confirm('Remove this journal from the goal?')">
+                                            <i class="fas fa-times me-1"></i>Remove
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Journals Linked</h5>
+                        <p class="text-muted mb-3">Link existing journals or create new ones to track your progress.</p>
+                        <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addJournalsModal">
+                            <i class="fas fa-link me-1"></i>Link Journals
+                        </button>
+                        <a href="{% url 'journal_create' %}?goal_id={{ goal.id }}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Create New Journal
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Available Journals Section -->
+            {% if available_journals %}
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <h3 class="card-title mb-0 fw-bold text-dark">
+                        <i class="fas fa-folder-open me-2 text-success"></i>
+                        Available Journals ({{ available_journals.count }})
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">These are your journals that aren't yet linked to this goal:</p>
+                    
+                    <div class="list-group">
+                        {% for journal in available_journals %}
+                        <div class="list-group-item border-0 mb-3 rounded-3 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">{{ journal.title }}</h6>
+                                    <p class="text-muted mb-2">{{ journal.description|truncatewords:30 }}</p>
+                                    <div class="d-flex gap-3 text-sm">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ journal.created_at|date:"M d, Y" }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-tags me-1"></i>
+                                            {{ journal.get_related_goals_count }} goals
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 ms-3">
+                                    <a href="{% url 'journal_detail' journal.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                    {% if not goal.is_achieved %}
+                                    <form method="post" action="{% url 'goal_add_journal' goal.id journal.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-plus me-1"></i>Add to Goal
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="{% url 'goal_edit' goal.id %}" class="btn btn-warning px-4">
+                    <i class="fas fa-edit me-1"></i>Edit Goal
+                </a>
+                <a href="{% url 'goal_list' %}" class="btn btn-secondary px-4">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Goals
+                </a>
+                <button class="btn btn-danger px-4" 
+                        onclick="if(confirm('Are you sure you want to delete this goal?')) { location.href = '{% url 'goal_delete' goal.id %}'; }">
+                    <i class="fas fa-trash me-1"></i>Delete Goal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Journals Modal -->
+<div class="modal fade" id="addJournalsModal" tabindex="-1" aria-labelledby="addJournalsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="addJournalsModalLabel">Add Journals to Goal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if available_journals %}
+                <form method="post" action="{% url 'goal_add_multiple_journals' goal.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select journals to add:</label>
+                        <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                            {% for journal in available_journals %}
+                            <label class="list-group-item border-0">
+                                <input class="form-check-input me-2" type="checkbox" name="journal_ids" value="{{ journal.id }}">
+                                <div class="ms-2">
+                                    <h6 class="fw-bold mb-1">{{ journal.title }}</h6>
+                                    <p class="text-muted mb-1 small">{{ journal.description|truncatewords:20 }}</p>
+                                    <small class="text-muted">{{ journal.created_at|date:"M d, Y" }}</small>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary" id="selectAllJournals">Select All</button>
+                        <div>
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Selected Journals</button>
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Available Journals</h5>
+                    <p class="text-muted">All your journals are already linked to this goal.</p>
+                    <a href="{% url 'journal_create' %}?goal_id={{ goal.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Create New Journal
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress {
+    border-radius: 10px;
+    background-color: #f1f3f9;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
+}
+
+.list-group-item {
+    transition: all 0.3s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+}
+
+.btn {
+    border: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Select All functionality for the modal
+    const selectAllBtn = document.getElementById('selectAllJournals');
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('input[name="journal_ids"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !allChecked;
+            });
+            
+            this.textContent = allChecked ? 'Select All' : 'Deselect All';
+        });
+    }
+
+    // Auto-show modal if there are available journals and no linked journals
+    {% if not related_journals and available_journals %}
+    const addJournalsModal = new bootstrap.Modal(document.getElementById('addJournalsModal'));
+    addJournalsModal.show();
+    {% endif %}
+});
+</script>
+{% endblock %}

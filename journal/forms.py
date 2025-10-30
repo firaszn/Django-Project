@@ -1,5 +1,6 @@
 from django import forms
 from .models import Journal
+from TagsCat.models import Category
 
 
 class JournalForm(forms.ModelForm):
@@ -16,12 +17,24 @@ class JournalForm(forms.ModelForm):
 
     class Meta:
         model = Journal
-        fields = ['title', 'description', 'entry_date', 'location']
+        fields = ['title', 'description', 'entry_date', 'location', 'category']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 8}),
             'title': forms.TextInput(attrs={'placeholder': 'Title'}),
             'location': forms.TextInput(attrs={'placeholder': 'Location (optional)'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        if user:
+            # Filtrer les catégories par utilisateur
+            self.fields['category'].queryset = Category.objects.filter(user=user).order_by('name')
+            
+            # Rendre le champ optionnel
+            self.fields['category'].required = False
 
     def clean_entry_date(self):
         data = self.cleaned_data.get('entry_date')
