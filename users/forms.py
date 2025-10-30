@@ -22,6 +22,18 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ('email', 'username', 'first_name', 'last_name')
 
 class CustomSignupForm(SignupForm):
+    first_name = forms.CharField(max_length=30, label=_('First Name'),
+                               widget=forms.TextInput(attrs={'placeholder': _('First Name')}))
+    last_name = forms.CharField(max_length=30, label=_('Last Name'),
+                              widget=forms.TextInput(attrs={'placeholder': _('Last Name')}))
+    phone_number = forms.CharField(max_length=15, label=_('Phone Number'), required=False,
+                                 widget=forms.TextInput(attrs={'placeholder': _('Phone Number')}))
+    birth_date = forms.DateField(label=_('Date of Birth'), required=True,
+                               widget=forms.DateInput(attrs={
+                                   'type': 'date',
+                                   'placeholder': _('Date of Birth'),
+                                   'class': 'form-control'
+                               }))
     first_name = forms.CharField(
         max_length=30, 
         label=_('First Name'),
@@ -57,6 +69,7 @@ class CustomSignupForm(SignupForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
+
             # Désactiver la validation HTML5 pour laisser Django gérer la validation
             if hasattr(field.widget, 'attrs'):
                 field.widget.attrs['required'] = False
@@ -323,6 +336,7 @@ class UserProfileForm(forms.ModelForm):
             'phone_number': _('Phone Number'),
         }
     
+
     # --- PIN handling for hidden journals ---
     # Add PIN fields dynamically so templates can show them if desired
     new_pin = forms.CharField(
@@ -349,6 +363,7 @@ class UserProfileForm(forms.ModelForm):
         current_password = cleaned_data.get('current_password')
         new_password = cleaned_data.get('new_password')
         confirm_password = cleaned_data.get('confirm_password')
+
         new_pin = cleaned_data.get('new_pin')
         confirm_pin = cleaned_data.get('confirm_pin')
         remove_pin = cleaned_data.get('remove_pin')
@@ -368,6 +383,8 @@ class UserProfileForm(forms.ModelForm):
             if not self.instance.check_password(current_password):
                 raise forms.ValidationError(_('Your current password is incorrect.'))
         
+        return cleaned_data
+    
         # If user asked to remove pin, ignore new_pin/confirm_pin
         if remove_pin:
             return cleaned_data
@@ -389,6 +406,7 @@ class UserProfileForm(forms.ModelForm):
         # Changer le mot de passe si fourni
         if new_password:
             user.set_password(new_password)
+
 
         # Handle PIN removal or set
         if self.cleaned_data.get('remove_pin'):

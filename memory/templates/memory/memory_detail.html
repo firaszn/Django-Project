@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ memory.title|default:"Souvenir" }} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="memory-detail-hero py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm overflow-hidden">
+                    {% if photos|length > 0 %}
+                        <div class="cover-photo" style="background-image:url('{{ photos.0.image.url }}');"></div>
+                    {% else %}
+                        <div class="cover-photo no-photo d-flex align-items-center justify-content-center">Aucune photo</div>
+                    {% endif %}
+
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h2 class="mb-1">{{ memory.title|default:"(Sans titre)" }}</h2>
+                                <div class="text-muted small">{{ memory.date|date:"F j, Y" }} • Créé le {{ memory.created_at|date:"F j, Y H:i" }}</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'memory:memory_edit' memory.pk %}" class="btn btn-outline-primary btn-sm">Modifier</a>
+                                <a href="{% url 'memory:memory_delete' memory.pk %}" class="btn btn-outline-danger btn-sm">Supprimer</a>
+                                <a href="{% url 'memory:memory_management' %}" class="btn btn-light btn-sm">Retour</a>
+                            </div>
+                        </div>
+
+                        <p class="lead text-muted">{{ memory.description|linebreaksbr }}</p>
+
+                        {% if memory.tags.exists %}
+                            <div class="mt-3 mb-2" id="tag-badges">
+                                {% for tag in memory.tags.all %}
+                                    <span class="tag-badge" data-name="{{ tag.name }}">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <hr>
+
+                        <h6 class="mb-3">Galerie</h6>
+                        <div class="row g-3 gallery">
+                            {% for photo in photos %}
+                                <div class="col-6 col-md-4">
+                                    <div class="photo-thumb rounded shadow-sm position-relative">
+                                        <img src="{{ photo.image.url }}" alt="photo" class="img-fluid rounded pointer" data-full="{{ photo.image.url }}" data-caption="{{ photo.caption|default:'' }}">
+                                        <div class="photo-actions position-absolute top-0 end-0 m-2">
+                                            <form method="post" action="{% url 'memory:memory_photo_delete' memory.pk photo.pk %}" style="display:inline">{% csrf_token %}
+                                                <button class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="col-12 text-muted">Aucune photo disponible.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card p-3 shadow-sm sidebar-meta">
+                    <h5 class="mb-2">Détails du souvenir</h5>
+                    <dl class="row small">
+                        <dt class="col-5 text-muted">Utilisateur</dt><dd class="col-7">{{ memory.user.get_full_name|default:memory.user.username }}</dd>
+                        <dt class="col-5 text-muted">Date</dt><dd class="col-7">{{ memory.date|date:"F j, Y" }}</dd>
+                        <dt class="col-5 text-muted">Photos</dt><dd class="col-7">{{ photos|length }}</dd>
+                        <dt class="col-5 text-muted">Créé</dt><dd class="col-7">{{ memory.created_at|date:"F j, Y" }}</dd>
+                    </dl>
+
+                    <div class="mt-3">
+                        <a href="{% url 'memory:memory_edit' memory.pk %}" class="btn btn-primary w-100 mb-2">Modifier</a>
+                        <a href="{% url 'memory:memory_management' %}" class="btn btn-outline-secondary w-100">Retour aux souvenirs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox modal -->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-body p-0 position-relative">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                <img id="modalImage" src="" class="img-fluid w-100 rounded" alt="">
+                <div id="modalCaption" class="mt-2 text-white small"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.memory-detail-hero { background: linear-gradient(135deg,#f7f7fb 0%, #fff 100%); }
+.cover-photo { height:320px; background-size:cover; background-position:center; }
+.cover-photo.no-photo { height:320px; background:linear-gradient(180deg,#f0f0f5,#fafafa); color:#999; }
+    /* default visible badge color (fallback if JS fails) */
+    .tag-badge { display:inline-block; padding:6px 10px; border-radius:999px; color:#fff; background:#6c757d; margin-right:6px; font-weight:600; }
+.photo-thumb { overflow:hidden; }
+.photo-thumb img.pointer { cursor:pointer; transition:transform .18s ease; }
+.photo-thumb img.pointer:hover { transform:scale(1.03); }
+.photo-actions button { opacity:0.95; }
+.sidebar-meta { border-radius:12px; }
+
+@media (max-width:767px){ .cover-photo { height:220px; } }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    // Colorize tag badges based on their name
+    document.querySelectorAll('#tag-badges .tag-badge, .tag-badge').forEach(function(el){
+        const name = el.getAttribute('data-name') || el.textContent.trim();
+        let hash=0; for(let i=0;i<name.length;i++){ hash = name.charCodeAt(i) + ((hash<<5)-hash); }
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        const color = '#' + ('00000'.substring(0, 6 - c.length) + c);
+        el.style.background = color;
+    });
+
+    // lightbox
+    const modal = document.getElementById('photoModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalCaption = document.getElementById('modalCaption');
+    const bsModal = modal ? new bootstrap.Modal(modal) : null;
+
+    document.querySelectorAll('.gallery img').forEach(img => {
+        img.addEventListener('click', () => {
+            const src = img.getAttribute('data-full') || img.src;
+            const cap = img.getAttribute('data-caption') || '';
+            if(modalImage) modalImage.src = src;
+            if(modalCaption) modalCaption.textContent = cap;
+            if(bsModal) bsModal.show();
+        });
+    });
+});
+</script>
+
+{% endblock %}

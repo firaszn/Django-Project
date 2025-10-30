@@ -33,3 +33,4 @@ class JournalImageAdmin(admin.ModelAdmin):
     def get_category(self, obj):
         return obj.journal.category
     get_category.short_description = 'Category'
+    get_category.short_description = 'Category'

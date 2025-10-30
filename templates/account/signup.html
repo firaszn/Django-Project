@@ -4,6 +4,7 @@
 
 {% block title %}{% trans "Sign Up" %} - AI Personal Journal{% endblock %}
 
+
 {% block extra_css %}
 <style>
     /* Styles pour les messages d'erreur en rouge */
@@ -93,6 +94,9 @@
                 </div>
                 
                 <div class="card-body p-5">
+
+                    <form class="signup" id="signup_form" method="POST" action="{% url 'account_signup' %}">
+
                     <form class="signup" id="signup_form" method="POST" action="{% url 'account_signup' %}" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
@@ -172,6 +176,7 @@
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -248,3 +253,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+

@@ -1,5 +1,12 @@
 # statistics_and_insights/gemini_service.py
-import google.generativeai as genai
+genai = None
+try:
+    import google.generativeai as genai
+except Exception:
+    # google.generativeai is optional for deployments that don't use Gemini.
+    # Defer raising an error until the service is explicitly requested so
+    # the rest of the app can start without this dependency.
+    genai = None
 from django.conf import settings
 import json
 import time
@@ -24,6 +31,15 @@ class GeminiAIService:
             print(f"❌ Format de clé invalide: {api_key[:20]}...")
             raise ValueError("Format de clé API invalide")
         
+        if genai is None:
+            msg = (
+                "The optional package `google.generativeai` is not installed. "
+                "Install it to enable Gemini features or remove/disable usage of "
+                "the Gemini service (set `GEMINI_API_KEY` empty to avoid calls)."
+            )
+            print(f"❌ {msg}")
+            raise ImportError(msg)
+
         try:
             genai.configure(api_key=api_key)
             print("✅ Gemini AI configuré avec succès")
