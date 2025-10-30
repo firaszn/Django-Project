@@ -6,4 +6,5 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 #Appliquer toutes les migrations de bases de données en suspens
 python manage.py migrate
-python manage.py createsuperuser --noinput || true
+# Créer le superutilisateur avec le script Python
+python create_superuser.py || true

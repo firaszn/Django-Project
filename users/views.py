@@ -20,7 +20,11 @@ class CustomLoginView(AllauthLoginView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['recaptcha_site_key'] = settings.RECAPTCHA_SITE_KEY
+        # Ne montrer reCAPTCHA que si les deux clés sont configurées et non vides
+        if settings.RECAPTCHA_SITE_KEY and settings.RECAPTCHA_SECRET_KEY:
+            context['recaptcha_site_key'] = settings.RECAPTCHA_SITE_KEY
+        else:
+            context['recaptcha_site_key'] = None
         return context
 
 class ProfileView(LoginRequiredMixin, DetailView):
