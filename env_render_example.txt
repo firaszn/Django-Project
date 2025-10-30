@@ -1,0 +1,23 @@
+# Variables d'environnement pour Render
+# Copiez ces variables dans la section "Environment Variables" de votre service Render
+
+# Configuration de base
+SECRET_KEY=your-generated-secret-key-here
+DEBUG=False
+WEB_CONCURRENCY=4
+
+# Base de données PostgreSQL (fournie automatiquement par Render)
+DATABASE_URL=postgresql://user:password@hostname:port/database_name
+
+# Configuration du superutilisateur Django
+DJANGO_SUPERUSER_USERNAME=your-admin-username
+DJANGO_SUPERUSER_PASSWORD=your-admin-password
+DJANGO_SUPERUSER_EMAIL=your-admin-email
+
+# Configuration des API (optionnel)
+GROQ_API_KEY=your-groq-api-key-if-needed
+GEMINI_API_KEY=your-gemini-api-key-if-needed
+
+# Configuration reCAPTCHA (optionnel)
+RECAPTCHA_SITE_KEY=your-recaptcha-site-key
+RECAPTCHA_SECRET_KEY=your-recaptcha-secret-key
