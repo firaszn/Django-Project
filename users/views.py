@@ -13,6 +13,15 @@ from .forms import UserProfileForm
 from .models import CustomUser
 from .ai_services import BioGeneratorService, FraudDetectionService
 
+class CustomLoginView(LoginRequiredMixin, DetailView):
+    model = CustomUser
+    template_name = 'users/profile.html'
+    context_object_name = 'user'
+    
+    def get_object(self):
+        return self.request.user
+    
+
 class ProfileView(LoginRequiredMixin, DetailView):
     model = CustomUser
     template_name = 'users/profile.html'
