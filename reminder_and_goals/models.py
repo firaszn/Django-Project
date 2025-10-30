@@ -13,9 +13,18 @@ class Reminder(models.Model):
     status = models.BooleanField(default=True)  # Active/Inactive
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # New fields for CalDAV integration
+    apple_reminder_id = models.CharField(max_length=255, blank=True, null=True)
+    apple_calendar_id = models.CharField(max_length=255, blank=True, null=True)
+    is_synced_with_apple = models.BooleanField(default=False)
+    last_sync_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ['reminder_time']
 
 class Goal(models.Model):
     user = models.ForeignKey(
@@ -67,3 +76,40 @@ class Goal(models.Model):
         if self.end_date < today:
             return 0
         return (self.end_date - today).days
+
+
+class GoalSuggestion(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='goal_suggestions'
+    )
+    journal = models.ForeignKey(
+        'journal.Journal',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='generated_goal_suggestions'
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    category = models.CharField(max_length=50, blank=True, null=True)
+    confidence = models.FloatField(default=0.5)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.status})"
+    
+
+
+    

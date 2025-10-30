@@ -43,14 +43,18 @@
                                             <h4 class="fw-bold text-dark mb-2">{{ reminder.title }}</h4>
                                             <p class="text-muted mb-3">{{ reminder.description|default:"No description"|truncatewords:20 }}</p>
                                             
-                                            <!-- Time and Status -->
-                                            <div class="d-flex flex-wrap gap-4 align-items-center">
+                                            <!-- Date, Time and Status -->
+                                            <div class="d-flex flex-wrap gap-3 align-items-center">
+                                                <!-- Date Badge -->
+                                                
+                                                <!-- Time Badge -->
                                                 <div class="time-badge">
                                                     <span class="badge bg-warning bg-opacity-10 text-warning py-2 px-3 rounded-pill">
                                                         <i class="fas fa-clock me-2"></i>
                                                         {{ reminder.reminder_time }}
                                                     </span>
                                                 </div>
+                                                <!-- Status Badge -->
                                                 <div class="status-badge">
                                                     {% if reminder.status %}
                                                     <span class="badge bg-success bg-opacity-10 text-success py-2 px-3 rounded-pill">
@@ -61,6 +65,20 @@
                                                     <span class="badge bg-danger bg-opacity-10 text-danger py-2 px-3 rounded-pill">
                                                         <i class="fas fa-pause-circle me-2"></i>
                                                         Inactive
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                                <!-- Apple Sync Badge -->
+                                                <div class="sync-badge">
+                                                    {% if reminder.is_synced_with_apple %}
+                                                    <span class="badge bg-info bg-opacity-10 text-info py-2 px-3 rounded-pill">
+                                                        <i class="fab fa-apple me-2"></i>
+                                                        Synced
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary py-2 px-3 rounded-pill">
+                                                        <i class="fab fa-apple me-2"></i>
+                                                        Not Synced
                                                     </span>
                                                     {% endif %}
                                                 </div>
@@ -152,6 +170,18 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(246, 173, 85, 0.4);
     color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .d-flex.flex-wrap.gap-3 {
+        gap: 1rem !important;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem !important;
+    }
 }
 </style>
 {% endblock %}

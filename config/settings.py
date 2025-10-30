@@ -1,6 +1,61 @@
 import os
 from pathlib import Path
+ 
+# Load environment variables from a local .env file if present
+try:
+    from dotenv import load_dotenv, find_dotenv  # type: ignore
+    _env_file = find_dotenv()
+    if _env_file:
+        load_dotenv(_env_file)
+except Exception:
+    # Fallback minimal loader: parse KEY=VALUE lines in .env at project root
+    try:
+        _base_dir = Path(__file__).resolve().parent.parent
+        _fallback_env = _base_dir / '.env'
+        if _fallback_env.exists():
+            for _line in _fallback_env.read_text(encoding='utf-8').splitlines():
+                _line = _line.strip()
+                if not _line or _line.startswith('#') or '=' not in _line:
+                    continue
+                _k, _v = _line.split('=', 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+    except Exception:
+        pass
 from django.contrib.messages import constants as messages
+import base64
+import os
+
+# Generate a key for encryption (do this once and keep it secret)
+# You can generate one with: from cryptography.fernet import Fernet; Fernet.generate_key()
+ENCRYPTION_KEY = b'3YIQyb4cb-oImwuwsxOwqua6xgFc67pavrIipzinrMw='
+
+# Apple CalDAV settings
+APPLE_CALDAV_SERVER = "https://caldav.icloud.com"
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'apple_reminders.log',
+        },
+    },
+    'loggers': {
+        'reminder_and_goals': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+# AI Goal Suggestions
+# Configure Gemini for high-quality suggestions. Put values in your .env file.
+GOAL_GEMINI_API_KEY = os.getenv('GOAL_GEMINI_API_KEY')
+GOAL_GEMINI_MODEL = os.getenv('GOAL_GEMINI_MODEL', 'gemini-latest')
 
 # Import de la configuration email
 try:
@@ -47,9 +102,10 @@ INSTALLED_APPS = [
     # Local apps
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
-    'reminder_and_goals',
     'TagsCat',
     'statistics_and_insights',
+    'reminder_and_goals.apps.ReminderAndGoalsConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -90,7 +146,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': 'root',
         'HOST': 'localhost',
-        'PORT': '3308',
+        'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',

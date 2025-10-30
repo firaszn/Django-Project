@@ -160,6 +160,12 @@
                             </button>
                             
                             {% if request.GET.journal_id and not form.instance.pk %}
+                            <a href="{% url 'goal_suggestions' %}?journal_id={{ request.GET.journal_id }}" class="btn btn-success btn-lg py-3">
+                                <i class="fas fa-magic me-2"></i>Goal Suggestions
+                            </a>
+                            {% endif %}
+
+                            {% if request.GET.journal_id and not form.instance.pk %}
                             <a href="{% url 'journal_detail' journal_id=request.GET.journal_id %}" class="btn btn-outline-secondary btn-lg py-3">
                                 <i class="fas fa-arrow-left me-2"></i>Back
                             </a>

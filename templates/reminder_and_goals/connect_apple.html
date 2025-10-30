@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fab fa-apple fa-3x text-dark mb-3"></i>
+                        <h2 class="fw-bold">Connect Apple Account</h2>
+                        <p class="text-muted">Sync your reminders with iPhone</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Apple ID</label>
+                            <input type="email" name="apple_username" class="form-control" required 
+                                   placeholder="your@email.com">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">App-Specific Password</label>
+                            <input type="password" name="apple_password" class="form-control" required 
+                                   placeholder="Generated app-specific password">
+                            <div class="form-text">
+                                <a href="https://appleid.apple.com/" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-external-link-alt me-1"></i>
+                                    Generate app-specific password
+                                </a>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100 py-2">
+                            <i class="fab fa-apple me-2"></i>Connect Apple Account
+                        </button>
+                    </form>
+                    
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="fw-bold">Important Notes:</h6>
+                        <ul class="small mb-0">
+                            <li>Use an app-specific password, not your main Apple ID password</li>
+                            <li>Go to appleid.apple.com to generate an app-specific password</li>
+                            <li>Your credentials are encrypted and stored securely</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
