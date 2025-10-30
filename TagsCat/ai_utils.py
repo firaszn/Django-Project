@@ -16,15 +16,18 @@ def get_generation_prompt(tag_count: int) -> str:
         f"Tu es un assistant expert qui extrait des tags de noms/substantifs pour un agenda personnel. "
         f"Règles ULTRA-STRICTES : "
         f"- Extrais {count_desc[tag_count]} "
-        f"- PRIORITÉ ABSOLUE : UNIQUEMENT des noms concrets, objets, concepts, genres, types, catégories "
-        f"- Exemples de tags prioritaires : feuilletons, romance, drame, école, travail, famille, santé, sport, voyage, projet "
+        f"- PRIORITÉ ABSOLUE : UNIQUEMENT des noms concrets, objets, concepts, genres, types, catégories, activités "
+        f"- Exemples de tags prioritaires : balades, nature, cycling, vélo, randonnée, sport, voyage, lecture, cuisine, musique "
         f"- INTERDICTION TOTALE : "
         f"  * JAMAIS d'expressions d'opinion (j'aime, j'adore, je préfère, j'aime bien, j'aime les) "
-        f"  * JAMAIS de verbes (marcher, manger, faire, aller, regarder, être, avoir) "
-        f"  * JAMAIS d'adjectifs (beau, bon, grand, petit, turques, français) "
-        f"  * JAMAIS de mots vides (le, la, les, un, une, des, et, ou, mais, avec, dans) "
-        f"- Corrige l'orthographe des mots mal écrits (feuilleon → feuilletons) "
-        f"- Choisis UNIQUEMENT les mots qui représentent des CONCEPTS ou OBJETS concrets "
+        f"  * JAMAIS de verbes d'action (aller, faire, marcher, manger, regarder, être, avoir, prendre, donner, venir, partir, sortir, entrer, monter, descendre) "
+        f"  * JAMAIS de verbes à l'infinitif (courir, nager, danser, chanter, jouer, lire, écrire, cuisiner) "
+        f"  * JAMAIS d'adjectifs (beau, bon, grand, petit, joli, sympa, cool, génial) "
+        f"  * JAMAIS de mots vides (le, la, les, un, une, des, et, ou, mais, avec, dans, pour, sur, sous, entre) "
+        f"  * JAMAIS de pronoms (je, tu, il, elle, nous, vous, ils, elles, me, te, se) "
+        f"- Transforme les verbes en noms d'activités : 'faire du vélo' → 'vélo' ou 'cycling', 'faire des balades' → 'balades' "
+        f"- Corrige l'orthographe des mots mal écrits "
+        f"- Choisis UNIQUEMENT les mots qui représentent des CONCEPTS, OBJETS ou ACTIVITÉS concrètes "
         f"- Format : liste JSON en minuscules, sans accents ni dièses "
         f"- Évite les doublons et mots génériques "
         f"Texte: "
@@ -54,6 +57,24 @@ def _dedupe_and_normalize(candidates: List[str]) -> List[str]:
         'sport': 'sport'
     }
     
+    # Transformation verbes → noms d'activités
+    verb_to_activity = {
+        'courir': 'course',
+        'nager': 'natation',
+        'danser': 'danse',
+        'chanter': 'chant',
+        'cuisiner': 'cuisine',
+        'lire': 'lecture',
+        'ecrire': 'écriture',
+        'dessiner': 'dessin',
+        'peindre': 'peinture',
+        'jardiner': 'jardinage',
+        'bricoler': 'bricolage',
+        'voyager': 'voyage',
+        'marcher': 'marche',
+        'randonner': 'randonnée'
+    }
+    
     for c in candidates:
         tag = re.sub(r"[^\w\s-]", "", c).strip().lower()
         tag = re.sub(r"\s+", " ", tag)
@@ -63,8 +84,28 @@ def _dedupe_and_normalize(candidates: List[str]) -> List[str]:
         # Appliquer les corrections d'orthographe
         tag = corrections.get(tag, tag)
         
-        # Ignorer les expressions d'opinion et mots vides
-        if tag in ['aime', 'adore', 'prefere', 'j-aime', 'j-adore', 'j-prefere', 'aime-bien', 'j-aime-bien']:
+        # Transformer les verbes en noms d'activités
+        tag = verb_to_activity.get(tag, tag)
+        
+        # Ignorer les expressions d'opinion, verbes et mots vides
+        excluded_words = {
+            # Expressions d'opinion
+            'aime', 'adore', 'prefere', 'j-aime', 'j-adore', 'j-prefere', 'aime-bien', 'j-aime-bien',
+            # Verbes courants
+            'aller', 'faire', 'marcher', 'manger', 'regarder', 'etre', 'avoir', 'prendre', 'donner',
+            'venir', 'partir', 'sortir', 'entrer', 'monter', 'descendre', 'courir', 'nager', 'danser',
+            'chanter', 'jouer', 'lire', 'ecrire', 'cuisiner', 'dormir', 'boire', 'voir', 'entendre',
+            'vais', 'vas', 'vont', 'allons', 'allez', 'suis', 'sommes', 'etes', 'sont', 'fais', 'fait',
+            'apprendre', 'savoir', 'pouvoir', 'vouloir', 'devoir', 'penser', 'croire', 'sentir',
+            # Mots vides et adverbes
+            'avec', 'sans', 'dans', 'pour', 'cette', 'cela', 'comme', 'mais', 'alors', 'donc', 
+            'parce', 'quand', 'tous', 'tout', 'tres', 'plus', 'moins', 'elle', 'elles', 'nous', 'vous',
+            'bien', 'mal', 'mieux', 'beaucoup', 'peu', 'assez', 'trop', 'encore', 'deja', 'toujours',
+            # Pronoms et articles
+            'que', 'qui', 'quoi', 'quel', 'dont', 'sur', 'sous', 'entre', 'vers', 'chez', 'une', 'des', 'les', 'aux'
+        }
+        
+        if tag in excluded_words:
             continue
             
         if tag in seen:
@@ -270,12 +311,16 @@ def suggest_tags_from_text(text: str, tag_count: int = 2) -> List[str]:
         'elle','elles','il','ils','nous','vous','que','qui','quoi','quel','dont','sur','sous','entre','vers','chez','une','des','les','aux',
         # Expressions d'opinion - PRIORITÉ ABSOLUE
         'aime','adore','prefere','aime-bien','j-aime','j-adore','j-prefere','j-aime-bien','j-aime-les','aime-les',
-        # Verbes communs
-        'marcher','manger','faire','aller','regarder','voir','ecouter','parler','dire','etre','avoir',
+        # Verbes courants - LISTE ÉTENDUE
+        'aller','faire','marcher','manger','regarder','voir','ecouter','parler','dire','etre','avoir','prendre','donner',
+        'venir','partir','sortir','entrer','monter','descendre','courir','nager','danser','chanter','jouer','lire',
+        'ecrire','cuisiner','dormir','boire','entendre','sentir','toucher','penser','croire','savoir','pouvoir',
+        'vouloir','devoir','falloir','plaire','rester','devenir','sembler','paraître','commencer','finir','continuer',
         # Adjectifs communs
         'beau','bon','grand','petit','nouveau','vieux','jeune','bonne','belle','grande','petite','turques','francais','français',
+        'joli','sympa','cool','génial','super','formidable','magnifique','horrible','terrible','difficile','facile',
         # Mots génériques
-        'the','and','this','that','from','into','your','avec','chose','truc','machin'
+        'the','and','this','that','from','into','your','avec','chose','truc','machin','quelque','plusieurs'
     }
     freq = {}
     for w in words:
