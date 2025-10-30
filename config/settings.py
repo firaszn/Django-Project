@@ -1,5 +1,10 @@
 import os
 from pathlib import Path
+from django.contrib.messages import constants as messages
+import base64
+import os
+from decouple import config
+
  
 # Load environment variables from a local .env file if present
 try:
@@ -21,12 +26,8 @@ except Exception:
                 os.environ.setdefault(_k.strip(), _v.strip())
     except Exception:
         pass
-from django.contrib.messages import constants as messages
-import base64
-import os
 
-# Generate a key for encryption (do this once and keep it secret)
-# You can generate one with: from cryptography.fernet import Fernet; Fernet.generate_key()
+
 ENCRYPTION_KEY = b'3YIQyb4cb-oImwuwsxOwqua6xgFc67pavrIipzinrMw='
 
 # Apple CalDAV settings
@@ -154,6 +155,9 @@ DATABASES = {
     }
 }
 
+GEMINI_API_KEY = 'AIzaSyCIReSYkG37uyIV-VvU87LObnhPzEJSN9M'
+GEMINI_MODEL="models/text-bison-001"
+
 
 # Désactiver les messages de validation de mot de passe
 AUTH_PASSWORD_VALIDATORS = []
@@ -277,3 +281,12 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 
 # Adapter pour les comptes sociaux
 SOCIALACCOUNT_ADAPTER = 'users.adapter.CustomSocialAccountAdapter'
+
+# Configuration API IA (Génération de bio)
+# Groq API - Gratuit et rapide : https://console.groq.com/
+# IMPORTANT: Ne pas mettre la clé directement dans le code !
+# Utilisez la variable d'environnement GROQ_API_KEY ou un fichier .env
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
+
+# HuggingFace API (Optionnel - fallback)
+HUGGINGFACE_API_KEY = config('HUGGINGFACE_API_KEY', default=None)  # Optionnel : clé HuggingFace si vous en avez une

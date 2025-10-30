@@ -1,9 +1,12 @@
 # signals.py
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete ,m2m_changed
 from django.dispatch import receiver
 from django.utils import timezone
 from .models import Reminder
 import logging
+from journal.models import Journal
+from .models import Goal
+
 
 logger = logging.getLogger(__name__)
 
@@ -59,3 +62,25 @@ def sync_reminder_with_apple(sender, instance, created, **kwargs):
         logger.error(f"Error in signal for reminder {instance.id}: {e}", exc_info=True)
 
 logger.info("Reminder signals module loaded")
+
+
+
+@receiver(m2m_changed, sender=Journal.related_goals.through)
+def update_goal_progress_on_journal_link(sender, instance, action, pk_set, **kwargs):
+    """
+    Auto-update goal progress when journals are added/removed from goals
+    """
+    if action in ['post_add', 'post_remove', 'post_clear']:
+        # Get all affected goals
+        if pk_set:  # pk_set contains the goal IDs that were changed
+            goals = Goal.objects.filter(pk__in=pk_set)
+            for goal in goals:
+                goal.update_progress_from_journals()
+
+@receiver(post_save, sender=Goal)
+def update_goal_progress_on_goal_save(sender, instance, created, **kwargs):
+    """
+    Update progress when a goal is first created (in case journals were linked during creation)
+    """
+    if created:
+        instance.update_progress_from_journals()

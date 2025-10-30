@@ -23,7 +23,7 @@ MODEL_FALLBACKS = [
 
 def _gemini_prompt(journal_title: str, journal_text: str) -> str:
     return (
-        "You are a helpful coaching assistant. Read the journal entry and propose exactly 4 or 5 actionable,"
+        "You are a helpful coaching assistant. Read the journal entry and propose exactly 6 or 7 actionable,"
         " personalized goals derived from the user's own words. Output strict JSON with this schema: {\n"
         "  \"goals\": [\n"
         "    { \"title\": string, \"description\": string, \"category\": string }\n"

@@ -92,94 +92,119 @@
 <!-- Users Grid -->
 <div class="users-container">
     <div class="users-grid" id="usersGrid">
-        {% for user_item in users %}
-        {% if user_item.role != 'admin' %}
-        <div class="user-card" data-aos="zoom-in" data-aos-delay="{{ forloop.counter|add:300 }}" 
-             data-status="{% if user_item.is_active %}active{% else %}inactive{% endif %}"
-             data-verified="{% if user_item.verified %}verified{% else %}unverified{% endif %}"
-             data-search="{{ user_item.get_full_name|lower }} {{ user_item.email|lower }}">
-            
-            <!-- Card Glow Effect -->
-            <div class="card-glow"></div>
-            
-            <!-- User Header -->
-            <div class="user-header">
-                <div class="user-avatar-container">
-                    {% if user_item.profilePicture %}
-                        <img src="{{ user_item.profilePicture.url }}" class="user-avatar" alt="{{ user_item.get_full_name }}">
-                    {% else %}
-                        <div class="user-avatar-placeholder">
-                            {{ user_item.first_name|first|default:user_item.username|first|upper }}{{ user_item.last_name|first|upper }}
+        {% for user_data in users %}
+            {% with user_item=user_data.user %}
+            {% if user_item.role != 'admin' %}
+                <div class="user-card" data-aos="zoom-in" data-aos-delay="{{ forloop.counter|add:300 }}" 
+                     data-status="{% if user_item.is_active %}active{% else %}inactive{% endif %}"
+                     data-verified="{% if user_item.verified %}verified{% else %}unverified{% endif %}"
+                     data-search="{{ user_item.get_full_name|lower }} {{ user_item.email|lower }}">
+                    
+                    <!-- Card Glow Effect -->
+                    <div class="card-glow"></div>
+                    
+                    <!-- User Header -->
+                    <div class="user-header">
+                        <div class="user-avatar-container">
+                            {% if user_item.profilePicture %}
+                                <img src="{{ user_item.profilePicture.url }}" class="user-avatar" alt="{{ user_item.get_full_name }}">
+                            {% else %}
+                                <div class="user-avatar-placeholder">
+                                    {{ user_item.first_name|first|default:user_item.username|first|upper }}{{ user_item.last_name|first|upper }}
+                                </div>
+                            {% endif %}
+                            <div class="avatar-status {% if user_item.is_active %}online{% else %}offline{% endif %}"></div>
                         </div>
-                    {% endif %}
-                    <div class="avatar-status {% if user_item.is_active %}online{% else %}offline{% endif %}"></div>
-                </div>
-                
-                <div class="user-badges">
-                    {% if user_item.verified %}
-                        <span class="badge verified">
-                            <i class="fas fa-check-circle"></i>
-                            Verified
-                        </span>
-                    {% else %}
-                        <span class="badge unverified">
-                            <i class="fas fa-clock"></i>
-                            Pending
-                        </span>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- User Info -->
-            <div class="user-info">
-                <h3 class="user-name">{{ user_item.get_full_name|default:user_item.username }}</h3>
-                <p class="user-email">{{ user_item.email }}</p>
-                
-                <div class="user-meta">
-                    <div class="meta-row">
-                        <span class="meta-label">
-                            <i class="fas fa-calendar-alt"></i>
-                            Joined
-                        </span>
-                        <span class="meta-value">{{ user_item.date_joined|date:"M d, Y" }}</span>
+                        
+                        <div class="user-badges">
+                            {% if user_item.verified %}
+                                <span class="badge verified">
+                                    <i class="fas fa-check-circle"></i>
+                                    Verified
+                                </span>
+                            {% else %}
+                                <span class="badge unverified">
+                                    <i class="fas fa-clock"></i>
+                                    Pending
+                                </span>
+                            {% endif %}
+                            
+                            <!-- Confidence Score Badge -->
+                            {% if user_data.risk_level == 'high_risk' %}
+                                <span class="badge confidence-high-risk" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; margin-top: 4px;">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    High Risk ({{ user_data.confidence_score }}%)
+                                </span>
+                            {% elif user_data.risk_level == 'suspicious' %}
+                                <span class="badge confidence-suspicious" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; margin-top: 4px;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    Suspicious ({{ user_data.confidence_score }}%)
+                                </span>
+                            {% elif user_data.risk_level == 'normal' %}
+                                <span class="badge confidence-normal" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; margin-top: 4px;">
+                                    <i class="fas fa-info-circle"></i>
+                                    Normal ({{ user_data.confidence_score }}%)
+                                </span>
+                            {% else %}
+                                <span class="badge confidence-trusted" style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-top: 4px;">
+                                    <i class="fas fa-shield-check"></i>
+                                    Trusted ({{ user_data.confidence_score }}%)
+                                </span>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% if user_item.last_login %}
-                    <div class="meta-row">
-                        <span class="meta-label">
-                            <i class="fas fa-clock"></i>
-                            Last seen
-                        </span>
-                        <span class="meta-value">{{ user_item.last_login|timesince }} ago</span>
+
+                    <!-- User Info -->
+                    <div class="user-info">
+                        <h3 class="user-name">{{ user_item.get_full_name|default:user_item.username }}</h3>
+                        <p class="user-email">{{ user_item.email }}</p>
+                        
+                        <div class="user-meta">
+                            <div class="meta-row">
+                                <span class="meta-label">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Joined
+                                </span>
+                                <span class="meta-value">{{ user_item.date_joined|date:"M d, Y" }}</span>
+                            </div>
+                            {% if user_item.last_login %}
+                            <div class="meta-row">
+                                <span class="meta-label">
+                                    <i class="fas fa-clock"></i>
+                                    Last seen
+                                </span>
+                                <span class="meta-value">{{ user_item.last_login|timesince }} ago</span>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% endif %}
+
+                    <!-- User Actions -->
+                    <div class="user-actions">
+                        <a href="{% url 'admin_user_detail' user_item.id %}" class="action-btn primary">
+                            <i class="fas fa-eye"></i>
+                            <span>View Profile</span>
+                        </a>
+                        <button class="action-btn secondary" onclick="toggleUserStatus({{ user_item.id }})">
+                            {% if user_item.is_active %}
+                                <i class="fas fa-pause"></i>
+                                <span>Deactivate</span>
+                            {% else %}
+                                <i class="fas fa-play"></i>
+                                <span>Activate</span>
+                            {% endif %}
+                        </button>
+                    </div>
+
+                    <!-- Hover Effects -->
+                    <div class="card-particles">
+                        <div class="particle"></div>
+                        <div class="particle"></div>
+                        <div class="particle"></div>
+                    </div>
                 </div>
-            </div>
-
-            <!-- User Actions -->
-            <div class="user-actions">
-                <a href="{% url 'admin_user_detail' user_item.id %}" class="action-btn primary">
-                    <i class="fas fa-eye"></i>
-                    <span>View Profile</span>
-                </a>
-                <button class="action-btn secondary" onclick="toggleUserStatus({{ user_item.id }})">
-                    {% if user_item.is_active %}
-                        <i class="fas fa-pause"></i>
-                        <span>Deactivate</span>
-                    {% else %}
-                        <i class="fas fa-play"></i>
-                        <span>Activate</span>
-                    {% endif %}
-                </button>
-            </div>
-
-            <!-- Hover Effects -->
-            <div class="card-particles">
-                <div class="particle"></div>
-                <div class="particle"></div>
-                <div class="particle"></div>
-            </div>
-        </div>
-        {% endif %}
+            {% endif %}
+            {% endwith %}
         {% empty %}
         <div class="empty-state">
             <div class="empty-icon">
