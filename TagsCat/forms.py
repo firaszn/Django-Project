@@ -1,6 +1,5 @@
 from django import forms
 from .models import Category, Tag
-from .ai_utils import generate_icon_from_number
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -18,7 +17,7 @@ class CategoryForm(forms.ModelForm):
             }),
             'icon': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Numéro d\'icône (1-30)'
+                'placeholder': 'Nom de l\'icône (ex: heart, home, work, school...)'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -36,7 +35,7 @@ class CategoryForm(forms.ModelForm):
         self.fields['name'].label = 'Nom de la catégorie'
         self.fields['color'].label = 'Couleur'
         self.fields['icon'].label = 'Icône'
-        self.fields['icon'].help_text = 'Saisissez un numéro entre 1 et 30 (1=Maison, 2=Travail, 3=École, etc.)'
+        self.fields['icon'].help_text = 'Saisissez le nom de l\'icône FontAwesome (ex: heart, home, briefcase, graduation-cap, users, etc.)'
         self.fields['description'].label = 'Description'
         self.fields['tags'].label = 'Tags associés'
         
@@ -62,41 +61,69 @@ class CategoryForm(forms.ModelForm):
     
     def clean_icon(self):
         """
-        Valide et génère automatiquement l'icône basée sur le numéro saisi.
+        Valide le nom de l'icône FontAwesome saisi.
         """
         icon_input = self.cleaned_data.get('icon', '').strip()
         
         if not icon_input:
-            # Si aucun numéro n'est fourni, utiliser l'icône par défaut
-            return 'fas fa-folder'
+            # Si aucune icône n'est fournie, utiliser l'icône par défaut
+            return 'folder'
         
-        # Générer l'icône basée sur le numéro
-        generated_icon = generate_icon_from_number(icon_input)
+        # Nettoyer le nom de l'icône (supprimer les préfixes s'ils existent)
+        icon_name = icon_input.lower()
         
-        # Valider que le numéro est dans la plage valide (1-30)
-        try:
-            icon_number = int(icon_input)
-            if icon_number < 1 or icon_number > 30:
-                raise forms.ValidationError(
-                    "Le numéro d'icône doit être entre 1 et 30. "
-                    "Exemples: 1=Maison, 2=Travail, 3=École, 4=Cœur, 5=Famille..."
-                )
-        except ValueError:
+        # Supprimer les préfixes courants si présents
+        prefixes_to_remove = ['fas fa-', 'far fa-', 'fab fa-', 'fa-', 'fa ']
+        for prefix in prefixes_to_remove:
+            if icon_name.startswith(prefix):
+                icon_name = icon_name[len(prefix):]
+                break
+        
+        # Liste des icônes populaires et valides pour validation
+        valid_icons = [
+            'home', 'heart', 'briefcase', 'graduation-cap', 'users', 'dumbbell', 'plane', 
+            'utensils', 'film', 'book', 'music', 'gamepad', 'shopping-cart', 'car', 
+            'hospital', 'calendar', 'gift', 'camera', 'laptop', 'coffee', 'tree', 
+            'paint-brush', 'tools', 'bicycle', 'dog', 'star', 'lightbulb', 'money-bill',
+            'envelope', 'phone', 'folder', 'tag', 'clock', 'map', 'key', 'shield',
+            'fire', 'leaf', 'sun', 'moon', 'cloud', 'bolt', 'snowflake', 'umbrella',
+            'anchor', 'rocket', 'gem', 'crown', 'trophy', 'medal', 'flag', 'bell',
+            'headphones', 'microphone', 'video', 'image', 'file', 'folder-open',
+            'save', 'download', 'upload', 'share', 'link', 'paperclip', 'scissors',
+            'pen', 'pencil', 'eraser', 'ruler', 'calculator', 'chart-bar', 'chart-pie',
+            'chart-line', 'table', 'list', 'th', 'th-list', 'search', 'filter',
+            'sort', 'eye', 'eye-slash', 'lock', 'unlock', 'user', 'user-plus',
+            'user-minus', 'user-check', 'user-times', 'cog', 'cogs', 'wrench',
+            'hammer', 'magic', 'wand-sparkles', 'palette', 'brush', 'spray-can'
+        ]
+        
+        # Validation basique du format
+        if not icon_name.replace('-', '').replace('_', '').isalnum():
             raise forms.ValidationError(
-                "Veuillez saisir un numéro valide entre 1 et 30. "
-                "Exemples: 1=Maison, 2=Travail, 3=École, 4=Cœur, 5=Famille..."
+                "Le nom de l'icône ne peut contenir que des lettres, chiffres, tirets et underscores. "
+                "Exemples: heart, home, briefcase, graduation-cap"
             )
         
-        return generated_icon
+        # Avertissement si l'icône n'est pas dans la liste des icônes courantes
+        if icon_name not in valid_icons:
+            # On n'empêche pas l'utilisation, mais on avertit
+            pass  # L'utilisateur peut utiliser n'importe quelle icône FontAwesome
+        
+        return icon_name
 
 class TagForm(forms.ModelForm):
     class Meta:
         model = Tag
-        fields = ['name']
+        fields = ['name', 'color']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nom du tag'
+            }),
+            'color': forms.TextInput(attrs={
+                'class': 'form-control',
+                'type': 'color',
+                'placeholder': '#FF6B6B'
             })
         }
     
@@ -104,6 +131,8 @@ class TagForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['name'].label = 'Nom du tag'
+        self.fields['color'].label = 'Couleur'
+        self.fields['color'].help_text = 'Couleur automatique si vide'
     
     def clean_name(self):
         name = self.cleaned_data.get('name')

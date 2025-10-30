@@ -134,6 +134,75 @@ def generate_icon_from_number(icon_number: str) -> str:
         return 'fas fa-folder'
 
 
+def generate_tag_color(tag_name: str, category_color: str = None) -> str:
+    """
+    Génère une couleur automatique pour un tag basée sur son nom et optionnellement la couleur de sa catégorie.
+    
+    Args:
+        tag_name: Nom du tag
+        category_color: Couleur de la catégorie parente (optionnel)
+    
+    Returns:
+        str: Code couleur hexadécimal
+    """
+    import hashlib
+    
+    # Palette de couleurs harmonieuses pour les tags
+    tag_colors = [
+        '#FF6B6B',  # Rouge corail
+        '#4ECDC4',  # Turquoise
+        '#45B7D1',  # Bleu ciel
+        '#96CEB4',  # Vert menthe
+        '#FFEAA7',  # Jaune pastel
+        '#DDA0DD',  # Prune
+        '#98D8C8',  # Vert d'eau
+        '#F7DC6F',  # Jaune doré
+        '#BB8FCE',  # Violet pastel
+        '#85C1E9',  # Bleu pastel
+        '#F8C471',  # Orange pastel
+        '#82E0AA',  # Vert pastel
+        '#F1948A',  # Rose saumon
+        '#85C1E9',  # Bleu clair
+        '#D7BDE2',  # Lavande
+        '#A3E4D7',  # Vert aqua
+        '#FAD7A0',  # Pêche
+        '#AED6F1',  # Bleu poudre
+        '#F9E79F',  # Jaune beurre
+        '#D5A6BD',  # Rose poudré
+    ]
+    
+    if category_color:
+        # Si une couleur de catégorie est fournie, générer des variations harmonieuses
+        try:
+            # Convertir la couleur hex en RGB
+            category_color = category_color.lstrip('#')
+            r = int(category_color[0:2], 16)
+            g = int(category_color[2:4], 16)
+            b = int(category_color[4:6], 16)
+            
+            # Créer des variations en ajustant la luminosité et la saturation
+            hash_val = int(hashlib.md5(tag_name.encode()).hexdigest()[:8], 16)
+            
+            # Ajuster les composants RGB pour créer une variation harmonieuse
+            variation = (hash_val % 60) - 30  # Variation de -30 à +30
+            
+            r = max(0, min(255, r + variation))
+            g = max(0, min(255, g + variation))
+            b = max(0, min(255, b + variation))
+            
+            return f"#{r:02x}{g:02x}{b:02x}"
+            
+        except (ValueError, IndexError):
+            # Si erreur dans le parsing de la couleur, utiliser la méthode par défaut
+            pass
+    
+    # Méthode par défaut : utiliser le hash du nom pour sélectionner une couleur
+    hash_val = int(hashlib.md5(tag_name.encode()).hexdigest()[:8], 16)
+    color_index = hash_val % len(tag_colors)
+    
+    return tag_colors[color_index]
+
+
 def get_icon_list_help() -> str:
     """
     Retourne une chaîne d'aide avec la liste des icônes disponibles.
