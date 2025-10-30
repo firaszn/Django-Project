@@ -74,6 +74,81 @@ def _dedupe_and_normalize(candidates: List[str]) -> List[str]:
     return normalized[:30]
 
 
+def generate_icon_from_number(icon_number: str) -> str:
+    """
+    Génère une icône basée sur un numéro saisi.
+    Utilise une liste prédéfinie d'icônes populaires.
+    
+    Args:
+        icon_number: Numéro d'icône (string pour gérer les cas d'erreur)
+    
+    Returns:
+        str: Nom de l'icône correspondante ou icône par défaut
+    """
+    # Liste d'icônes populaires et utiles pour un agenda personnel
+    icon_list = [
+        'fas fa-home',           # 1 - Maison
+        'fas fa-briefcase',      # 2 - Travail
+        'fas fa-graduation-cap', # 3 - École/Université
+        'fas fa-heart',          # 4 - Personnel/Amour
+        'fas fa-users',          # 5 - Famille/Amis
+        'fas fa-dumbbell',       # 6 - Sport/Fitness
+        'fas fa-plane',          # 7 - Voyage
+        'fas fa-utensils',       # 8 - Nourriture/Restaurant
+        'fas fa-film',           # 9 - Divertissement/Films
+        'fas fa-book',           # 10 - Lecture/Livres
+        'fas fa-music',          # 11 - Musique
+        'fas fa-gamepad',        # 12 - Jeux
+        'fas fa-shopping-cart',  # 13 - Shopping
+        'fas fa-car',            # 14 - Transport
+        'fas fa-hospital',       # 15 - Santé/Médical
+        'fas fa-calendar',       # 16 - Événements
+        'fas fa-gift',           # 17 - Cadeaux/Anniversaires
+        'fas fa-camera',         # 18 - Photos
+        'fas fa-laptop',         # 19 - Technologie
+        'fas fa-coffee',         # 20 - Café/Pause
+        'fas fa-tree',           # 21 - Nature
+        'fas fa-paint-brush',    # 22 - Art/Créativité
+        'fas fa-tools',          # 23 - Bricolage/Réparations
+        'fas fa-bicycle',        # 24 - Vélo
+        'fas fa-dog',            # 25 - Animaux
+        'fas fa-star',           # 26 - Favoris/Important
+        'fas fa-lightbulb',      # 27 - Idées/Projets
+        'fas fa-money-bill',     # 28 - Finance/Argent
+        'fas fa-envelope',       # 29 - Messages/Email
+        'fas fa-phone',          # 30 - Appels/Communication
+    ]
+    
+    try:
+        # Convertir en entier et ajuster pour l'index (base 0)
+        index = int(icon_number) - 1
+        
+        # Vérifier que l'index est valide
+        if 0 <= index < len(icon_list):
+            return icon_list[index]
+        else:
+            # Si le numéro est hors limite, utiliser l'icône par défaut
+            return 'fas fa-folder'
+    except (ValueError, TypeError):
+        # Si la conversion échoue, utiliser l'icône par défaut
+        return 'fas fa-folder'
+
+
+def get_icon_list_help() -> str:
+    """
+    Retourne une chaîne d'aide avec la liste des icônes disponibles.
+    """
+    icon_descriptions = [
+        "1=🏠 Maison", "2=💼 Travail", "3=🎓 École/Université", "4=❤️ Personnel/Amour", "5=👥 Famille/Amis",
+        "6=💪 Sport/Fitness", "7=✈️ Voyage", "8=🍽️ Nourriture", "9=🎬 Films/Divertissement", "10=📚 Lecture/Livres",
+        "11=🎵 Musique", "12=🎮 Jeux", "13=🛒 Shopping", "14=🚗 Transport", "15=🏥 Santé/Médical",
+        "16=📅 Événements", "17=🎁 Cadeaux", "18=📷 Photos", "19=💻 Technologie", "20=☕ Café/Pause",
+        "21=🌳 Nature", "22=🎨 Art/Créativité", "23=🔧 Bricolage", "24=🚲 Vélo", "25=🐕 Animaux",
+        "26=⭐ Favoris/Important", "27=💡 Idées/Projets", "28=💰 Finance/Argent", "29=✉️ Messages/Email", "30=📞 Appels"
+    ]
+    return " | ".join(icon_descriptions)
+
+
 def suggest_tags_from_text(text: str, tag_count: int = 2) -> List[str]:
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
     if api_key:

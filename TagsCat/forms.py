@@ -1,5 +1,6 @@
 from django import forms
 from .models import Category, Tag
+from .ai_utils import generate_icon_from_number
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -17,7 +18,7 @@ class CategoryForm(forms.ModelForm):
             }),
             'icon': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Icône (optionnel)'
+                'placeholder': 'Numéro d\'icône (1-30)'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -35,6 +36,7 @@ class CategoryForm(forms.ModelForm):
         self.fields['name'].label = 'Nom de la catégorie'
         self.fields['color'].label = 'Couleur'
         self.fields['icon'].label = 'Icône'
+        self.fields['icon'].help_text = 'Saisissez un numéro entre 1 et 30 (1=Maison, 2=Travail, 3=École, etc.)'
         self.fields['description'].label = 'Description'
         self.fields['tags'].label = 'Tags associés'
         
@@ -57,6 +59,35 @@ class CategoryForm(forms.ModelForm):
                     "Veuillez choisir un nom différent."
                 )
         return name
+    
+    def clean_icon(self):
+        """
+        Valide et génère automatiquement l'icône basée sur le numéro saisi.
+        """
+        icon_input = self.cleaned_data.get('icon', '').strip()
+        
+        if not icon_input:
+            # Si aucun numéro n'est fourni, utiliser l'icône par défaut
+            return 'fas fa-folder'
+        
+        # Générer l'icône basée sur le numéro
+        generated_icon = generate_icon_from_number(icon_input)
+        
+        # Valider que le numéro est dans la plage valide (1-30)
+        try:
+            icon_number = int(icon_input)
+            if icon_number < 1 or icon_number > 30:
+                raise forms.ValidationError(
+                    "Le numéro d'icône doit être entre 1 et 30. "
+                    "Exemples: 1=Maison, 2=Travail, 3=École, 4=Cœur, 5=Famille..."
+                )
+        except ValueError:
+            raise forms.ValidationError(
+                "Veuillez saisir un numéro valide entre 1 et 30. "
+                "Exemples: 1=Maison, 2=Travail, 3=École, 4=Cœur, 5=Famille..."
+            )
+        
+        return generated_icon
 
 class TagForm(forms.ModelForm):
     class Meta:

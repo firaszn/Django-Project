@@ -88,7 +88,7 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-                                <small class="form-hint">{% trans "e.g., home, work, heart, star, book, music" %}</small>
+                                <small class="form-hint">{{ form.icon.help_text }}</small>
                             </div>
                         </div>
                     </div>
@@ -426,6 +426,114 @@
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.querySelector('input[name="color"]');
+    const iconInput = document.querySelector('input[name="icon"]');
+    const colorPreview = document.getElementById('colorPreview');
+    const iconPreview = document.getElementById('iconPreview');
+    
+    // Liste des icônes correspondant aux numéros
+    const iconList = [
+        'fas fa-home',           // 1 - Maison
+        'fas fa-briefcase',      // 2 - Travail
+        'fas fa-graduation-cap', // 3 - École/Université
+        'fas fa-heart',          // 4 - Personnel/Amour
+        'fas fa-users',          // 5 - Famille/Amis
+        'fas fa-dumbbell',       // 6 - Sport/Fitness
+        'fas fa-plane',          // 7 - Voyage
+        'fas fa-utensils',       // 8 - Nourriture/Restaurant
+        'fas fa-film',           // 9 - Divertissement/Films
+        'fas fa-book',           // 10 - Lecture/Livres
+        'fas fa-music',          // 11 - Musique
+        'fas fa-gamepad',        // 12 - Jeux
+        'fas fa-shopping-cart',  // 13 - Shopping
+        'fas fa-car',            // 14 - Transport
+        'fas fa-hospital',       // 15 - Santé/Médical
+        'fas fa-calendar',       // 16 - Événements
+        'fas fa-gift',           // 17 - Cadeaux/Anniversaires
+        'fas fa-camera',         // 18 - Photos
+        'fas fa-laptop',         // 19 - Technologie
+        'fas fa-coffee',         // 20 - Café/Pause
+        'fas fa-tree',           // 21 - Nature
+        'fas fa-paint-brush',    // 22 - Art/Créativité
+        'fas fa-tools',          // 23 - Bricolage/Réparations
+        'fas fa-bicycle',        // 24 - Vélo
+        'fas fa-dog',            // 25 - Animaux
+        'fas fa-star',           // 26 - Favoris/Important
+        'fas fa-lightbulb',      // 27 - Idées/Projets
+        'fas fa-money-bill',     // 28 - Finance/Argent
+        'fas fa-envelope',       // 29 - Messages/Email
+        'fas fa-phone',          // 30 - Appels/Communication
+    ];
+    
+    // Fonction pour mettre à jour les couleurs
+    function updateColorPreview(color) {
+        if (colorPreview) {
+            colorPreview.style.background = `linear-gradient(135deg, ${color}dd, ${color})`;
+        }
+        
+        if (iconPreview) {
+            iconPreview.style.background = `linear-gradient(135deg, ${color}dd, ${color})`;
+        }
+    }
+    
+    // Fonction pour mettre à jour l'icône
+    function updateIconPreview(iconNumber) {
+        if (iconPreview) {
+            const iconElement = iconPreview.querySelector('i');
+            if (iconElement) {
+                // Supprimer toutes les classes d'icône existantes
+                iconElement.className = '';
+                
+                if (iconNumber && !isNaN(iconNumber)) {
+                    const index = parseInt(iconNumber) - 1;
+                    if (index >= 0 && index < iconList.length) {
+                        iconElement.className = iconList[index];
+                    } else {
+                        iconElement.className = 'fas fa-folder';
+                    }
+                } else {
+                    iconElement.className = 'fas fa-folder';
+                }
+            }
+        }
+    }
+    
+    // Écouter les changements de couleur
+    if (colorInput) {
+        colorInput.addEventListener('input', function() {
+            updateColorPreview(this.value);
+        });
+        
+        colorInput.addEventListener('change', function() {
+            updateColorPreview(this.value);
+        });
+        
+        // Initialiser avec la couleur existante
+        if (colorInput.value) {
+            updateColorPreview(colorInput.value);
+        }
+    }
+    
+    // Écouter les changements d'icône
+    if (iconInput) {
+        iconInput.addEventListener('input', function() {
+            updateIconPreview(this.value);
+        });
+        
+        iconInput.addEventListener('change', function() {
+            updateIconPreview(this.value);
+        });
+        
+        // Initialiser avec l'icône existante
+        if (iconInput.value) {
+            updateIconPreview(iconInput.value);
+        }
+    }
+});
+</script>
 
 {% endblock %}
 
