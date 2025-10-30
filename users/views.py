@@ -14,14 +14,17 @@ from .models import CustomUser
 from .ai_services import BioGeneratorService, FraudDetectionService
 from allauth.account.views import LoginView as AllauthLoginView
 from django.conf import settings
+import os
 
 class CustomLoginView(AllauthLoginView):
     """Custom login view to add reCAPTCHA site key to context"""
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Ne montrer reCAPTCHA que si les deux clés sont configurées et non vides
-        if settings.RECAPTCHA_SITE_KEY and settings.RECAPTCHA_SECRET_KEY:
+        # Désactiver reCAPTCHA si on est sur Render (les clés locales ne fonctionnent pas)
+        # ou si les clés ne sont pas configurées
+        is_on_render = os.environ.get('RENDER_EXTERNAL_HOSTNAME') is not None
+        if not is_on_render and settings.RECAPTCHA_SITE_KEY and settings.RECAPTCHA_SECRET_KEY:
             context['recaptcha_site_key'] = settings.RECAPTCHA_SITE_KEY
         else:
             context['recaptcha_site_key'] = None

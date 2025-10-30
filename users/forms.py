@@ -263,8 +263,12 @@ class CustomLoginForm(LoginForm):
         cleaned_data = super().clean()
         recaptcha_token = cleaned_data.get('recaptcha_token')
         
-        # Only validate if RECAPTCHA is configured
-        if settings.RECAPTCHA_SECRET_KEY and settings.RECAPTCHA_SITE_KEY:
+        # Ne pas valider reCAPTCHA si on est sur Render (les clés locales ne fonctionnent pas)
+        import os
+        is_on_render = os.environ.get('RENDER_EXTERNAL_HOSTNAME') is not None
+        
+        # Only validate if RECAPTCHA is configured and not on Render
+        if not is_on_render and settings.RECAPTCHA_SECRET_KEY and settings.RECAPTCHA_SITE_KEY:
             if not recaptcha_token:
                 raise forms.ValidationError(_('Please complete the reCAPTCHA verification.'))
             
