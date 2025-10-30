@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
 from decouple import config, Csv
+from dotenv import load_dotenv
+
 
 # Import de la configuration email
 try:
@@ -23,6 +25,12 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+# Charger les variables d'environnement
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# Gemini AI Configuration
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Application definition
 INSTALLED_APPS = [
@@ -90,7 +98,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'root',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
