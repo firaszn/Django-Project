@@ -12,6 +12,16 @@ from django.views.decorators.http import require_http_methods
 from .forms import UserProfileForm
 from .models import CustomUser
 from .ai_services import BioGeneratorService, FraudDetectionService
+from allauth.account.views import LoginView as AllauthLoginView
+from django.conf import settings
+
+class CustomLoginView(AllauthLoginView):
+    """Custom login view to add reCAPTCHA site key to context"""
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['recaptcha_site_key'] = settings.RECAPTCHA_SITE_KEY
+        return context
 
 class ProfileView(LoginRequiredMixin, DetailView):
     model = CustomUser

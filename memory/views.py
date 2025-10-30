@@ -17,6 +17,62 @@ try:
 except Exception:
     OPENAI_AVAILABLE = False
 
+# Optional spaCy support for better offline suggestions
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+    _spacy_nlp = None
+except Exception:
+    SPACY_AVAILABLE = False
+    _spacy_nlp = None
+
+def get_spacy_nlp():
+    """Lazy-load a small spaCy model (fr or en) if available."""
+    global _spacy_nlp
+    if _spacy_nlp is not None:
+        return _spacy_nlp
+    if not SPACY_AVAILABLE:
+        return None
+    # choose model based on project language, fall back to en
+    lang = getattr(settings, 'LANGUAGE_CODE', 'en') or 'en'
+    model = 'fr_core_news_sm' if str(lang).lower().startswith('fr') else 'en_core_web_sm'
+    try:
+        _spacy_nlp = spacy.load(model)
+        return _spacy_nlp
+    except Exception:
+        try:
+            _spacy_nlp = spacy.load('en_core_web_sm')
+            return _spacy_nlp
+        except Exception:
+            return None
+
+def suggest_with_spacy(text):
+    """Return (title, tags) using spaCy if model available, or None."""
+    nlp = get_spacy_nlp()
+    if not nlp:
+        return None
+    try:
+        doc = nlp(text)
+        # Title: first sentence's non-stop lemmas (up to 6 words)
+        title = ''
+        for sent in doc.sents:
+            tokens = [t.lemma_ for t in sent if not t.is_stop and t.is_alpha]
+            if tokens:
+                title = ' '.join(tokens[:6])
+                break
+        if not title:
+            title = ' '.join([t.lemma_ for t in doc[:6] if not t.is_stop and t.is_alpha])
+
+        # Tags: lemmatized nouns/proper nouns, frequency-ranked
+        candidates = [token.lemma_.lower() for token in doc if token.pos_ in ('NOUN', 'PROPN') and not token.is_stop and token.is_alpha and len(token.text) >= 4]
+        freq = {}
+        for c in candidates:
+            freq[c] = freq.get(c, 0) + 1
+        tags = [t for t, c in sorted(freq.items(), key=lambda x: (-x[1], -len(x[0])) )][:6]
+        return title.strip(), tags
+    except Exception:
+        return None
+
 
 @login_required
 def memory_management(request):
@@ -279,6 +335,16 @@ def memory_ai_suggest(request):
         except Exception:
             # fallback silently to heuristic below
             pass
+
+        # If spaCy is available, try it before the simple heuristic
+        if SPACY_AVAILABLE:
+            try:
+                spacy_result = suggest_with_spacy(description)
+                if spacy_result:
+                    title, tags = spacy_result
+                    return JsonResponse({'title': title, 'tags': tags})
+            except Exception:
+                pass
 
     # Improved fallback heuristic: short title from first meaningful sentence, and tag extraction by simple frequency
     import re

@@ -3,6 +3,8 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.utils.translation import gettext_lazy as _
 from allauth.account.forms import SignupForm, LoginForm
 from .models import CustomUser
+from django.conf import settings
+import requests
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
@@ -259,10 +261,45 @@ class CustomSignupForm(SignupForm):
         return user
 
 class CustomLoginForm(LoginForm):
+    recaptcha_token = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False
+    )
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
+    
+    def clean(self):
+        """Validate reCAPTCHA token"""
+        cleaned_data = super().clean()
+        recaptcha_token = cleaned_data.get('recaptcha_token')
+        
+        # Only validate if RECAPTCHA is configured
+        if settings.RECAPTCHA_SECRET_KEY and settings.RECAPTCHA_SITE_KEY:
+            if not recaptcha_token:
+                raise forms.ValidationError(_('Please complete the reCAPTCHA verification.'))
+            
+            # Verify the token with Google
+            verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+            data = {
+                'secret': settings.RECAPTCHA_SECRET_KEY,
+                'response': recaptcha_token
+            }
+            
+            try:
+                response = requests.post(verify_url, data=data, timeout=5)
+                result = response.json()
+                
+                if not result.get('success'):
+                    raise forms.ValidationError(_('reCAPTCHA verification failed. Please try again.'))
+            except requests.exceptions.RequestException:
+                # If there's a network error, we'll allow the login to proceed
+                # but could also raise an error if you want stricter validation
+                pass
+        
+        return cleaned_data
 
 class UserProfileForm(forms.ModelForm):
     # Champs de mot de passe optionnels
