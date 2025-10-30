@@ -11,6 +11,126 @@
                     <h1 class="display-6 fw-bold text-gradient-primary mb-2">My Goals</h1>
                     <p class="text-muted fs-5">Track your progress and achievements</p>
                 </div>
+                <a href="{% url 'goal_create' %}" class="btn btn-primary btn-lg px-4 py-3">
+                    <i class="fas fa-plus me-2"></i>Create New Goal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-bullseye fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0" id="total-goals">{{ total_goals }}</h3>
+                            <p class="text-muted mb-0">Total Goals</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-trophy fa-2x text-success"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0" id="completed-goals">{{ completed_goals }}</h3>
+                            <p class="text-muted mb-0">Completed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-spinner fa-2x text-warning"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0" id="in-progress-goals">{{ in_progress_goals }}</h3>
+                            <p class="text-muted mb-0">In Progress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="rounded-circle bg-secondary bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-clock fa-2x text-secondary"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0" id="not-started-goals">{{ not_started_goals }}</h3>
+                            <p class="text-muted mb-0">Not Started</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <!-- Search Input -->
+                        <div class="col-md-6">
+                            <label for="search-input" class="form-label fw-semibold">Search Goals</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control border-start-0" 
+                                       id="search-input" 
+                                       placeholder="Search by title or description..." 
+                                       autocomplete="off">
+                            </div>
+                        </div>
+                        
+                        <!-- Status Filter -->
+                        <div class="col-md-4">
+                            <label for="status-filter" class="form-label fw-semibold">Filter by Status</label>
+                            <select class="form-select" id="status-filter">
+                                <option value="all">All Status</option>
+                                <option value="completed">Completed</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="not-started">Not Started</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="col-md-2">
+                            <button type="button" id="clear-filters" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Filters Display -->
+                    <div id="active-filters" class="mt-3" style="display: none;">
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="fw-semibold">Active Filters:</small>
+                            <span id="search-filter-badge" class="badge bg-primary" style="display: none;"></span>
+                            <span id="status-filter-badge" class="badge bg-info" style="display: none;"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -20,88 +140,185 @@
         <div class="col-12">
             <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
                 <div class="card-header bg-transparent border-0 py-4">
-                    <h3 class="card-title mb-0 fw-bold text-dark">
-                        <i class="fas fa-bullseye me-2 text-primary"></i>
-                        Active Goals ({{ object_list.count }})
-                    </h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0 fw-bold text-dark">
+                            <i class="fas fa-bullseye me-2 text-primary"></i>
+                            <span id="goals-count">{{ object_list.count }}</span> Goal(s)
+                        </h3>
+                        <div class="text-muted">
+                            <small id="filter-info"></small>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body p-0">
-                    {% if object_list %}
-                    <div class="list-group list-group-flush">
-                        {% for goal in object_list %}
-                        <div class="list-group-item border-0 py-4 px-5 hover-card">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-start mb-2">
-                                        <div class="goal-icon me-3">
-                                            <i class="fas fa-bullseye fa-2x text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="fw-bold text-dark mb-2">{{ goal.title }}</h4>
-                                            <p class="text-muted mb-3">{{ goal.description|default:"No description"|truncatewords:20 }}</p>
-                                            
-                                            <!-- Progress Bar -->
-                                            <div class="progress-wrapper mb-2">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span class="text-sm fw-semibold">Progress</span>
-                                                    <span class="text-sm fw-bold text-primary">{{ goal.progress }}/{{ goal.target }}</span>
+                    <div id="goals-list">
+                        {% if object_list %}
+                        <div class="list-group list-group-flush">
+                            {% for goal in object_list %}
+                            <div class="list-group-item border-0 py-4 px-5 hover-card goal-item 
+                                {% if goal.is_completed %}goal-completed{% endif %}" 
+                                 data-title="{{ goal.title|lower }}" 
+                                 data-description="{{ goal.description|default:''|lower }}"
+                                 data-status="{% if goal.is_completed %}completed{% elif goal.progress > 0 %}in-progress{% else %}not-started{% endif %}"
+                                 data-progress="{{ goal.progress }}"
+                                 data-target="{{ goal.target }}">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="d-flex align-items-start mb-2">
+                                            <div class="goal-icon me-3">
+                                                {% if goal.is_completed %}
+                                                <i class="fas fa-trophy fa-2x text-success"></i>
+                                                {% else %}
+                                                <i class="fas fa-bullseye fa-2x text-primary"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <h4 class="fw-bold text-dark mb-0 me-3">{{ goal.title }}</h4>
+                                                    {% if goal.is_completed %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>Completed 🎉
+                                                    </span>
+                                                    {% endif %}
                                                 </div>
-                                                <div class="progress" style="height: 10px;">
-                                                    <div class="progress-bar bg-gradient-primary" 
-                                                         role="progressbar" 
-                                                         style="width: {{ goal.progress_percentage }}%"
-                                                         aria-valuenow="{{ goal.progress_percentage }}" 
-                                                         aria-valuemin="0" 
-                                                         aria-valuemax="100">
+                                                
+                                                <p class="text-muted mb-3">{{ goal.description|default:"No description"|truncatewords:20 }}</p>
+                                                
+                                                <!-- Progress Bar -->
+                                                <div class="progress-wrapper mb-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="text-sm fw-semibold">Progress</span>
+                                                        <span class="text-sm fw-bold {% if goal.is_completed %}text-success{% else %}text-primary{% endif %}">
+                                                            {{ goal.progress }}/{{ goal.target }} journals
+                                                            {% if goal.is_completed %}✅{% endif %}
+                                                        </span>
+                                                    </div>
+                                                    <div class="progress" style="height: 12px;">
+                                                        <div class="progress-bar {% if goal.is_completed %}bg-success{% else %}bg-gradient-primary{% endif %}" 
+                                                             role="progressbar" 
+                                                             style="width: {{ goal.progress_percentage }}%"
+                                                             aria-valuenow="{{ goal.progress_percentage }}" 
+                                                             aria-valuemin="0" 
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                                        <small class="text-muted">
+                                                            {{ goal.progress_percentage|floatformat:0 }}% Complete
+                                                        </small>
+                                                        {% if not goal.is_completed and goal.get_missing_count > 0 %}
+                                                        <small class="text-primary fw-bold">
+                                                            {{ goal.get_missing_count }} more journals needed
+                                                        </small>
+                                                        {% endif %}
                                                     </div>
                                                 </div>
-                                                <small class="text-muted mt-1">{{ goal.progress_percentage|floatformat:0 }}% Complete</small>
-                                            </div>
-                                            
-                                            <!-- Dates -->
-                                            <div class="d-flex gap-4 text-sm">
-                                                <span class="text-muted">
-                                                    <i class="fas fa-play-circle me-1 text-success"></i>
-                                                    {{ goal.start_date|date:"M d, Y" }}
-                                                </span>
-                                                <span class="text-muted">
-                                                    <i class="fas fa-flag-checkered me-1 text-danger"></i>
-                                                    {{ goal.end_date|date:"M d, Y" }}
-                                                </span>
+                                                
+                                                <!-- Status & Info Badges -->
+                                                <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
+                                                    <!-- Status Badge -->
+                                                    <div class="status-badge">
+                                                        {% if goal.is_completed %}
+                                                        <span class="badge bg-success bg-opacity-10 text-success py-2 px-3 rounded-pill">
+                                                            <i class="fas fa-check-circle me-2"></i>
+                                                            Completed
+                                                        </span>
+                                                        {% elif goal.progress > 0 %}
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning py-2 px-3 rounded-pill">
+                                                            <i class="fas fa-spinner me-2"></i>
+                                                            In Progress
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary bg-opacity-10 text-secondary py-2 px-3 rounded-pill">
+                                                            <i class="fas fa-clock me-2"></i>
+                                                            Not Started
+                                                        </span>
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    <!-- Linked Journals Count -->
+                                                    <div class="journals-count">
+                                                        <span class="badge bg-light text-dark py-2 px-3 rounded-pill">
+                                                            <i class="fas fa-book me-2"></i>
+                                                            {{ goal.get_journal_count }} journals linked
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <!-- Days Remaining -->
+                                                    <div class="days-badge">
+                                                        <span class="badge bg-info bg-opacity-10 text-info py-2 px-3 rounded-pill">
+                                                            <i class="fas fa-calendar me-2"></i>
+                                                            {{ goal.days_remaining }} days left
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Dates -->
+                                                <div class="d-flex gap-4 text-sm">
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-play-circle me-1 text-success"></i>
+                                                        {{ goal.start_date|date:"M d, Y" }}
+                                                    </span>
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-flag-checkered me-1 text-danger"></i>
+                                                        {{ goal.end_date|date:"M d, Y" }}
+                                                    </span>
+                                                    {% if goal.is_completed and goal.completed_at %}
+                                                    <span class="text-success">
+                                                        <i class="fas fa-trophy me-1"></i>
+                                                        Completed: {{ goal.completed_at|date:"M d, Y" }}
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <a href="{% url 'goal_edit' goal.id %}" class="btn btn-warning btn-sm px-3 py-2">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </a>
-                                        <button class="btn btn-danger btn-sm px-3 py-2" 
-                                                onclick="if(confirm('Are you sure you want to delete this goal?')) { location.href = '{% url 'goal_delete' goal.id %}'; }">
-                                            <i class="fas fa-trash me-1"></i>Delete
-                                        </button>
+                                    <div class="col-md-4">
+                                        <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                            <a href="{% url 'goal_edit' goal.id %}" class="btn btn-warning btn-sm px-3 py-2 mb-2">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </a>
+                                            <a href="{% url 'goal_detail' goal.id %}" class="btn btn-info btn-sm px-3 py-2 mb-2">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </a>
+                                            <button class="btn btn-danger btn-sm px-3 py-2 mb-2" 
+                                                    onclick="if(confirm('Are you sure you want to delete this goal?')) { location.href = '{% url 'goal_delete' goal.id %}'; }">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            {% if not forloop.last %}
+                            <div class="border-bottom mx-5"></div>
+                            {% endif %}
+                            {% endfor %}
                         </div>
-                        {% if not forloop.last %}
-                        <div class="border-bottom mx-5"></div>
+                        {% else %}
+                        <div class="text-center py-5" id="empty-state">
+                            <div class="empty-state-icon mb-4">
+                                <i class="fas fa-bullseye fa-4x text-muted"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">No Goals Yet</h4>
+                            <p class="text-muted mb-4">Start by creating your first goal to track your progress.</p>
+                            <a href="{% url 'goal_create' %}" class="btn btn-primary btn-lg px-4">
+                                <i class="fas fa-plus me-2"></i>Create Your First Goal
+                            </a>
+                        </div>
                         {% endif %}
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <div class="text-center py-5">
+                    
+                    <!-- Filtered Empty State (Hidden by default) -->
+                    <div id="filtered-empty-state" class="text-center py-5" style="display: none;">
                         <div class="empty-state-icon mb-4">
-                            <i class="fas fa-bullseye fa-4x text-muted"></i>
+                            <i class="fas fa-search fa-4x text-muted"></i>
                         </div>
-                        <h4 class="text-muted mb-3">No Goals Yet</h4>
-                        <p class="text-muted mb-4">Start by creating your first goal to track your progress.</p>
-                        <a href="{% url 'goal_create' %}" class="btn btn-primary btn-lg px-4">
-                            <i class="fas fa-plus me-2"></i>Create Your First Goal
-                        </a>
+                        <h4 class="text-muted mb-3">No Goals Found</h4>
+                        <p class="text-muted mb-4">Try adjusting your search or filter criteria.</p>
+                        <button id="clear-filters-btn" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear Filters
+                        </button>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -129,6 +346,11 @@
     background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
     border-left-color: #667eea;
     transform: translateX(5px);
+}
+
+.goal-completed {
+    background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+    border-left: 4px solid #10b981 !important;
 }
 
 .progress {
@@ -169,14 +391,262 @@
     color: white;
 }
 
+.btn-info {
+    background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%);
+    color: white;
+}
+
 .goal-icon {
     animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.05); }
     100% { transform: scale(1); }
 }
+
+.badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.goal-item {
+    transition: all 0.3s ease;
+}
+
+.goal-item.hidden {
+    display: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .d-flex.flex-wrap.gap-3 {
+        gap: 1rem !important;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem !important;
+    }
+    
+    .card-body .row.g-3 {
+        gap: 1rem;
+    }
+    
+    .col-md-4 .d-flex {
+        justify-content: start !important;
+    }
+}
 </style>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const clearFiltersMainBtn = document.getElementById('clear-filters-btn');
+    const goalsCount = document.getElementById('goals-count');
+    const filterInfo = document.getElementById('filter-info');
+    const activeFilters = document.getElementById('active-filters');
+    const searchFilterBadge = document.getElementById('search-filter-badge');
+    const statusFilterBadge = document.getElementById('status-filter-badge');
+    const goalsList = document.getElementById('goals-list');
+    const emptyState = document.getElementById('empty-state');
+    const filteredEmptyState = document.getElementById('filtered-empty-state');
+    
+    const goalItems = document.querySelectorAll('.goal-item');
+    const totalGoals = document.getElementById('total-goals');
+    const completedGoals = document.getElementById('completed-goals');
+    const inProgressGoals = document.getElementById('in-progress-goals');
+    const notStartedGoals = document.getElementById('not-started-goals');
+
+    // Store original counts for reset
+    const originalStats = {
+        total: {{ total_goals }},
+        completed: {{ completed_goals }},
+        inProgress: {{ in_progress_goals }},
+        notStarted: {{ not_started_goals }}
+    };
+
+    function updateStatistics() {
+        let visibleTotal = 0;
+        let visibleCompleted = 0;
+        let visibleInProgress = 0;
+        let visibleNotStarted = 0;
+
+        goalItems.forEach(item => {
+            if (!item.classList.contains('hidden')) {
+                visibleTotal++;
+                const status = item.dataset.status;
+                if (status === 'completed') {
+                    visibleCompleted++;
+                } else if (status === 'in-progress') {
+                    visibleInProgress++;
+                } else if (status === 'not-started') {
+                    visibleNotStarted++;
+                }
+            }
+        });
+
+        // Update statistics cards with animation
+        animateCounter(totalGoals, visibleTotal);
+        animateCounter(completedGoals, visibleCompleted);
+        animateCounter(inProgressGoals, visibleInProgress);
+        animateCounter(notStartedGoals, visibleNotStarted);
+    }
+
+    function animateCounter(element, targetValue) {
+        const current = parseInt(element.textContent) || 0;
+        const diff = targetValue - current;
+        if (diff === 0) return;
+        
+        const duration = 500;
+        const steps = 20;
+        const step = diff / steps;
+        let currentStep = 0;
+
+        function update() {
+            if (currentStep < steps) {
+                const value = Math.round(current + (step * currentStep));
+                element.textContent = value;
+                currentStep++;
+                setTimeout(update, duration / steps);
+            } else {
+                element.textContent = targetValue;
+            }
+        }
+        update();
+    }
+
+    function filterGoals() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const statusValue = statusFilter.value;
+        
+        let visibleCount = 0;
+        let hasSearchFilter = searchTerm !== '';
+        let hasStatusFilter = statusValue !== 'all';
+
+        // Update active filters display
+        if (hasSearchFilter) {
+            searchFilterBadge.textContent = `Search: "${searchTerm}"`;
+            searchFilterBadge.style.display = 'inline-block';
+        } else {
+            searchFilterBadge.style.display = 'none';
+        }
+
+        if (hasStatusFilter) {
+            const statusText = statusValue === 'completed' ? 'Completed' : 
+                             statusValue === 'in-progress' ? 'In Progress' : 'Not Started';
+            statusFilterBadge.textContent = `Status: ${statusText}`;
+            statusFilterBadge.style.display = 'inline-block';
+        } else {
+            statusFilterBadge.style.display = 'none';
+        }
+
+        activeFilters.style.display = (hasSearchFilter || hasStatusFilter) ? 'block' : 'none';
+
+        // Filter items
+        goalItems.forEach(item => {
+            const title = item.dataset.title;
+            const description = item.dataset.description;
+            const status = item.dataset.status;
+            
+            let matchesSearch = true;
+            let matchesStatus = true;
+
+            // Search filter
+            if (hasSearchFilter) {
+                matchesSearch = title.includes(searchTerm) || 
+                              (description && description.includes(searchTerm));
+            }
+
+            // Status filter
+            if (hasStatusFilter) {
+                matchesStatus = status === statusValue;
+            }
+
+            if (matchesSearch && matchesStatus) {
+                item.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+
+        // Update counters and UI
+        goalsCount.textContent = visibleCount;
+        updateStatistics();
+
+        // Show/hide empty states
+        if (visibleCount === 0) {
+            if (hasSearchFilter || hasStatusFilter) {
+                goalsList.style.display = 'none';
+                filteredEmptyState.style.display = 'block';
+                if (emptyState) emptyState.style.display = 'none';
+            } else {
+                if (emptyState) emptyState.style.display = 'block';
+                filteredEmptyState.style.display = 'none';
+                goalsList.style.display = 'none';
+            }
+        } else {
+            goalsList.style.display = 'block';
+            filteredEmptyState.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'none';
+        }
+
+        // Update filter info text
+        if (hasSearchFilter || hasStatusFilter) {
+            let infoParts = [];
+            if (hasSearchFilter) infoParts.push(`search: "${searchTerm}"`);
+            if (hasStatusFilter) {
+                const statusText = statusValue === 'completed' ? 'Completed' : 
+                                 statusValue === 'in-progress' ? 'In Progress' : 'Not Started';
+                infoParts.push(`status: ${statusText}`);
+            }
+            filterInfo.textContent = `Filtered by ${infoParts.join(' • ')}`;
+        } else {
+            filterInfo.textContent = '';
+        }
+    }
+
+    function clearAllFilters() {
+        searchInput.value = '';
+        statusFilter.value = 'all';
+        filterGoals();
+        
+        // Reset statistics to original values
+        totalGoals.textContent = originalStats.total;
+        completedGoals.textContent = originalStats.completed;
+        inProgressGoals.textContent = originalStats.inProgress;
+        notStartedGoals.textContent = originalStats.notStarted;
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', debounce(filterGoals, 300));
+    statusFilter.addEventListener('change', filterGoals);
+    clearFiltersBtn.addEventListener('click', clearAllFilters);
+    if (clearFiltersMainBtn) {
+        clearFiltersMainBtn.addEventListener('click', clearAllFilters);
+    }
+
+    // Debounce function for search input
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Initialize
+    filterGoals();
+});
+</script>
+
 {% endblock %}

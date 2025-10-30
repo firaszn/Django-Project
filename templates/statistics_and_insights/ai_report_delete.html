@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Delete AI Report" %} - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="dashboard-header mb-5">
+        <br><br>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="page-title mb-2">
+                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                    {% trans "Delete AI Report" %}
+                </h1>
+                <p class="page-subtitle text-muted mb-0">
+                    {% trans "Permanently delete an AI report" %}
+                </p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'statistics_and_insights:ai_report_detail' report.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Back" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Card -->
+    <div class="insight-section">
+        <div class="section-header">
+            <h4 class="section-title text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {% trans "Delete Confirmation" %}
+            </h4>
+        </div>
+        <div class="insight-content">
+            <div class="alert alert-danger mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle me-3 fs-4"></i>
+                    <div>
+                        <h5 class="alert-heading mb-2">{% trans "Warning!" %}</h5>
+                        <p class="mb-0">{% trans "You are about to permanently delete the following report:" %}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Report Information -->
+            <div class="report-info-card">
+                <h5 class="report-title">{{ report.title }}</h5>
+                <div class="report-details">
+                    <div class="detail-item">
+                        <span class="detail-label">{% trans "User" %}:</span>
+                        <span class="detail-value">{{ report.user.username }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">{% trans "Type" %}:</span>
+                        <span class="detail-value badge bg-primary">{{ report.get_report_type_display }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">{% trans "Period" %}:</span>
+                        <span class="detail-value">{{ report.period_start }} - {{ report.period_end }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">{% trans "Created" %}:</span>
+                        <span class="detail-value">{{ report.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle me-3"></i>
+                    <div>
+                        <strong>{% trans "This action is irreversible." %}</strong>
+                        {% trans "All data from this report will be lost." %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Delete Form -->
+            <form method="post" class="confirmation-form">
+                {% csrf_token %}
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('{% trans 'Are you absolutely sure you want to delete this report?' %}')">
+                        <i class="fas fa-trash me-2"></i>{% trans "Delete Permanently" %}
+                    </button>
+                    <a href="{% url 'statistics_and_insights:ai_report_detail' report.pk %}" 
+                       class="btn btn-secondary">{% trans "Cancel" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary-color: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --secondary-color: #f59e0b;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --dark-color: #1f2937;
+    --light-color: #f8fafc;
+    --muted-color: #6b7280;
+    --border-color: #e5e7eb;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Dashboard Styles */
+.dashboard-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted-color);
+}
+
+/* Insight Sections */
+.insight-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.insight-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--danger-color), #f87171);
+}
+
+.section-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--light-color);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.insight-content {
+    padding: 1.5rem;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 12px;
+    border: none;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 4px solid var(--danger-color);
+    color: #991b1b;
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 4px solid var(--warning-color);
+    color: #92400e;
+}
+
+.alert-heading {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Report Info Card */
+.report-info-card {
+    background: var(--light-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+.report-title {
+    margin: 0 0 1rem 0;
+    color: var(--dark-color);
+    font-weight: 700;
+}
+
+.report-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--muted-color);
+}
+
+.detail-value {
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+/* Form Actions */
+.confirmation-form {
+    margin-top: 2rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    border: 2px solid transparent;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color), #dc2626);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+    color: white;
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--muted-color);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--light-color);
+    color: var(--dark-color);
+    border-color: var(--muted-color);
+    transform: translateY(-1px);
+}
+
+/* Badge Styles */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .dashboard-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .alert {
+        padding: 1.25rem;
+    }
+    
+    .insight-content {
+        padding: 1.25rem;
+    }
+}
+</style>
+{% endblock %}

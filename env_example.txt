@@ -33,3 +33,8 @@ HUGGINGFACE_API_KEY=your-huggingface-api-key-here
 # reCAPTCHA Configuration
 RECAPTCHA_SITE_KEY=your-recaptcha-site-key
 RECAPTCHA_SECRET_KEY=your-recaptcha-secret-key
+
+
+GOAL_GEMINI_API_KEY=AIzaSyDzv5WMTm7e_RJaj7BxrKdhzr7QHA83FQQ
+GOAL_GEMINI_MODEL=gemini-latest
+

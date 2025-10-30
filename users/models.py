@@ -2,6 +2,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from cryptography.fernet import Fernet
+from django.conf import settings
+import base64
 from django.contrib.auth.hashers import make_password, check_password
 
 
@@ -90,6 +93,77 @@ class CustomUser(AbstractUser):
 
         super().save(*args, **kwargs)
 
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,  # This will point to your CustomUser
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+    
+    # Apple Reminders Integration Fields
+    apple_username = models.EmailField(blank=True, null=True, verbose_name=_('Apple ID'))
+    encrypted_apple_password = models.BinaryField(blank=True, null=True)
+    is_apple_connected = models.BooleanField(default=False, verbose_name=_('Connected to Apple Reminders'))
+    
+    # Additional profile fields that don't belong in the main User model
+    timezone = models.CharField(max_length=50, default='UTC', verbose_name=_('Timezone'))
+    language = models.CharField(max_length=10, default='en', verbose_name=_('Language'))
+    notification_preferences = models.JSONField(
+        default=dict,
+        verbose_name=_('Notification Preferences'),
+        help_text=_('User preferences for notifications')
+    )
+    
+    # CalDAV specific fields
+    apple_calendar_id = models.CharField(max_length=255, blank=True, null=True)
+    last_apple_sync = models.DateTimeField(blank=True, null=True)
+
+    # Rappels via Shortcut webhook
+    reminders_webhook_url = models.URLField(blank=True, null=True)
+    reminders_webhook_secret = models.CharField(max_length=255, blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('User Profile')
+        verbose_name_plural = _('User Profiles')
+
+    def __str__(self):
+        return f"Profile for {self.user.email}"
+
+    def set_apple_password(self, password):
+        """Encrypt and store Apple password"""
+        if not settings.ENCRYPTION_KEY:
+            raise ValueError("ENCRYPTION_KEY not set in settings")
+        
+        fernet = Fernet(settings.ENCRYPTION_KEY)
+        self.encrypted_apple_password = fernet.encrypt(password.encode())
+        self.is_apple_connected = True
+
+    def get_apple_password(self):
+        """Decrypt and return Apple password"""
+        if not self.encrypted_apple_password or not settings.ENCRYPTION_KEY:
+            return None
+        
+        fernet = Fernet(settings.ENCRYPTION_KEY)
+        try:
+            return fernet.decrypt(self.encrypted_apple_password).decode()
+        except:
+            return None
+
+    def has_apple_credentials(self):
+        """Check if user has valid Apple credentials"""
+        return bool(self.apple_username and self.encrypted_apple_password and self.is_apple_connected)
+
+    def disconnect_apple(self):
+        """Disconnect Apple integration"""
+        self.apple_username = None
+        self.encrypted_apple_password = None
+        self.is_apple_connected = False
+        self.apple_calendar_id = None
+        self.save()
     def set_journal_pin(self, raw_pin: str):
         """Set a 4-digit numeric PIN for accessing hidden journals. Stores a hashed value."""
         if raw_pin is None or raw_pin == '':

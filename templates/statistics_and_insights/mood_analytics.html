@@ -5,83 +5,978 @@
 {% block title %}{% trans "Mood Analytics" %} - AI Personal Journal{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="card p-4">
-        <h3 class="mb-3">{% trans "Mood Analytics" %}</h3>
-        <p class="text-muted">{% blocktrans %}Last {{ chart_data.dates|length }} days{% endblocktrans %}</p>
-
-        <div class="chart-container" style="height:300px; background:#fff; border-radius:12px; padding:15px;">
-            <canvas id="moodChart"></canvas>
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="mood-analytics-header mb-5">
+        <br><br>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="page-title mb-2">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    {% trans "Mood Analytics" %}
+                </h1>
+                <p class="page-subtitle text-muted mb-0">
+                    {% trans "Track your emotional journey and discover patterns" %}
+                </p>
+            </div>
+            <div class="time-filter">
+                <select class="form-select" id="timeRangeSelect">
+                    <option value="7">{% trans "Last 7 days" %}</option>
+                    <option value="30" selected>{% trans "Last 30 days" %}</option>
+                    <option value="90">{% trans "Last 90 days" %}</option>
+                    <option value="365">{% trans "Last year" %}</option>
+                </select>
+            </div>
         </div>
+    </div>
 
-        <h5 class="mt-4">{% trans "Data points" %}</h5>
-        <ul class="list-unstyled">
-            {% for d,m in zipped_chart %}
-            <li>{{ d }} — {{ m }}</li>
-            {% empty %}
-            <li>{% trans "No mood data available." %}</li>
-            {% endfor %}
-        </ul>
+    <!-- Main Chart Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="mood-chart-card">
+                <div class="chart-header">
+                    <h4 class="chart-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        {% trans "Mood Evolution" %}
+                    </h4>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span class="legend-color positive"></span>
+                            <span class="legend-text">{% trans "Positive" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color neutral"></span>
+                            <span class="legend-text">{% trans "Neutral" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color negative"></span>
+                            <span class="legend-text">{% trans "Negative" %}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="moodChart"></canvas>
+                </div>
+                <div class="chart-footer">
+                    <div class="mood-stats">
+                        <div class="mood-stat">
+                            <span class="stat-label">{% trans "Current Mood" %}</span>
+                            <span class="stat-value mood-{{ current_mood_level|default:'neutral' }}">{{ current_mood_display|default:"Neutral" }}</span>
+                        </div>
+                        <div class="mood-stat">
+                            <span class="stat-label">{% trans "Average" %}</span>
+                            <span class="stat-value">{{ average_mood|default:"3.0" }}</span>
+                        </div>
+                        <div class="mood-stat">
+                            <span class="stat-label">{% trans "Trend" %}</span>
+                            <span class="stat-value trend-{{ mood_trend|default:'stable' }}">{{ mood_trend_display|default:"Stable" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mood Details & Insights -->
+    <div class="row">
+    
+        <!-- Mood Insights -->
+        <div>
+            <div class="mood-insights-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        {% trans "Mood Insights" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="insights-list">
+                        <!-- Insight 1: Mood Trend -->
+                        {% if mood_trend_data.positive_days > mood_trend_data.negative_days %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-arrow-up text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Your mood has been mostly positive recently!" %}</p>
+                                <small class="text-muted">{% trans "Positive days:" %} {{ mood_trend_data.positive_days|default:"0" }}/{{ zipped_chart|length }}</small>
+                            </div>
+                        </div>
+                        {% elif mood_trend_data.negative_days > mood_trend_data.positive_days %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-arrow-down text-danger"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "You've had more challenging days recently." %}</p>
+                                <small class="text-muted">{% trans "Consider activities that boost your mood" %}</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-chart-line text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Your mood has been relatively stable." %}</p>
+                                <small class="text-muted">{% trans "Consistency is a good sign" %}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Insight 2: Best Mood Day -->
+                        {% if best_mood_day %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-trophy text-info"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Your best mood was on" %} {{ best_mood_day.date }} - {{ best_mood_day.mood_label }}</p>
+                                <small class="text-muted">{% trans "What made that day special?" %}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Insight 3: Consistency -->
+                        {% if mood_consistency > 70 %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-shield-alt text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Great mood consistency!" %}</p>
+                                <small class="text-muted">{% trans "You maintain stable emotional patterns" %}</small>
+                            </div>
+                        </div>
+                        {% elif mood_consistency < 40 %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-random text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Your mood varies significantly" %}</p>
+                                <small class="text-muted">{% trans "This could indicate changing circumstances" %}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Insight 4: Weekly Pattern -->
+                        {% if weekly_pattern %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-calendar-week text-primary"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{{ weekly_pattern.message }}</p>
+                                <small class="text-muted">{{ weekly_pattern.period }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Insight 5: Improvement Suggestion -->
+                        {% if average_mood and average_mood < 3.0 %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-hands-helping text-info"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Consider incorporating more positive activities" %}</p>
+                                <small class="text-muted">{% trans "Exercise, meditation, or social connections can help" %}</small>
+                            </div>
+                        </div>
+                        {% elif average_mood and average_mood > 4.0 %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-star text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "You're doing great! Keep up the positive habits" %}</p>
+                                <small class="text-muted">{% trans "Your mood patterns are very positive" %}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Fallback insights if no data -->
+                        {% if not zipped_chart %}
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-seedling text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Start tracking your mood to get personalized insights" %}</p>
+                                <small class="text-muted">{% trans "The more you journal, the better insights you'll get" %}</small>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon">
+                                <i class="fas fa-chart-line text-info"></i>
+                            </div>
+                            <div class="insight-content">
+                                <p class="mb-0">{% trans "Mood tracking helps identify patterns and triggers" %}</p>
+                                <small class="text-muted">{% trans "Understanding your emotions is the first step to wellbeing" %}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mood Distribution -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="patterns-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        {% trans "Mood Distribution" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container-pie">
+                                <canvas id="moodDistributionChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mood-distribution-stats">
+                                <!-- Mood distribution in correct order from Very Happy to Very Sad -->
+                                <!-- Very Happy -->
+                                <div class="distribution-item">
+                                    <div class="distribution-label">
+                                        <span class="mood-dot mood-very_happy"></span>
+                                        {% trans "Very Happy" %}
+                                    </div>
+                                    <div class="distribution-bar">
+                                        <div class="bar-fill" style="width: {{ mood_distribution.very_happy.percentage|default:"20" }}%"></div>
+                                    </div>
+                                    <div class="distribution-value">{{ mood_distribution.very_happy.percentage|default:"20" }}%</div>
+                                </div>
+                                <!-- Happy -->
+                                <div class="distribution-item">
+                                    <div class="distribution-label">
+                                        <span class="mood-dot mood-happy"></span>
+                                        {% trans "Happy" %}
+                                    </div>
+                                    <div class="distribution-bar">
+                                        <div class="bar-fill" style="width: {{ mood_distribution.happy.percentage|default:"30" }}%"></div>
+                                    </div>
+                                    <div class="distribution-value">{{ mood_distribution.happy.percentage|default:"30" }}%</div>
+                                </div>
+                                <!-- Neutral -->
+                                <div class="distribution-item">
+                                    <div class="distribution-label">
+                                        <span class="mood-dot mood-neutral"></span>
+                                        {% trans "Neutral" %}
+                                    </div>
+                                    <div class="distribution-bar">
+                                        <div class="bar-fill" style="width: {{ mood_distribution.neutral.percentage|default:"25" }}%"></div>
+                                    </div>
+                                    <div class="distribution-value">{{ mood_distribution.neutral.percentage|default:"25" }}%</div>
+                                </div>
+                                <!-- Sad -->
+                                <div class="distribution-item">
+                                    <div class="distribution-label">
+                                        <span class="mood-dot mood-sad"></span>
+                                        {% trans "Sad" %}
+                                    </div>
+                                    <div class="distribution-bar">
+                                        <div class="bar-fill" style="width: {{ mood_distribution.sad.percentage|default:"15" }}%"></div>
+                                    </div>
+                                    <div class="distribution-value">{{ mood_distribution.sad.percentage|default:"15" }}%</div>
+                                </div>
+                                <!-- Very Sad -->
+                                <div class="distribution-item">
+                                    <div class="distribution-label">
+                                        <span class="mood-dot mood-very_sad"></span>
+                                        {% trans "Very Sad" %}
+                                    </div>
+                                    <div class="distribution-bar">
+                                        <div class="bar-fill" style="width: {{ mood_distribution.very_sad.percentage|default:"10" }}%"></div>
+                                    </div>
+                                    <div class="distribution-value">{{ mood_distribution.very_sad.percentage|default:"10" }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Charger Chart.js en premier -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-function initializeChart() {
+// Mood mapping with correct order
+const moodMap = {
+    'very_happy': { value: 5, label: '{% trans "Very Happy" %}', color: '#2ecc71', icon: 'fa-laugh-beam' },
+    'happy': { value: 4, label: '{% trans "Happy" %}', color: '#3498db', icon: 'fa-smile-beam' },
+    'neutral': { value: 3, label: '{% trans "Neutral" %}', color: '#f39c12', icon: 'fa-meh' },
+    'sad': { value: 2, label: '{% trans "Sad" %}', color: '#e74c3c', icon: 'fa-frown' },
+    'very_sad': { value: 1, label: '{% trans "Very Sad" %}', color: '#dc3545', icon: 'fa-sad-tear' }
+};
+
+// Correct order for display
+const moodOrder = ['very_happy', 'happy', 'neutral', 'sad', 'very_sad'];
+
+function initializeCharts() {
+    console.log('Initializing charts...');
+    
     if (typeof Chart === 'undefined') {
-        // Réessayer après un court délai si Chart.js n'est pas encore chargé
-        setTimeout(initializeChart, 100);
+        console.log('Chart.js not loaded, retrying...');
+        setTimeout(initializeCharts, 100);
         return;
     }
-    
-    const ctx = document.getElementById('moodChart');
-    if (!ctx) return;
-    
-    const dates = {{ chart_data.dates|safe }};
-    const moods = {{ chart_data.moods|safe }};
-    
-    const moodValues = moods.map(mood => {
-        const moodMap = {
-            'very_sad': 1, 'sad': 2, 'neutral': 3, 'happy': 4, 'very_happy': 5
-        };
-        return moodMap[mood] || 3;
-    });
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [{
-                label: '{% trans "Mood Level" %}',
-                data: moodValues,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    min: 0, max: 6,
-                    ticks: {
-                        stepSize: 1,
-                        callback: function(value) {
-                            const labels = {1: '{% trans "Very Sad" %}', 2: '{% trans "Sad" %}', 3: '{% trans "Neutral" %}', 4: '{% trans "Happy" %}', 5: '{% trans "Very Happy" %}'};
-                            return labels[value] || '';
+
+    // Main Mood Chart
+    const moodCtx = document.getElementById('moodChart');
+    if (moodCtx) {
+        console.log('Initializing mood chart...');
+        
+        // Données par défaut si les données du backend sont vides
+        const dates = {{ chart_data.dates|safe|default:"[]" }};
+        const moods = {{ chart_data.moods|safe|default:"[]" }};
+        
+        console.log('Dates:', dates);
+        console.log('Moods:', moods);
+        
+        // Si pas de données, utiliser des données de démonstration
+        const displayDates = dates.length > 0 ? dates : ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'];
+        const displayMoods = moods.length > 0 ? moods : ['neutral', 'happy', 'very_happy', 'sad', 'neutral'];
+        
+        const moodValues = displayMoods.map(mood => moodMap[mood]?.value || 3);
+        const moodColors = displayMoods.map(mood => moodMap[mood]?.color || '#f39c12');
+        
+        const gradient = moodCtx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(52, 152, 219, 0.3)');
+        gradient.addColorStop(1, 'rgba(52, 152, 219, 0.05)');
+        
+        try {
+            new Chart(moodCtx, {
+                type: 'line',
+                data: {
+                    labels: displayDates,
+                    datasets: [{
+                        label: '{% trans "Mood Level" %}',
+                        data: moodValues,
+                        borderColor: '#3498db',
+                        backgroundColor: gradient,
+                        pointBackgroundColor: moodColors,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        tension: 0.4,
+                        fill: true,
+                        segment: {
+                            borderColor: ctx => moodColors[ctx.p0DataIndex] || '#3498db'
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const mood = displayMoods[context.dataIndex];
+                                    return `${moodMap[mood]?.label || '{% trans "Neutral" %}'} (${context.parsed.y}/5)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0.5,
+                            max: 5.5,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    const labels = {
+                                        1: '😢', 2: '😔', 3: '😐', 4: '😊', 5: '😄'
+                                    };
+                                    return labels[value] || '';
+                                },
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    animations: {
+                        tension: {
+                            duration: 1000,
+                            easing: 'linear'
                         }
                     }
                 }
-            }
+            });
+            console.log('Mood chart initialized successfully');
+        } catch (error) {
+            console.error('Error initializing mood chart:', error);
         }
-    });
+    }
+
+    // Mood Distribution Chart
+    const distCtx = document.getElementById('moodDistributionChart');
+    if (distCtx) {
+        console.log('Initializing distribution chart...');
+        
+        // Calculer la distribution à partir des données réelles
+        const moods = {{ chart_data.moods|safe|default:"[]" }};
+        const moodCounts = {
+            'very_happy': 0,
+            'happy': 0,
+            'neutral': 0,
+            'sad': 0,
+            'very_sad': 0
+        };
+
+        // Compter les occurrences de chaque humeur
+        moods.forEach(mood => {
+            if (moodCounts.hasOwnProperty(mood)) {
+                moodCounts[mood]++;
+            }
+        });
+
+        const totalMoods = moods.length;
+        
+        // Si pas de données, utiliser des données de démonstration
+        const displayData = totalMoods > 0 ? moodCounts : {
+            'very_happy': 2,
+            'happy': 3, 
+            'neutral': 2,
+            'sad': 1,
+            'very_sad': 1
+        };
+        
+        // Utiliser l'ordre correct pour les labels et données
+        const labels = moodOrder.map(mood => moodMap[mood].label);
+        const data = moodOrder.map(mood => displayData[mood]);
+        const colors = moodOrder.map(mood => moodMap[mood].color);
+
+        try {
+            new Chart(distCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 3,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((context.parsed / total) * 100) : 0;
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+            console.log('Distribution chart initialized successfully');
+        } catch (error) {
+            console.error('Error initializing distribution chart:', error);
+        }
+    }
 }
 
-// Démarrer l'initialisation
-document.addEventListener('DOMContentLoaded', initializeChart);
+// Show All Moods functionality
+document.getElementById('showAllMoods')?.addEventListener('click', function() {
+    const moodHistory = document.querySelector('.mood-history');
+    const showAllButton = this;
+    
+    // Récupérer toutes les données
+    const allMoods = {{ zipped_chart|safe|default:"[]" }};
+    
+    // Vider et remplir avec toutes les données
+    moodHistory.innerHTML = '';
+    
+    allMoods.forEach(([date, mood]) => {
+        const moodItem = document.createElement('div');
+        moodItem.className = 'mood-history-item';
+        moodItem.innerHTML = `
+            <div class="mood-date">${date}</div>
+            <div class="mood-indicator mood-${mood}">
+                <i class="fas ${getMoodIcon(mood)}"></i>
+            </div>
+            <div class="mood-label">${getMoodLabel(mood)}</div>
+        `;
+        moodHistory.appendChild(moodItem);
+    });
+    
+    // Cacher le bouton "View All"
+    showAllButton.style.display = 'none';
+});
+
+// Helper functions for mood display
+function getMoodIcon(mood) {
+    const icons = {
+        'very_happy': 'fa-laugh-beam',
+        'happy': 'fa-smile-beam', 
+        'neutral': 'fa-meh',
+        'sad': 'fa-frown',
+        'very_sad': 'fa-sad-tear'
+    };
+    return icons[mood] || 'fa-meh';
+}
+
+function getMoodLabel(mood) {
+    const labels = {
+        'very_happy': '{% trans "Very Happy" %}',
+        'happy': '{% trans "Happy" %}',
+        'neutral': '{% trans "Neutral" %}', 
+        'sad': '{% trans "Sad" %}',
+        'very_sad': '{% trans "Very Sad" %}'
+    };
+    return labels[mood] || '{% trans "Neutral" %}';
+}
+
+// Time range filter
+document.getElementById('timeRangeSelect')?.addEventListener('change', function() {
+    console.log('Time range changed to:', this.value);
+    // Typically you would reload data or make an AJAX call here
+});
+
+// Initialize charts when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeCharts);
+} else {
+    initializeCharts();
+}
 </script>
+
+<style>
+/* Header Styles */
+.mood-analytics-header {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+
+/* Main Chart Card */
+.mood-chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    margin-bottom: 1.5rem;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.chart-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-color.positive { background: #2ecc71; }
+.legend-color.neutral { background: #f39c12; }
+.legend-color.negative { background: #e74c3c; }
+
+.legend-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.chart-container {
+    height: 400px;
+    position: relative;
+}
+
+.chart-container-pie {
+    height: 300px;
+    position: relative;
+}
+
+.chart-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.mood-stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.mood-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-value.mood-very_happy { color: #2ecc71; }
+.stat-value.mood-happy { color: #3498db; }
+.stat-value.mood-neutral { color: #f39c12; }
+.stat-value.mood-sad { color: #e74c3c; }
+.stat-value.mood-very_sad { color: #dc3545; }
+
+.stat-value.trend-up { color: #2ecc71; }
+.stat-value.trend-down { color: #e74c3c; }
+.stat-value.trend-stable { color: #f39c12; }
+
+/* Mood Details Card */
+.mood-details-card,
+.mood-insights-card,
+.patterns-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    height: 100%;
+}
+
+.card-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Mood History */
+.mood-history {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.mood-history-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.mood-history-item:hover {
+    background: #e9ecef;
+    transform: translateX(4px);
+}
+
+.mood-date {
+    font-weight: 500;
+    color: #2c3e50;
+    min-width: 100px;
+}
+
+.mood-indicator {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.mood-indicator.mood-very_happy { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+.mood-indicator.mood-happy { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+.mood-indicator.mood-neutral { background: rgba(243, 156, 18, 0.2); color: #f39c12; }
+.mood-indicator.mood-sad { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+.mood-indicator.mood-very_sad { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+
+.mood-label {
+    font-weight: 500;
+    color: #2c3e50;
+    flex: 1;
+}
+
+/* Insights */
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    transition: all 0.3s ease;
+}
+
+.insight-item:hover {
+    background: #e9ecef;
+    transform: translateX(4px);
+}
+
+.insight-icon {
+    font-size: 1.2rem;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+}
+
+.insight-content p {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.insight-content small {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Mood Distribution */
+.mood-distribution-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.distribution-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.distribution-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #2c3e50;
+    min-width: 120px;
+}
+
+.mood-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.mood-dot.mood-very_happy { background: #2ecc71; }
+.mood-dot.mood-happy { background: #3498db; }
+.mood-dot.mood-neutral { background: #f39c12; }
+.mood-dot.mood-sad { background: #e74c3c; }
+.mood-dot.mood-very_sad { background: #dc3545; }
+
+.distribution-bar {
+    flex: 1;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+
+/* Couleurs spécifiques pour chaque barre */
+.distribution-item:nth-child(1) .bar-fill { background: #2ecc71; } /* Very Happy */
+.distribution-item:nth-child(2) .bar-fill { background: #3498db; } /* Happy */
+.distribution-item:nth-child(3) .bar-fill { background: #f39c12; } /* Neutral */
+.distribution-item:nth-child(4) .bar-fill { background: #e74c3c; } /* Sad */
+.distribution-item:nth-child(5) .bar-fill { background: #dc3545; } /* Very Sad */
+
+.distribution-value {
+    font-weight: 600;
+    color: #2c3e50;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Empty States */
+.empty-state {
+    padding: 2rem 1rem;
+}
+
+/* Scrollbar styling for mood history */
+.mood-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mood-history::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.mood-history::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.mood-history::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .mood-chart-card {
+        padding: 1rem;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .chart-legend {
+        align-self: flex-start;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    .chart-container-pie {
+        height: 250px;
+    }
+    
+    .mood-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .mood-history-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .mood-date {
+        min-width: auto;
+    }
+    
+    .insight-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .insight-icon {
+        align-self: center;
+    }
+    
+    .distribution-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .distribution-bar {
+        width: 100%;
+    }
+}
+</style>
 {% endblock %}

@@ -179,14 +179,42 @@ def admin_user_detail(request, user_id):
 
 @login_required
 @user_passes_test(is_admin)
-def admin_user_toggle_status(request, user_id):
-    """Activer/Désactiver un utilisateur"""
-    user = CustomUser.objects.get(id=user_id)
-    user.is_active = not user.is_active
-    user.save()
-    
-    status = _('activated') if user.is_active else _('deactivated')
-    messages.success(request, _(f'User {user.email} has been {status}'))
+def admin_user_delete(request, user_id):
+    """Supprimer définitivement un utilisateur de la base de données"""
+    if request.method == 'POST':
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            
+            # Ne pas permettre de supprimer soi-même
+            if user.id == request.user.id:
+                messages.error(request, _('You cannot delete your own account.'))
+                return redirect('admin_users_list')
+            
+            # Ne pas permettre de supprimer d'autres admins
+            if user.role == 'admin':
+                messages.error(request, _('Cannot delete admin accounts.'))
+                return redirect('admin_users_list')
+            
+            user_email = user.email
+            
+            # Désactiver temporairement le signal pour éviter les erreurs
+            from django.db.models.signals import post_save
+            from users import signals
+            
+            # Désactiver le signal qui crée/met à jour le profil
+            post_save.disconnect(signals.save_user_profile, sender=CustomUser)
+            
+            try:
+                user.delete()
+                messages.success(request, _(f'User {user_email} has been permanently deleted.'))
+            finally:
+                # Réactiver le signal
+                post_save.connect(signals.save_user_profile, sender=CustomUser)
+                
+        except CustomUser.DoesNotExist:
+            messages.error(request, _('User not found.'))
+        except Exception as e:
+            messages.error(request, _(f'Error deleting user: {str(e)}'))
     
     return redirect('admin_users_list')
 
