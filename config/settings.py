@@ -86,18 +86,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ai_journal_db',
-        'USER': 'root',
-        'PASSWORD':'' ,
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': os.environ.get('DJANGO_DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.environ.get('DJANGO_DB_NAME', 'ai_journal_db'),
+        'USER': os.environ.get('DJANGO_DB_USER', 'root'),
+        # use env var if set; default to 'root' for local dev only
+        'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', ''),
+        'HOST': os.environ.get('DJANGO_DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DJANGO_DB_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
         }
     }
 }
+
+GEMINI_API_KEY = 'AIzaSyCIReSYkG37uyIV-VvU87LObnhPzEJSN9M'
+GEMINI_MODEL="models/text-bison-001"
 
 
 # Désactiver les messages de validation de mot de passe

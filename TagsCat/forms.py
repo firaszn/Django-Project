@@ -4,7 +4,7 @@ from .models import Category, Tag
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name', 'color', 'icon', 'description']
+        fields = ['name', 'color', 'icon', 'description', 'tags']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -23,6 +23,9 @@ class CategoryForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Description (optionnel)'
+            }),
+            'tags': forms.CheckboxSelectMultiple(attrs={
+                'class': 'form-check-input'
             })
         }
     
@@ -33,6 +36,11 @@ class CategoryForm(forms.ModelForm):
         self.fields['color'].label = 'Couleur'
         self.fields['icon'].label = 'Icône'
         self.fields['description'].label = 'Description'
+        self.fields['tags'].label = 'Tags associés'
+        
+        # Filtrer les tags pour cet utilisateur
+        if self.user:
+            self.fields['tags'].queryset = Tag.objects.filter(user=self.user).order_by('name')
     
     def clean_name(self):
         name = self.cleaned_data.get('name')
