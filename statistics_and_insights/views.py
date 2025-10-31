@@ -673,7 +673,7 @@ def ai_report_detail(request, pk):
 @login_required
 def backoffice_dashboard(request):
     """Tableau de bord backoffice"""
-    if not (request.user.is_staff or getattr(request.user, 'role', None) == 'admin'):
+    if not request.user.role == 'admin':
         messages.error(request, "Accès réservé aux administrateurs.")
         return redirect('statistics_and_insights:dashboard')
     
@@ -742,7 +742,7 @@ def backoffice_dashboard(request):
 @login_required
 def backoffice_ai_reports(request):
     """Tous les rapports IA (backoffice)"""
-    if not (request.user.is_staff or getattr(request.user, 'role', None) == 'admin'):
+    if not request.user.role == 'admin':
         messages.error(request, "Accès réservé aux administrateurs.")
         return redirect('statistics_and_insights:dashboard')
     
@@ -778,7 +778,7 @@ def backoffice_ai_reports(request):
 @login_required
 def backoffice_ai_report_detail(request, pk):
     """Détail d'un rapport IA en backoffice"""
-    if not (request.user.is_staff or getattr(request.user, 'role', None) == 'admin'):
+    if not request.user.role == 'user':
         messages.error(request, "Accès réservé aux administrateurs.")
         return redirect('statistics_and_insights:dashboard')
     
@@ -935,10 +935,6 @@ def debug_weekly_insights(user):
 @login_required
 def ai_report_update(request, pk):
     """Modifier un rapport IA dans le backoffice"""
-    if not request.user.is_staff:
-        messages.error(request, "Accès réservé aux administrateurs.")
-        return redirect('statistics_and_insights:dashboard')
-    
     report = get_object_or_404(AIGeneratedReport, pk=pk)
     
     if request.method == 'POST':
@@ -965,10 +961,6 @@ def ai_report_update(request, pk):
 @login_required
 def ai_report_delete(request, pk):
     """Supprimer un rapport IA dans le backoffice"""
-    if not request.user.is_staff:
-        messages.error(request, "Accès réservé aux administrateurs.")
-        return redirect('statistics_and_insights:dashboard')
-    
     report = get_object_or_404(AIGeneratedReport, pk=pk)
     
     if request.method == 'POST':

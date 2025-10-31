@@ -1161,6 +1161,14 @@ def journal_garden_data(request):
         except Exception:
             tags = []
 
+        # Get first image if available
+        images = []
+        try:
+            for img in j.images.all():
+                images.append(img.image.url)
+        except Exception:
+            images = []
+
         out.append({
             'id': j.id,
             'title': j.title or '',
@@ -1171,6 +1179,7 @@ def journal_garden_data(request):
             'word_count': word_count,
             'snippet': snippet,
             'closing_reflection': (j.closing_reflection or '')[:300],
+            'images': images,
         })
 
     return JsonResponse(out, safe=False)

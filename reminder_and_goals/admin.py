@@ -20,14 +20,13 @@ class CustomAdminSite(admin.AdminSite):
         active_reminders = reminders.filter(status=True).count()
         inactive_reminders = reminders.filter(status=False).count()
         
-        context = dict(
-            self.each_context(request),
-            reminders=reminders,
-            reminders_count=reminders.count(),
-            active_reminders=active_reminders,
-            inactive_reminders=inactive_reminders,
-            title="Reminders Overview",
-        )
+        context = {
+            'reminders': reminders,
+            'reminders_count': reminders.count(),
+            'active_reminders': active_reminders,
+            'inactive_reminders': inactive_reminders,
+            'title': "Reminders Overview",
+        }
         return TemplateResponse(request, "reminder_and_goals/reminder_list_admin.html", context)
 
     def goal_list_view(self, request):
@@ -41,15 +40,14 @@ class CustomAdminSite(admin.AdminSite):
             goal.progress_percentage = goal.progress_percentage()
             goal.is_achieved = goal.progress >= goal.target
         
-        context = dict(
-            self.each_context(request),
-            goals=goals,
-            goals_count=goals.count(),
-            completed_goals=completed_goals,
-            in_progress_goals=in_progress_goals,
-            average_progress=round(average_progress, 1),
-            title="Goals Overview",
-        )
+        context = {
+            'goals': goals,
+            'goals_count': goals.count(),
+            'completed_goals': completed_goals,
+            'in_progress_goals': in_progress_goals,
+            'average_progress': round(average_progress, 1),
+            'title': "Goals Overview",
+        }
         return TemplateResponse(request, "reminder_and_goals/goal_list_admin.html", context)
 
 custom_admin_site = CustomAdminSite(name='custom_admin')

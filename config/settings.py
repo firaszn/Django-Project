@@ -1,21 +1,61 @@
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
-from dotenv import load_dotenv
+import base64
+import os
 
-# The project previously used python-decouple's `config` helper. Some
-# environments may not have that package installed. Provide a thin
-# fallback that reads from environment variables via os.getenv so the
-# settings file works in development without extra deps.
-def config(key, default=None):
-    return os.getenv(key, default)
+ 
+# Load environment variables from a local .env file if present
+try:
+    from dotenv import load_dotenv, find_dotenv  # type: ignore
+    _env_file = find_dotenv()
+    if _env_file:
+        load_dotenv(_env_file)
+except Exception:
+    # Fallback minimal loader: parse KEY=VALUE lines in .env at project root
+    try:
+        _base_dir = Path(__file__).resolve().parent.parent
+        _fallback_env = _base_dir / '.env'
+        if _fallback_env.exists():
+            for _line in _fallback_env.read_text(encoding='utf-8').splitlines():
+                _line = _line.strip()
+                if not _line or _line.startswith('#') or '=' not in _line:
+                    continue
+                _k, _v = _line.split('=', 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+    except Exception:
+        pass
 
-# A minimal Csv helper to mimic decouple.Csv usage when needed.
-def Csv(value):
-    if value is None:
-        return []
-    return [v.strip() for v in str(value).split(',') if v.strip()]
 
+ENCRYPTION_KEY = b'3YIQyb4cb-oImwuwsxOwqua6xgFc67pavrIipzinrMw='
+
+# Apple CalDAV settings
+APPLE_CALDAV_SERVER = "https://caldav.icloud.com"
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'apple_reminders.log',
+        },
+    },
+    'loggers': {
+        'reminder_and_goals': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+# AI Goal Suggestions
+# Configure Gemini for high-quality suggestions. Put values in your .env file.
+GOAL_GEMINI_API_KEY = os.getenv('GOAL_GEMINI_API_KEY')
+GOAL_GEMINI_MODEL = os.getenv('GOAL_GEMINI_MODEL', 'gemini-latest')
 
 # Import de la configuration email
 try:
@@ -37,12 +77,6 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-# Charger les variables d'environnement
-load_dotenv(os.path.join(BASE_DIR, '.env'))
-
-# Gemini AI Configuration
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Application definition
 INSTALLED_APPS = [
@@ -69,9 +103,9 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
     'TagsCat',
-    'memory',
     'statistics_and_insights',
     'reminder_and_goals.apps.ReminderAndGoalsConfig',
+    'memory.apps.MemoryConfig',
 
 ]
 
@@ -108,13 +142,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('DJANGO_DB_ENGINE', 'django.db.backends.mysql'),
-        'NAME': os.environ.get('DJANGO_DB_NAME', 'ai_journal_db'),
-        'USER': os.environ.get('DJANGO_DB_USER', 'root'),
-        # use env var if set; default to 'root' for local dev only
-        'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', ''),
-        'HOST': os.environ.get('DJANGO_DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DJANGO_DB_PORT', '3306'),
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',
@@ -129,7 +156,7 @@ DATABASES = {
 }
 
 GEMINI_API_KEY = 'AIzaSyCIReSYkG37uyIV-VvU87LObnhPzEJSN9M'
-#GEMINI_MODEL="models/text-bison-001"
+GEMINI_MODEL="models/text-bison-001"
 
 
 # Désactiver les messages de validation de mot de passe
@@ -193,7 +220,6 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirection directe vers log
 # Configuration du formulaire d'inscription personnalisé
 ACCOUNT_FORMS = {
     'signup': 'users.forms.CustomSignupForm',
-    'login': 'users.forms.CustomLoginForm',
 }
 
 # Adaptateur personnalisé pour la redirection après login
@@ -241,7 +267,6 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
-            'prompt': 'select_account',  # force le sélecteur de compte Google
         },
         'OAUTH_PKCE_ENABLED': True,
     }
@@ -261,11 +286,11 @@ SOCIALACCOUNT_ADAPTER = 'users.adapter.CustomSocialAccountAdapter'
 # Groq API - Gratuit et rapide : https://console.groq.com/
 # IMPORTANT: Ne pas mettre la clé directement dans le code !
 # Utilisez la variable d'environnement GROQ_API_KEY ou un fichier .env
-GROQ_API_KEY = config('GROQ_API_KEY', default='')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
 
 # HuggingFace API (Optionnel - fallback)
-HUGGINGFACE_API_KEY = config('HUGGINGFACE_API_KEY', default=None)  # Optionnel : clé HuggingFace si vous en avez une
+HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY', None)  # Optionnel : clé HuggingFace si vous en avez une
 
-# reCAPTCHA Configuration
-RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
-RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
+# reCAPTCHA Configuration (Optionnel)
+RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_SITE_KEY', '')
+RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY', '')

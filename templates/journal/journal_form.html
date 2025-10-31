@@ -229,6 +229,8 @@
                                     <span id="voice-status">Record</span>
                                 </button>
                             </div>
+                            <!-- Voice feedback -->
+                            <div id="voice-feedback" class="mt-2" style="display:none;"></div>
                             <!-- Quill rich-text editor: we'll keep the textarea for form binding but hide it and sync on submit -->
                             <div id="quill-editor" style="min-height:200px; background:white; border-radius:8px;">
                                 <!-- Quill will initialize here -->
@@ -774,11 +776,11 @@ document.addEventListener('DOMContentLoaded', function(){
     const voiceFeedback = document.getElementById('voice-feedback');
     const descriptionInput = document.getElementById('id_description');
 
-    if(voiceBtn && descriptionInput && 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
+    if(voiceBtn && descriptionInput && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
         
-        recognition.continuous = true;
+        recognition.continuous = false;  // Changed to false for single utterance mode
         recognition.interimResults = true;
         recognition.lang = 'en-US'; // Change to your preferred language
         
@@ -789,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function(){
             isRecording = true;
             voiceBtn.classList.remove('btn-outline-primary');
             voiceBtn.classList.add('btn-danger');
-            voiceStatus.textContent = 'Recording...';
+            voiceStatus.textContent = 'Listening...';
             voiceFeedback.style.display = 'block';
             voiceFeedback.textContent = 'Listening... Speak now';
             voiceFeedback.className = 'text-primary';
@@ -815,14 +817,25 @@ document.addEventListener('DOMContentLoaded', function(){
 
         recognition.onend = function(){
             if(isRecording){
-                // Insert the final transcript at cursor position
+                // Insert the final transcript into Quill editor
                 if(finalTranscript.trim()){
-                    insertAtCursor(descriptionInput, finalTranscript);
+                    // Use Quill if available, otherwise fallback to textarea
+                    if(window._quill){
+                        const quill = window._quill;
+                        const range = quill.getSelection(true);
+                        const index = range ? range.index : quill.getLength();
+                        quill.insertText(index, finalTranscript);
+                    } else {
+                        insertAtCursor(descriptionInput, finalTranscript);
+                    }
                     voiceFeedback.textContent = 'Added: ' + finalTranscript.substring(0, 50) + (finalTranscript.length > 50 ? '...' : '');
                     voiceFeedback.className = 'text-success';
                     setTimeout(() => {
                         voiceFeedback.style.display = 'none';
                     }, 3000);
+                } else {
+                    // No speech detected, just reset silently
+                    voiceFeedback.style.display = 'none';
                 }
                 finalTranscript = '';
             }
@@ -835,27 +848,51 @@ document.addEventListener('DOMContentLoaded', function(){
 
         recognition.onerror = function(event){
             console.error('Speech recognition error:', event.error);
-            voiceFeedback.textContent = 'Error: ' + event.error;
-            voiceFeedback.className = 'text-danger';
-            voiceFeedback.style.display = 'block';
             
-            isRecording = false;
-            voiceBtn.classList.remove('btn-danger');
-            voiceBtn.classList.add('btn-outline-primary');
-            voiceStatus.textContent = 'Record';
+            // Handle different error types
+            let errorMessage = '';
+            let shouldReset = true;
             
-            setTimeout(() => {
-                voiceFeedback.style.display = 'none';
-            }, 3000);
+            switch(event.error){
+                case 'no-speech':
+                    // Ignore no-speech errors silently - they're common when user clicks but doesn't speak
+                    return;
+                case 'audio-capture':
+                    errorMessage = 'No microphone found.';
+                    break;
+                case 'not-allowed':
+                    errorMessage = 'Microphone permission denied.';
+                    break;
+                case 'network':
+                    errorMessage = 'Network error occurred.';
+                    break;
+                default:
+                    errorMessage = 'Recognition error: ' + event.error;
+            }
+            
+            if(shouldReset){
+                voiceFeedback.textContent = errorMessage;
+                voiceFeedback.className = 'text-danger';
+                voiceFeedback.style.display = 'block';
+                
+                isRecording = false;
+                voiceBtn.classList.remove('btn-danger');
+                voiceBtn.classList.add('btn-outline-primary');
+                voiceStatus.textContent = 'Record';
+                
+                setTimeout(() => {
+                    voiceFeedback.style.display = 'none';
+                }, 3000);
+            }
         };
 
         voiceBtn.addEventListener('click', function(){
             if(!isRecording){
                 finalTranscript = '';
                 recognition.start();
-            } else {
-                recognition.stop();
             }
+            // With continuous=false, we don't need to stop manually
+            // It will stop automatically after speech ends
         });
     } else if(voiceBtn) {
         // Browser doesn't support speech recognition
