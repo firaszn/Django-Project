@@ -1,10 +1,12 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
 from cryptography.fernet import Fernet
 from django.conf import settings
 import base64
 from django.contrib.auth.hashers import make_password, check_password
+
 
 class CustomUser(AbstractUser):
     # Attributs du diagramme (userid est géré automatiquement par Django)
@@ -35,6 +37,7 @@ class CustomUser(AbstractUser):
         ('user', 'User'),
         ('admin', 'Admin')
     ])
+
     # Hashed 4-digit PIN used to unlock hidden journals. Use helper methods to set/check.
     journal_pin = models.CharField(_('journal pin'), max_length=128, null=True, blank=True,
                                    help_text=_('Hashed 4-digit PIN for accessing hidden journals'))
@@ -85,6 +88,9 @@ class CustomUser(AbstractUser):
                     self.username = f"{original_username}{counter}"
                     counter += 1
         
+
+        super().save(*args, **kwargs)
+
         super().save(*args, **kwargs)
 
 

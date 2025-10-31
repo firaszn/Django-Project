@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'journal.apps.JournalConfig',
     'TagsCat',
+    'memory',
     'statistics_and_insights',
     'reminder_and_goals.apps.ReminderAndGoalsConfig',
 
@@ -107,6 +108,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 DATABASES = {
     'default': {
+        'ENGINE': os.environ.get('DJANGO_DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.environ.get('DJANGO_DB_NAME', 'ai_journal_db'),
+        'USER': os.environ.get('DJANGO_DB_USER', 'root'),
+        # use env var if set; default to 'root' for local dev only
+        'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', ''),
+        'HOST': os.environ.get('DJANGO_DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DJANGO_DB_PORT', '3306'),
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',

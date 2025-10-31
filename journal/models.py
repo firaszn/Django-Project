@@ -1,6 +1,8 @@
 # journal/models.py
 from django.db import models
 from django.conf import settings
+
+
 from django.utils import timezone
 
 
@@ -26,6 +28,8 @@ class Journal(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='journals')
     title = models.CharField(max_length=255)
     description = models.TextField()
+
+    # The date this entry should be associated with (can be today or user-chosen)
     entry_date = models.DateField(default=timezone.localdate)
     location = models.CharField(max_length=255, blank=True, null=True)
     hidden = models.BooleanField(default=False)
@@ -94,6 +98,7 @@ class Journal(models.Model):
 
     def get_related_goals_count(self):
         return self.related_goals.count()
+
 
 
 class JournalImage(models.Model):

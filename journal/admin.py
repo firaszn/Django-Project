@@ -40,3 +40,4 @@ class JournalImageAdmin(admin.ModelAdmin):
     def get_category(self, obj):
         return obj.journal.category if getattr(obj, 'journal', None) else ''
     get_category.short_description = 'Category'
+    get_category.short_description = 'Category'

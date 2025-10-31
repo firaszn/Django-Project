@@ -16,6 +16,9 @@ urlpatterns = [
     path('manage/', include('TagsCat.urls')),
     # API endpoints (app-level routers)
     path('api/', include('TagsCat.api_urls')),
+
+    path('memory/', include('memory.urls')),
+
     path('statistics-and-insights/', include('statistics_and_insights.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

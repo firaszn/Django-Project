@@ -280,11 +280,15 @@
                                 <i class="fas fa-folder me-1"></i>{% trans "Categories" %}
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'memory:memory_management' %}">
+                                <i class="fas fa-bookmark me-1"></i>{% trans "Memories" %}
+                            </a>
+                        </li>
                         <li class="nav-item" style="padding-left: 100px;">
                             <a class="nav-link" href="{% url 'journal_create' %}">
                                 <i class="fas fa-plus me-1"></i>{% trans "New Entry" %}
-                            </a>
-                        </li>
+                            </li>
                         
                         {% endif %}
                     {% endif %}
