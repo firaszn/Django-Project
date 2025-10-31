@@ -5,10 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AI Personal Journal{% endblock %}</title>
+    <title>{% block title %}mindmuse{% endblock %}</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Inter (body), Plus Jakarta Sans (headings), Poppins (quotes) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600&family=Poppins:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -21,53 +21,195 @@
     
     <style>
         :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f39c12;
-            --accent-color: #e74c3c;
+            /* Color system from design brief */
+            --bg-gradient: linear-gradient(135deg, #eef3ff, #f8f1ff);
+            --primary-accent: #7D66F5; /* buttons, highlights */
+            --secondary-accent: #a88bff; /* hover states */
+            --card-surface: rgba(255, 255, 255, 0.6); /* glass */
+            --text-primary: #1b1b1f;
+            --text-secondary: #55566a;
+            --success-joy: #ffd86e;
+            --calm-neutral: #a8d8ff;
+            --sad-reflect: #b9b4f8;
+            --radius: 10px;
+            --nav-height: 64px;
+            --accent-highlight: #FFD76D; /* warm accent for icons/buttons */
         }
         
         body {
+            /* ensure content doesn't hide under fixed navbar */
+            padding-top: calc(var(--nav-height) + 12px);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+        }
+        
+        @keyframes subtleMotion {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+            100% { transform: translateY(0); }
+        }
+        
+        .navbar {
+            height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.4) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.05);
+            border-bottom: none;
         }
         
         .navbar-brand {
+            font-weight: 600;
+            color: var(--text-primary) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.05rem;
+        }
+        
+        .navbar .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.18s ease, text-shadow 0.18s ease;
+            font-weight: 500;
+        }
+
+        .navbar .nav-link:hover {
+            color: var(--primary-accent) !important;
+            text-shadow: 0 0 8px rgba(125,140,255,0.18);
+        }
+        
+        .navbar .nav-link.active {
+            color: var(--primary-accent) !important;
             font-weight: bold;
-            color: var(--primary-color) !important;
         }
         
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+        .dropdown-menu {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(125, 102, 245, 0.12);
         }
         
+        .dropdown-item {
+            color: var(--text-dark);
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(125, 102, 245, 0.06);
+            color: var(--primary-accent);
+        }
+        
+        .navbar-toggler {
+            border-color: var(--text-light);
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        
+        /* unify button look */
+        .btn, .btn-primary, .btn-secondary, .btn-success, .btn-warning, .btn-outline-primary, .btn-outline-secondary {
+            border-radius: 12px !important;
+            background-color: var(--primary-accent) !important;
+            border-color: var(--primary-accent) !important;
+            color: white !important;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            font-weight: 600;
+        }
+
+        .btn:hover, .btn-primary:hover, .btn-secondary:hover, .btn-success:hover, .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(125,102,245,0.18);
+        }
+
         .btn-primary:hover {
-            background-color: #357abd;
-            border-color: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(125,140,255,0.18);
         }
         
         .main-content {
             flex: 1;
-            padding: 2rem 0;
+            padding: 2.5rem 0;
             min-height: calc(100vh - 200px);
+            /* extra breathing room after the fixed navbar */
+            margin-top: 0.5rem;
         }
         
         .footer {
             margin-top: 60px;
             padding: 2rem 0;
-            background-color: #f8f9fa;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: rgba(125, 102, 245, 0.06);
+            border-top: 1px solid rgba(125, 102, 245, 0.08);
+            color: var(--text-secondary);
         }
         
         .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            border-radius: var(--radius);
+            box-shadow: 0 6px 18px rgba(11, 26, 50, 0.06);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+            background: var(--card-surface);
+            border: 1px solid rgba(0,0,0,0.04);
+            color: var(--text-primary);
+            backdrop-filter: blur(6px);
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 40px rgba(11,26,50,0.08);
+        }
+
+        .glass-card { background: var(--card-surface); border-radius: calc(var(--radius) - 2px); }
+
+        /* Prompt / suggestion card style */
+        .prompt-card {
+            border-radius: 12px;
+            padding: 1rem;
+            min-width: 220px;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .prompt-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+
+    .welcome-hero { border-radius: 12px; padding: 2rem; background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.35)); }
+
+        h1, h2, h3, h4, h5 { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text-primary); }
+        p, label, small { color: var(--text-secondary); }
+
+        blockquote, .reflection { font-family: 'Poppins', sans-serif; font-style: italic; font-weight: 300; color: var(--text-secondary); }
+        
+        .alert {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(125, 102, 245, 0.12);
+            color: var(--text-dark);
         }
         
-        .card:hover {
-            transform: translateY(-5px);
+        .alert-success {
+            background-color: rgba(212, 237, 218, 0.8);
+            border-color: rgba(25, 135, 84, 0.3);
+            color: #155724;
+        }
+        
+        .alert-danger, .alert-error {
+            background-color: rgba(248, 215, 218, 0.8);
+            border-color: rgba(220, 53, 69, 0.3);
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background-color: rgba(255, 243, 205, 0.8);
+            border-color: rgba(255, 193, 7, 0.3);
+            color: #856404;
+        }
+        
+        .alert-info {
+            background-color: rgba(209, 231, 247, 0.8);
+            border-color: rgba(23, 162, 184, 0.3);
+            color: #0c5460;
         }
         
         .profile-picture {
@@ -75,24 +217,25 @@
             height: 150px;
             object-fit: cover;
             border-radius: 50%;
-            border: 3px solid var(--primary-color);
+            border: 3px solid var(--primary-accent);
         }
         
         .nav-link.active {
-            color: var(--primary-color) !important;
+            color: var(--primary-accent) !important;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
     <!-- Navbar Exceptionnelle -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+    <!-- Increased navbar transparency and updated gradient colors -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'journal_home' %}" data-aos="fade-right">
+                <a class="navbar-brand d-flex align-items-center" href="{% url 'journal_home' %}" data-aos="fade-right">
                 <div class="logo-icon me-2">
                     <i class="fas fa-book-reader"></i>
                 </div>
-                <span class="brand-text">AI Personal Journal</span>
+                <span class="brand-text">mindmuse</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -107,10 +250,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-plus me-1"></i>{% trans "New Entry" %}
+                            <a class="nav-link" href="{% url 'journal_list' %}">
+                                <i class="fas fa-book me-2"></i>Journals
                             </a>
                         </li>
+                        
 
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'statistics_and_insights:dashboard' %}">
@@ -129,11 +273,7 @@
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'journal_list' %}">
-                                <i class="fas fa-book me-2"></i>Journals
-                            </a>
-                        </li>
+                        
 
                          <li class="nav-item">
                             <a class="nav-link" href="{% url 'TagsCat:category_management' %}">
@@ -145,11 +285,17 @@
                                 <i class="fas fa-bookmark me-1"></i>{% trans "Memories" %}
                             </a>
                         </li>
+                        <li class="nav-item" style="padding-left: 100px;">
+                            <a class="nav-link" href="{% url 'journal_create' %}">
+                                <i class="fas fa-plus me-1"></i>{% trans "New Entry" %}
+                            </li>
                         
                         {% endif %}
                     {% endif %}
                 </ul>
+                
                 <ul class="navbar-nav">
+                     
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -217,6 +363,28 @@
         </div>
     {% endif %}
 
+    <!-- Calendar drawer trigger (compact) -->
+    <button id="open-calendar-btn" class="btn btn-primary" style="position:fixed; right:18px; bottom:18px; z-index:1050; border-radius:50%; width:56px; height:56px; display:flex; align-items:center; justify-content:center;"> 
+        <i class="fas fa-calendar-day accent-icon"></i>
+    </button>
+
+    <!-- Calendar Drawer -->
+    <div id="calendar-drawer" style="position:fixed; right:18px; bottom:90px; width:320px; max-width:90%; background:rgba(255,255,255,0.95); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:12px; z-index:1050; display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong id="calendar-title"></strong>
+            <div>
+                <button id="cal-prev" class="btn btn-sm btn-outline-secondary me-1">&lt;</button>
+                <button id="cal-next" class="btn btn-sm btn-outline-secondary">&gt;</button>
+            </div>
+        </div>
+        <div id="calendar-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px;">
+            <!-- day cells injected by JS -->
+        </div>
+        <div id="calendar-encouragement" class="mt-2 small text-muted"></div>
+    </div>
+
+  
+
     <!-- Main Content -->
     <main class="main-content">
         {% block content %}{% endblock %}
@@ -225,7 +393,7 @@
     <!-- Footer -->
     <footer class="footer text-center">
         <div class="container">
-            <p class="mb-0">&copy; {% now "Y" %} AI Personal Journal. All rights reserved.</p>
+            <p class="mb-0">&copy; {% now "Y" %} mindmuse. All rights reserved.</p>
         </div>
     </footer>
 
@@ -236,6 +404,140 @@
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}"></script>
     
+    <!-- Calendar drawer script -->
+    <script>
+        (function(){
+            const btn = document.getElementById('open-calendar-btn');
+            const drawer = document.getElementById('calendar-drawer');
+            const grid = document.getElementById('calendar-grid');
+            const title = document.getElementById('calendar-title');
+            const enc = document.getElementById('calendar-encouragement');
+            const prev = document.getElementById('cal-prev');
+            const next = document.getElementById('cal-next');
+
+            let current = new Date();
+
+            function formatTitle(d){
+                return d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+            }
+
+            function buildGrid(year, month, daysObj){
+                grid.innerHTML = '';
+                // show weekday headers
+                const weekNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                for(let i=0;i<7;i++){
+                    const h = document.createElement('div');
+                    h.style.fontWeight='600';
+                    h.style.textAlign='center';
+                    h.style.fontSize='12px';
+                    h.textContent = weekNames[i];
+                    grid.appendChild(h);
+                }
+
+                const first = new Date(year, month-1, 1);
+                const lastDay = new Date(year, month, 0).getDate();
+                const startWeekday = first.getDay();
+
+                // fill blanks
+                for(let i=0;i<startWeekday;i++){
+                    const blank = document.createElement('div');
+                    grid.appendChild(blank);
+                }
+
+                for(let day=1; day<=lastDay; day++){
+                    const cell = document.createElement('button');
+                    cell.type = 'button';
+                    cell.className = 'btn btn-sm';
+                    cell.style.padding = '8px';
+                    cell.style.minHeight = '36px';
+                    cell.style.display = 'flex';
+                    cell.style.flexDirection = 'column';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                    cell.style.fontSize = '13px';
+                    cell.textContent = day;
+
+                    const key = String(day);
+
+                    // navigate to create page with entry_date when clicking any day
+                    cell.addEventListener('click', function(){
+                        try{
+                            const yyyy = String(year);
+                            const mm = String(month).padStart(2,'0');
+                            const dd = String(day).padStart(2,'0');
+                            const url = '{% url "journal_create" %}';
+                            window.location.href = url + '?entry_date=' + yyyy + '-' + mm + '-' + dd;
+                        }catch(e){ console.error('Calendar navigation error', e); }
+                    });
+
+                    if(daysObj && daysObj[key]){
+                        const mood = daysObj[key];
+                        const happy = mood.happy || 0;
+                        const sad = mood.sad || 0;
+                        const neutral = mood.neutral || 0;
+                        let emoji = '😐';
+                        if(happy >= sad && happy >= neutral && (happy||sad||neutral)) emoji = '😊';
+                        else if(sad > happy && sad >= neutral && (happy||sad||neutral)) emoji = '😢';
+                        else if(neutral > happy && neutral > sad && (happy||sad||neutral)) emoji = '😐';
+
+                        const badge = document.createElement('div');
+                        badge.textContent = emoji;
+                        badge.style.fontSize = '14px';
+                        badge.style.marginTop = '4px';
+                        cell.appendChild(badge);
+                        // Force a lavender background and clear any gradient so global .btn !important rules can't force purple.
+                        cell.style.setProperty('background', '#bfa8ff', 'important');
+                        cell.style.setProperty('background-image', 'none', 'important');
+                        cell.style.setProperty('border', '1px solid rgba(0,0,0,0.06)', 'important');
+                    } else {
+                        // Ensure non-mood days also show a lavender surface (override global purple) while keeping a subtle border.
+                        cell.style.setProperty('background', '#bfa8ff', 'important');
+                        cell.style.setProperty('background-image', 'none', 'important');
+                        cell.style.setProperty('border', '1px solid rgba(0,0,0,0.04)', 'important');
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+
+            function fetchCalendar(year, month){
+                fetch(`{% url 'journal_calendar_data' %}?year=${year}&month=${month}`)
+                    .then(r=>r.json())
+                    .then(data=>{
+                        title.textContent = new Date(data.year, data.month-1, 1).toLocaleString(undefined,{month:'long', year:'numeric'});
+                        const daysObj = {};
+                        // each item now contains { day, happy, sad, neutral }
+                        (data.days || []).forEach(it=>{ daysObj[String(it.day)] = it; });
+                        buildGrid(data.year, data.month, daysObj);
+                        enc.textContent = data.message || '';
+                    })
+                    .catch(err=>{
+                        title.textContent = formatTitle(current);
+                        grid.innerHTML = '<div class="text-muted small">Unable to load calendar</div>';
+                        enc.textContent = '';
+                    });
+            }
+
+            btn.addEventListener('click', function(){
+                if(drawer.style.display === 'none' || !drawer.style.display){
+                    drawer.style.display = 'block';
+                    fetchCalendar(current.getFullYear(), current.getMonth()+1);
+                } else {
+                    drawer.style.display = 'none';
+                }
+            });
+
+            prev.addEventListener('click', function(){
+                current.setMonth(current.getMonth() - 1);
+                fetchCalendar(current.getFullYear(), current.getMonth()+1);
+            });
+
+            next.addEventListener('click', function(){
+                current.setMonth(current.getMonth() + 1);
+                fetchCalendar(current.getFullYear(), current.getMonth()+1);
+            });
+        })();
+    </script>
     <script>
         // Initialize AOS animations
         AOS.init({

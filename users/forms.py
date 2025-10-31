@@ -409,13 +409,23 @@ class UserProfileForm(forms.ModelForm):
 
 
         # Handle PIN removal or set
+        # PIN is stored on the related UserProfile model. Ensure profile exists and use its helpers.
+        try:
+            profile = user.profile
+        except Exception:
+            # Lazily import to avoid circular imports
+            from .models import UserProfile
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+
         if self.cleaned_data.get('remove_pin'):
-            user.set_journal_pin(None)
+            profile.set_journal_pin(None)
+            profile.save()
         else:
             new_pin = self.cleaned_data.get('new_pin')
             if new_pin:
-                # Use model helper to set hashed PIN
-                user.set_journal_pin(new_pin)
+                # Use UserProfile helper to set hashed PIN
+                profile.set_journal_pin(new_pin)
+                profile.save()
 
         if commit:
             user.save()

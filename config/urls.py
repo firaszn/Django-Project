@@ -14,6 +14,8 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('reminder-and-goals/', include('reminder_and_goals.urls')),
     path('manage/', include('TagsCat.urls')),
+    # API endpoints (app-level routers)
+    path('api/', include('TagsCat.api_urls')),
 
     path('memory/', include('memory.urls')),
 

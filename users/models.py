@@ -166,16 +166,25 @@ class UserProfile(models.Model):
         self.save()
     def set_journal_pin(self, raw_pin: str):
         """Set a 4-digit numeric PIN for accessing hidden journals. Stores a hashed value."""
+        # The actual storage for the hashed PIN lives on the related CustomUser
+        # (field `journal_pin`). Update that field instead to avoid DB schema changes.
         if raw_pin is None or raw_pin == '':
             # clear pin
-            self.journal_pin = None
+            self.user.journal_pin = None
         else:
             # Expecting exactly 4 digits
-            self.journal_pin = make_password(raw_pin)
-        # Note: caller should save()
+            self.user.journal_pin = make_password(raw_pin)
+        # Persist the change to the user record
+        try:
+            self.user.save(update_fields=['journal_pin'])
+        except Exception:
+            # Fallback to full save if update_fields isn't supported
+            self.user.save()
 
     def check_journal_pin(self, raw_pin: str) -> bool:
         """Return True if raw_pin matches the stored hashed journal PIN."""
-        if not self.journal_pin:
+        # The hashed PIN is stored on the related user model
+        stored = getattr(self.user, 'journal_pin', None)
+        if not stored:
             return False
-        return check_password(raw_pin, self.journal_pin)
+        return check_password(raw_pin, stored)

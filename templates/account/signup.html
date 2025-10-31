@@ -1,91 +1,96 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load socialaccount %}
+{% load static %}
 
 {% block title %}{% trans "Sign Up" %} - AI Personal Journal{% endblock %}
 
 
 {% block extra_css %}
 <style>
-    /* Styles pour les messages d'erreur en rouge */
-    .invalid-feedback {
-        color: #dc3545 !important;
-        font-weight: 500;
-        display: block;
-        margin-top: 0.25rem;
-        font-size: 0.875rem;
-    }
-    
-    .is-invalid {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-    }
-    
-    /* Messages d'erreur crispy forms */
-    .text-danger {
-        color: #dc3545 !important;
-    }
-    
-    /* Erreurs globales du formulaire */
-    .non-field-errors {
-        color: #dc3545 !important;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        padding: 12px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-    
-    /* Highlight des champs invalides */
-    .form-control:invalid {
-        border-color: #dc3545;
-    }
-    
-    .form-control:valid {
-        border-color: #28a745;
-    }
-    
-    /* Masquer les help_text (messages en gris) quand il y a une erreur */
-    .is-invalid ~ small.form-text,
-    .is-invalid ~ .form-text.text-muted {
-        display: none !important;
-    }
-    
-    /* Masquer tous les help_text en gris par défaut */
-    .form-text,
-    .form-text.text-muted,
-    small.form-text,
-    .help-block {
-        display: none !important;
-    }
-    
-    /* Afficher seulement les messages d'erreur */
-    .text-danger,
-    .invalid-feedback,
-    .alert-danger,
-    .errorlist,
-    .errorlist li {
-        display: block !important;
-        color: #dc3545 !important;
-        font-weight: 500 !important;
-    }
-    
-    .errorlist {
-        list-style: none;
-        padding: 0;
-        margin: 0.5rem 0 0 0;
-    }
-    
-    .errorlist li {
-        margin: 0.25rem 0;
-    }
+/* Google Button Styling */
+.btn-google {
+    background: #ffffff;
+    border: 2px solid #dadce0;
+    color: #3c4043;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    padding: 0.625rem 1rem; /* ~10px 16px */
+    font-size: 0.95rem;
+    border-radius: 12px;
+}
+
+.btn-google:hover {
+    background: #f8f9fa;
+    border-color: #c6c8ca;
+    color: #1a73e8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-google:focus {
+    background: #f8f9fa;
+    border-color: #1a73e8;
+    color: #1a73e8;
+    box-shadow: 0 0 0 0.2rem rgba(26, 115, 232, 0.25);
+}
+
+.btn-google i {
+    font-size: 18px;
+    background: linear-gradient(45deg, #ea4335, #fbbc05, #34a853, #1a73e8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Constrain button width on large screens */
+.btn-google.w-100 { max-width: 420px; margin-left: auto; margin-right: auto; }
+
+/* Divider Styling */
+.divider-container {
+    position: relative;
+    text-align: center;
+}
+
+.divider-line {
+    border: none;
+    height: 1px;
+    background: #e0e0e0;
+    margin: 0;
+}
+
+.divider-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Card enhancements */
+.card { border-radius: 20px; overflow: hidden; }
+
+.card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none; }
+
+/* Button animations */
+.btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn:hover { transform: translateY(-2px); }
+
+/* Form styling */
+.form-control:focus { border-color: #667eea; box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+    <div class="col-md-6">
             <div class="card shadow-lg border-0">
                 <div class="card-header bg-primary text-white text-center py-4">
                     <i class="fas fa-rocket fa-3x mb-3"></i>
@@ -94,25 +99,42 @@
                 </div>
                 
                 <div class="card-body p-5">
+                    <!-- Google OAuth Button (if available) -->
+                    {% get_providers as socialaccount_providers %}
+                    {% if socialaccount_providers %}
+                        <div class="text-center mb-4">
+                            {% for provider in socialaccount_providers %}
+                                {% if provider.id == "google" %}
+                                    <a href="{% provider_login_url 'google' %}" class="btn btn-google w-100 py-2 mb-3">
+                                        <i class="fab fa-google me-3"></i>
+                                        <strong>{% trans "Continue with Google" %}</strong>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
 
-                    <form class="signup" id="signup_form" method="POST" action="{% url 'account_signup' %}">
+                        <div class="divider-container mb-4">
+                            <hr class="divider-line">
+                            <span class="divider-text bg-white px-3 text-muted">{% trans "or" %}</span>
+                        </div>
+                    {% endif %}
 
                     <form class="signup" id="signup_form" method="POST" action="{% url 'account_signup' %}" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
-                        
+
                         {% if redirect_field_value %}
                             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
                         {% endif %}
-                        
+
                         <div class="d-grid gap-2 mt-4">
-                            <button class="btn btn-primary btn-lg py-3" type="submit">
+                            <button class="btn btn-primary py-2" type="submit">
                                 <i class="fas fa-user-plus me-2"></i>
-                                <strong>{% trans "Create My Account" %}</strong>
+                                <strong>{% trans "Create Account" %}</strong>
                             </button>
                         </div>
                     </form>
-                    
+
                     <div class="mt-4 text-center">
                         <hr class="my-4">
                         <p class="mb-3">{% trans "Already have an account?" %}</p>
@@ -125,31 +147,24 @@
             </div>
             
             <!-- Features Preview -->
-            <div class="row g-4 mt-4">
-                <div class="col-md-4">
-                    <div class="card border-0 bg-light h-100">
-                        <div class="card-body text-center p-4">
-                            <i class="fas fa-microphone fa-3x text-success mb-3"></i>
-                            <h5 class="card-title">{% trans "Voice Recording" %}</h5>
-                            <p class="card-text text-muted">{% trans "Record your thoughts and let AI transcribe them into beautiful journal entries." %}</p>
+            <div class="card mt-4 border-0 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="card-title text-center mb-3">
+                        <i class="fas fa-magic text-primary me-2"></i>
+                        {% trans "AI-Powered Journal Features" %}
+                    </h6>
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <i class="fas fa-microphone text-success"></i>
+                            <small class="d-block text-muted">{% trans "Voice Notes" %}</small>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-0 bg-light h-100">
-                        <div class="card-body text-center p-4">
-                            <i class="fas fa-camera fa-3x text-info mb-3"></i>
-                            <h5 class="card-title">{% trans "Smart Photos" %}</h5>
-                            <p class="card-text text-muted">{% trans "Upload photos and get AI-powered descriptions and automatic organization." %}</p>
+                        <div class="col-4">
+                            <i class="fas fa-camera text-info"></i>
+                            <small class="d-block text-muted">{% trans "Photo AI" %}</small>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-0 bg-light h-100">
-                        <div class="card-body text-center p-4">
-                            <i class="fas fa-brain fa-3x text-warning mb-3"></i>
-                            <h5 class="card-title">{% trans "AI Insights" %}</h5>
-                            <p class="card-text text-muted">{% trans "Get intelligent summaries, mood analysis, and discover patterns in your memories." %}</p>
+                        <div class="col-4">
+                            <i class="fas fa-chart-line text-warning"></i>
+                            <small class="d-block text-muted">{% trans "Insights" %}</small>
                         </div>
                     </div>
                 </div>

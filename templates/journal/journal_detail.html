@@ -9,42 +9,66 @@
             <!-- Back Button -->
             <div class="mb-4 d-flex justify-content-between align-items-center">
                 <div>
-                    <a href="{% url 'journal_list' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'journal_list' %}" class="btn btn-back">
                         <i class="fas fa-arrow-left me-2"></i>Back to Journals
                     </a>
                     
                 </div>
 
-
-                <div class="d-flex gap-2">
-                    <a href="{% url 'journal_update' journal.id %}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-edit me-1"></i>Edit
-                    </a>
-                    <form action="{% url 'journal_toggle_hide' journal.id %}" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <button class="btn btn-warning btn-sm" type="submit">
-                            {% if journal.hidden %}Unhide{% else %}Hide{% endif %}
-                        </button>
-                    </form>
-                    <a href="{% url 'journal_delete' journal.id %}" class="btn btn-outline-danger btn-sm">
-                        <i class="fas fa-trash me-1"></i>Delete
-                    </a>
+                <!-- Added 3-dot menu for edit, hide, delete actions -->
+                <div class="btn-group">
+                    <button class="btn btn-menu dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a href="{% url 'journal_update' journal.id %}" class="dropdown-item">
+                                <i class="fas fa-edit me-2"></i>Edit
+                            </a>
+                        </li>
+                        <li>
+                            <form action="{% url 'journal_toggle_hide' journal.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button class="dropdown-item" type="submit" style="border: none; background: none; text-align: left; width: 100%; cursor: pointer;">
+                                    <i class="fas fa-eye-slash me-2"></i>
+                                    {% if journal.hidden %}Unhide{% else %}Hide{% endif %}
+                                </button>
+                            </form>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a href="{% url 'journal_delete' journal.id %}" class="dropdown-item text-danger">
+                                <i class="fas fa-trash me-2"></i>Delete
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
             <!-- Journal Details -->
-            <div class="card">
-                <div class="card-header">
+            <div class="card journal-card">
+                <div class="card-header journal-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="card-title mb-0">{{ journal.title }}</h4>
-                        <span class="text-muted">{{ journal.created_at|date:"F d, Y" }}</span>
+                        <h4 class="card-title mb-0">
+                            {{ journal.title }}
+                            {% if journal.mood %}
+                                {% if journal.mood == 'happy' %}
+                                    <span class="badge mood-badge mood-happy ms-2" title="Mood: Happy">😊 Happy</span>
+                                {% elif journal.mood == 'sad' %}
+                                    <span class="badge mood-badge mood-sad ms-2" title="Mood: Sad">😢 Sad</span>
+                                {% else %}
+                                    <span class="badge mood-badge mood-neutral ms-2" title="Mood: Neutral">😐 Neutral</span>
+                                {% endif %}
+                            {% endif %}
+                        </h4>
+                        <span class="journal-date">{{ journal.created_at|date:"F d, Y" }}</span>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body journal-body">
                     <!-- Category -->
                     {% if journal.category %}
                         <div class="mb-4">
-                            <h5>Category</h5>
+                            <h5 class="section-title">Category</h5>
                             <div class="category-badge">
                                 <span class="badge" style="background-color: {{ journal.category.color }}; color: white; padding: 0.5rem 1rem; font-size: 1rem;">
                                     {% if journal.category.icon %}
@@ -58,17 +82,17 @@
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <h5>Description</h5>
-                        <p class="lead">{{ journal.description }}</p>
+                        <h5 class="section-title">Description</h5>
+                        <div class="lead description-text">{{ journal.description|safe }}</div>
                     </div>
 
                     <!-- Images -->
                     {% if journal.images.all %}
                         <div class="mb-4">
-                            <h5>Images</h5>
-                            <div class="d-flex flex-wrap gap-2">
+                            <h5 class="section-title">Images</h5>
+                            <div class="d-flex flex-wrap gap-3">
                                 {% for img in journal.images.all %}
-                                    <div class="card" style="width: 10rem;">
+                                    <div class="image-card">
                                         <img src="{{ img.image.url }}" class="card-img-top" alt="image">
                                     </div>
                                 {% endfor %}
@@ -78,11 +102,11 @@
 
                     <!-- Related Goals Section -->
                     <div class="mb-4">
-                        <h5 class="mb-0">Related Goals</h5>
+                        <h5 class="section-title mb-3">Related Goals</h5>
                         {% if journal.related_goals.exists %}
                             <div class="d-flex flex-wrap gap-2 mb-3">
                                 {% for goal in journal.related_goals.all %}
-                                <span class="badge bg-primary p-2">
+                                <span class="badge goal-badge">
                                     <i class="fas fa-bullseye me-1"></i>
                                     {{ goal.title }}
                                     <span class="ms-1">({{ goal.progress }}/{{ goal.target }})</span>
@@ -90,7 +114,7 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <div class="alert alert-info">
+                            <div class="alert alert-info goal-alert">
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-info-circle me-2"></i>
                                     <div>
@@ -102,22 +126,20 @@
                         {% endif %}
                     </div>
 
-                    <a href="{% url 'goal_create' %}?journal_id={{ journal.id }}" class="btn btn-primary my-2">
+                    <a href="{% url 'goal_create' %}?journal_id={{ journal.id }}" class="btn btn-primary-custom my-2">
                         <i class="fas fa-plus-circle me-1"></i> New Goal for This Journal
                     </a>
 
-                  
-
                     <!-- Journal Metadata -->
-                    <div class="row">
+                    <div class="row mt-4">
                         <div class="col-md-6">
-                            <div class="card bg-light">
+                            <div class="card metadata-card">
                                 <div class="card-body">
-                                    <h6 class="card-title">Journal Information</h6>
-                                    <ul class="list-unstyled mb-0">
+                                    <h6 class="metadata-title">Journal Information</h6>
+                                    <ul class="list-unstyled mb-0 metadata-list">
                                         <li><strong>Created:</strong> {{ journal.created_at|date:"M d, Y H:i" }}</li>
                                         <li><strong>Updated:</strong> {{ journal.updated_at|date:"M d, Y H:i" }}</li>
-                                        <li><strong>Word Count:</strong> {{ journal.description|wordcount }} words</li>
+                                        <li><strong>Word Count:</strong> {{ journal.description|striptags|wordcount }} words</li>
                                         <li><strong>Category:</strong> 
                                             {% if journal.category %}
                                                 <span class="badge" style="background-color: {{ journal.category.color }}; color: white; font-size: 0.8rem;">
@@ -145,21 +167,262 @@
 
 {% block extra_css %}
 <style>
+/* Complete styling overhaul with warm minimalist palette */
+
+/* Color Variables */
+:root {
+    --color-cream: #f5f1ed;
+    --color-taupe: #9b8b7e;
+    --color-charcoal: #3d3d3d;
+    --color-off-white: #fafaf8;
+    --color-sage: #d4e4d8;
+    --color-gold: #d4a574;
+    --color-light-taupe: #e8dfd8;
+    --color-lavender: #c9b8e4;
+}
+
+/* Back Button */
+.btn-back {
+    background-color: var(--color-off-white);
+    color: var(--color-taupe);
+    border: 2px solid var(--color-light-taupe);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background-color: var(--color-sage);
+    color: var(--color-charcoal);
+    border-color: var(--color-sage);
+}
+
+.btn-back:focus {
+    background-color: var(--color-sage);
+    color: var(--color-charcoal);
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.3);
+}
+
+/* 3-Dot Menu Button */
+.btn-menu {
+    background-color: var(--color-lavender);
+    color: var(--color-charcoal);
+    border: 2px solid var(--color-lavender);
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-menu:hover {
+    background-color: #b8a5d8;
+    border-color: #b8a5d8;
+}
+
+.btn-menu:focus {
+    box-shadow: 0 0 0 3px rgba(201, 184, 228, 0.5);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    border: 2px solid var(--color-light-taupe);
+    border-radius: 12px;
+    background-color: var(--color-off-white);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    color: var(--color-taupe);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 4px 8px;
+}
+
+.dropdown-item:hover {
+    background-color: var(--color-sage);
+    color: var(--color-charcoal);
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+/* Journal Card */
+.journal-card {
+    border: 2px solid var(--color-light-taupe);
+    border-radius: 16px;
+    background-color: var(--color-off-white);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.journal-header {
+    background-color: var(--color-off-white);
+    border-bottom: 2px solid var(--color-light-taupe);
+    padding: 20px 24px;
+}
+
+.journal-header .card-title {
+    color: var(--color-charcoal);
+    font-family: Poppins, sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+}
+
+.journal-date {
+    color: var(--color-taupe);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Mood Badges */
+.mood-badge {
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    font-weight: 600;
+}
+
+.mood-happy {
+    background-color: #c8e6c9 !important;
+    color: #2e7d32 !important;
+}
+
+.mood-sad {
+    background-color: #bbdefb !important;
+    color: #1565c0 !important;
+}
+
+.mood-neutral {
+    background-color: #e0e0e0 !important;
+    color: #424242 !important;
+}
+
+/* Journal Body */
+.journal-body {
+    padding: 24px;
+    color: var(--color-charcoal);
+}
+
+/* Section Titles */
+.section-title {
+    color: var(--color-charcoal);
+    font-family: Poppins, sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+/* Description Text */
+.description-text {
+    color: var(--color-charcoal);
+    line-height: 1.8;
+    font-size: 15px;
+}
+
+/* Category Badge */
 .category-badge .badge {
     border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
 .category-badge .badge:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Badge dans les métadonnées */
-.list-unstyled .badge {
+/* Image Cards */
+.image-card {
+    border: 2px solid var(--color-light-taupe);
     border-radius: 12px;
-    font-weight: 500;
+    overflow: hidden;
+    width: 140px;
+    transition: all 0.3s ease;
+    background-color: var(--color-off-white);
+}
+
+.image-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+}
+
+.image-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
+/* Goal Badge */
+.goal-badge {
+    background-color: var(--color-sage) !important;
+    color: var(--color-charcoal) !important;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+/* Goal Alert */
+.goal-alert {
+    background-color: #e3f2fd !important;
+    border: 2px solid #bbdefb !important;
+    border-radius: 12px !important;
+    color: #1565c0 !important;
+}
+
+/* Primary Button */
+.btn-primary-custom {
+    background-color: var(--color-sage);
+    color: var(--color-charcoal);
+    border: 2px solid var(--color-sage);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    background-color: var(--color-gold);
+    border-color: var(--color-gold);
+    color: var(--color-charcoal);
+}
+
+.btn-primary-custom:focus {
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.3);
+}
+
+/* Metadata Card */
+.metadata-card {
+    border: 2px solid var(--color-light-taupe);
+    border-radius: 12px;
+    background-color: var(--color-off-white);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.metadata-title {
+    color: var(--color-charcoal);
+    font-family: Poppins, sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.metadata-list li {
+    color: var(--color-charcoal);
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.metadata-list strong {
+    color: var(--color-taupe);
+    font-weight: 600;
 }
 </style>
 {% endblock %}

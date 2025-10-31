@@ -3,6 +3,287 @@
 {% block title %}My Journals - AI Personal Journal{% endblock %}
 
 {% block content %}
+<style>
+  /* Add warm minimalist color palette styling */
+  :root {
+    --cream: #f5f1ed;
+    --taupe: #9b8b7e;
+    --light-taupe: #e8dfd8;
+    --off-white: #fafaf8;
+    --charcoal: #3d3d3d;
+    --sage: #d4e4d8;
+    --gold: #d4a574;
+    --lavender: #d8bfd8;
+  }
+
+  h1, h5 {
+    color: var(--charcoal);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .card {
+    background: var(--off-white);
+    border: 2px solid var(--light-taupe);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* allow dropdowns to show outside the card */
+    overflow: visible;
+  }
+
+  .card-header {
+    background: var(--off-white);
+    border-bottom: 2px solid var(--light-taupe);
+    border-radius: 14px 14px 0 0;
+    padding: 20px;
+  }
+
+  .card-title {
+    color: var(--charcoal);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .form-control, .form-control-sm {
+    background: var(--off-white);
+    border: 2px solid var(--light-taupe);
+    border-radius: 12px;
+    color: var(--charcoal);
+    padding: 10px 14px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus, .form-control-sm:focus {
+    background: var(--off-white);
+    border-color: var(--gold);
+    color: var(--charcoal);
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+  }
+
+  .form-control::placeholder {
+    color: var(--taupe);
+    opacity: 0.6;
+  }
+
+  .btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    border-radius: 12px;
+    border: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary {
+    background: var(--sage);
+    color: var(--charcoal);
+    font-weight: 600;
+  }
+
+  .btn-primary:hover {
+    background: var(--gold);
+    color: var(--charcoal);
+    transform: translateY(-2px);
+  }
+
+  /* Garden button in lavender */
+  /* Garden button: use sage/green to represent plants */
+  .btn-garden {
+    background: var(--sage);
+    color: var(--charcoal);
+    border: 2px solid var(--sage);
+    font-weight: 600;
+  }
+
+  .btn-garden:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--charcoal);
+    transform: translateY(-2px);
+  }
+
+  /* Force the garden button to use the gold accent when requested by user (#FFD76D).
+     Use high specificity and !important to override other theme layers. */
+  .card .card-header .btn-garden,
+  .card-header .btn-garden {
+    background: #FFD76D !important;
+    border-color: #FFD76D !important;
+    color: #2b2b2b !important; /* dark text for contrast */
+    box-shadow: 0 2px 8px rgba(255, 215, 109, 0.18) !important;
+  }
+
+  .card .card-header .btn-garden:hover,
+  .card-header .btn-garden:hover {
+    background: #E6C05A !important;
+    border-color: #E6C05A !important;
+    transform: translateY(-2px) !important;
+  }
+
+  .card .card-header .btn-garden i,
+  .card-header .btn-garden i {
+    color: inherit !important;
+  }
+
+  .btn-outline-secondary {
+    color: var(--taupe);
+    border: 2px solid var(--light-taupe);
+  }
+
+  .btn-outline-secondary:hover {
+    background: var(--sage);
+    border-color: var(--sage);
+    color: var(--charcoal);
+  }
+
+  .btn-outline-primary {
+    color: var(--sage);
+    border: 2px solid var(--sage);
+  }
+
+  .btn-outline-primary:hover {
+    background: var(--sage);
+    color: var(--charcoal);
+    border-color: var(--sage);
+  }
+
+  .text-muted {
+    color: var(--taupe) !important;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    background: var(--off-white);
+    color: var(--charcoal);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    border: none;
+    border-bottom: 2px solid var(--light-taupe);
+    padding: 16px;
+  }
+
+  .table tbody td {
+    border-bottom: 1px solid var(--light-taupe);
+    padding: 14px 16px;
+    vertical-align: middle;
+    color: var(--charcoal);
+  }
+
+  .table tbody tr:hover {
+    background: rgba(212, 228, 216, 0.3);
+  }
+
+  .badge {
+    background: var(--sage);
+    color: var(--charcoal);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    border-radius: 8px;
+    padding: 6px 12px;
+  }
+
+  /* 3-dot menu dropdown styling */
+  .dropdown-menu {
+    background: var(--off-white);
+    border: 2px solid var(--light-taupe);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    min-width: 200px;
+    z-index: 3000; /* show above surrounding content */
+  }
+
+  .dropdown-item {
+    color: var(--charcoal);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    padding: 10px 16px;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin: 4px 6px;
+  }
+
+  .dropdown-item:hover {
+    background: var(--sage);
+    color: var(--charcoal);
+  }
+
+  .dropdown-item.danger-action:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+
+  /* 3-dot menu button in lavender */
+  .btn-menu {
+    background: var(--lavender);
+    color: var(--charcoal);
+    border: 2px solid var(--lavender);
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+  }
+
+  .btn-menu:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .btn-menu::after {
+    display: none;
+  }
+
+  /* ensure the dropdown's positioning root allows it to overflow the card */
+  .dropdown {
+    position: relative;
+  }
+
+  /* Force 3-dot menu and search button to lavender (#bfa8ff) for visual consistency */
+  .card .card-header .btn-menu,
+  .card .card-header .btn-search {
+    background: #bfa8ff !important;
+    border-color: #bfa8ff !important;
+    color: var(--charcoal) !important;
+  }
+
+  .card .card-header .btn-menu:hover,
+  .card .card-header .btn-search:hover {
+    background: #a88bff !important; /* slightly deeper lavender on hover */
+    border-color: #a88bff !important;
+    transform: translateY(-2px) !important;
+  }
+
+  .card .card-header .btn-search i {
+    color: inherit !important;
+  }
+
+  .no-entries-container {
+    background: var(--off-white);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .no-entries-icon {
+    color: var(--taupe);
+    opacity: 0.5;
+    margin-bottom: 16px;
+  }
+
+  .no-entries-container h4 {
+    color: var(--charcoal);
+    margin-bottom: 8px;
+  }
+</style>
+
 <div class="container-fluid py-4">
     <!-- Header -->
     <div class="row mb-4">
@@ -20,11 +301,22 @@
                     <h5 class="card-title mb-0">Journal Entries ({{ journals.count }})</h5>
 
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Journal Entries ({{ journals.count }})</h5>
-                    <div>
-                        <a href="{% url 'journal_create' %}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus me-1"></i>New Entry
-                        </a>
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Journal Entries ({{ journals.count }})</h5>
+                        <div class="d-flex align-items-center gap-2">
+              <form method="get" action="" class="d-flex align-items-center">
+                <input type="search" name="q" class="form-control form-control-sm" placeholder="Search journals..." value="{{ search_query|default:'' }}" style="width:360px; min-width:180px;">
+                                <button class="btn btn-sm btn-outline-secondary btn-search ms-2" type="submit" style="background: #bfa8ff !important; border-color: #bfa8ff !important; color: var(--charcoal) !important;"><i class="fas fa-search"></i></button>
+              </form>
+                            <!-- Garden button now has btn-garden class for lavender styling -->
+              <a href="{% url 'journal_garden_3d' %}" class="btn btn-sm btn-garden ms-3" title="Open your garden">
+                <i class="fas fa-seedling me-1"></i>Check Your Garden
+              </a>
+
+                            <a href="{% url 'journal_create' %}" class="btn btn-sm btn-primary ms-3">
+                                <i class="fas fa-plus me-1"></i>New Entry
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -45,9 +337,18 @@
                                 <tr>
                                     <td>
                                         <strong>{{ journal.title }}</strong>
+                                        {% if journal.mood %}
+                                            {% if journal.mood == 'happy' %}
+                                                <span class="ms-1" title="Happy">😊</span>
+                                            {% elif journal.mood == 'sad' %}
+                                                <span class="ms-1" title="Sad">😢</span>
+                                            {% else %}
+                                                <span class="ms-1" title="Neutral">😐</span>
+                                            {% endif %}
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        {{ journal.description|truncatewords:20 }}
+                                        {{ journal.description|striptags|truncatewords:20 }}
                                     </td>
                                     <td>
                                         {% if journal.related_goals.exists %}
@@ -62,25 +363,38 @@
                                         {{ journal.created_at|date:"M d, Y" }}
                                     </td>
                                     <td>
-
-                                        <a href="{% url 'journal_detail' journal.id %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye"></i> View
-                                        <a href="{% url 'journal_detail' journal.id %}" class="btn btn-sm btn-outline-primary me-1">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{% url 'journal_update' journal.id %}" class="btn btn-sm btn-outline-secondary me-1">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{% url 'journal_toggle_hide' journal.id %}" method="post" class="d-inline">
-                                            {% csrf_token %}
-                                            <button class="btn btn-sm btn-warning me-1" type="submit">
-                                                <i class="fas fa-eye-slash"></i>
-                                            </button>
-                                        </form>
-                                        <a href="{% url 'journal_delete' journal.id %}" class="btn btn-sm btn-outline-danger">
-                                            <i class="fas fa-trash"></i>
-
-                                        </a>
+                                        <!-- 3-dot menu dropdown for actions -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-menu dropdown-toggle" type="button" id="dropdownMenu-{{ journal.id }}" data-bs-toggle="dropdown" aria-expanded="false" style="background: #bfa8ff !important; border-color: #bfa8ff !important; color: var(--charcoal) !important;">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu-{{ journal.id }}">
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'journal_detail' journal.id %}">
+                                                        <i class="fas fa-eye me-2"></i>View
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'journal_update' journal.id %}">
+                                                        <i class="fas fa-edit me-2"></i>Edit
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <form action="{% url 'journal_toggle_hide' journal.id %}" method="post" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button class="dropdown-item" type="submit" style="width: 100%; text-align: left;">
+                                                            <i class="fas fa-eye-slash me-2"></i>Hide/Show
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item danger-action" href="{% url 'journal_delete' journal.id %}">
+                                                        <i class="fas fa-trash me-2"></i>Delete
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -88,8 +402,8 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                    <div class="no-entries-container">
+                        <i class="fas fa-book fa-3x no-entries-icon"></i>
                         <h4>No Journal Entries Yet</h4>
                         <p class="text-muted">Start writing your first journal entry!</p>
                     </div>

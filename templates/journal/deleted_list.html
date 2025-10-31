@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Deleted Journals - AI Personal Journal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Deleted Recently</h5>
+          <a href="{% url 'journal_list' %}" class="btn btn-sm btn-outline-secondary">Back to journals</a>
+        </div>
+        <div class="card-body">
+          {% if journals %}
+            <div class="list-group">
+              {% for journal in journals %}
+                <div class="list-group-item d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1">{{ journal.title }}</h6>
+                    <p class="mb-1 text-muted small">Deleted: {{ journal.deleted_at|date:'SHORT_DATETIME_FORMAT' }}</p>
+                    <p class="mb-0">{{ journal.description|truncatechars:200 }}</p>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <a href="{% url 'journal_detail' journal.id %}" class="btn btn-outline-primary btn-sm">View</a>
+
+                    <form method="post" action="{% url 'journal_restore' journal.id %}" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-success btn-sm">Restore</button>
+                    </form>
+
+                    <form method="post" action="{% url 'journal_permanent_delete' journal.id %}" style="display:inline;" onsubmit="return confirm('Permanently delete this entry? This cannot be undone.');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-danger btn-sm">Delete Permanently</button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted">No recently deleted entries.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

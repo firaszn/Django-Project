@@ -12,6 +12,9 @@ class JournalForm(forms.ModelForm):
         help_text='Choose a date for this entry or leave empty to use today.'
     )
 
+    # Allow description to be optional (Quill will provide HTML; server-side sanitization will handle empty content)
+    description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 8}))
+
     class Meta:
         model = Journal
         fields = ['title', 'description', 'entry_date', 'location', 'category']

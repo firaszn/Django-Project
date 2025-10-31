@@ -2,19 +2,216 @@
 
 {% block title %}{% if create %}New Entry{% else %}Edit Entry{% endif %} - AI Personal Journal{% endblock %}
 
+{% block extra_css %}
+    <!-- Quill editor styles -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <style>
+        /* Embedded journal form styling (scoped) - preserves all form logic and JS */
+        /* Palette and layout per design brief */
+        body .journal-form-backdrop {
+            background: linear-gradient(135deg, #f5f1ed 0%, #e8dfd8 100%);
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; }
+
+        /* Visual card wrapper: make header+body appear as a single card */
+        .container.py-4 > .row > .col-12 {
+            padding: 0;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            overflow: hidden;
+            background: transparent;
+        }
+
+        /* Force button colors inside the journal card to avoid global overrides */
+        .journal-card .btn-primary {
+            background: #d4a574 !important;
+            color: #ffffff !important;
+            border-color: transparent !important;
+        }
+
+        .journal-card .btn-primary:hover {
+            background: #c4955f !important;
+            color: #ffffff !important;
+        }
+
+        .journal-card .btn-outline-secondary {
+            background: #bfa8ff !important;
+            color: #ffffff !important;
+            border-color: #a88bff !important;
+        }
+
+        .journal-card .btn-outline-secondary:hover {
+            background: #a88bff !important;
+            color: #ffffff !important;
+        }
+
+        /* Ensure record button inside the journal card stays gold */
+        .journal-card #voice-record-btn {
+            background: #d4a574 !important;
+            border-color: #d4a574 !important;
+            color: #ffffff !important;
+        }
+
+        .card-header {
+            background: #fafaf8;
+            border: none;
+            border-radius: 16px 16px 0 0;
+            padding: 32px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .card-header h4 {
+            color: #3d3d3d;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 28px;
+            letter-spacing: -0.5px;
+        }
+
+        .card-body {
+            background: #fafaf8;
+            border-radius: 0 0 16px 16px;
+            padding: 32px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        /* Form Labels */
+        label {
+            color: #9b8b7e;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Title Input */
+        #id_title {
+            border: 2px solid #e8dfd8;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            color: #3d3d3d;
+            background: #ffffff;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        #id_title:focus { outline: none; border-color: #d4a574; box-shadow: 0 0 0 4px rgba(212,165,116,0.1); }
+        #id_title::placeholder { color: #c9b8ad; }
+
+        /* Quill Editor Container */
+        #quill-editor { background: #ffffff; border: 2px solid #e8dfd8; border-radius: 12px; min-height: 240px; padding: 16px; font-family: 'Poppins', sans-serif; color: #3d3d3d; transition: all 0.3s ease; margin-top: 16px; }
+        #quill-editor:focus-within { border-color: #d4a574; box-shadow: 0 0 0 4px rgba(212,165,116,0.1); }
+
+        .ql-toolbar { background: #f9f7f5; border: none; border-bottom: 1px solid #e8dfd8; border-radius: 10px 10px 0 0; padding: 12px; }
+        .ql-toolbar button:hover, .ql-toolbar button.ql-active { color: #d4a574; }
+        .ql-toolbar button:hover::before, .ql-toolbar button.ql-active::before { color: #d4a574; }
+        .ql-container { border: none; font-family: 'Poppins', sans-serif; font-size: 16px; color: #3d3d3d; }
+
+        /* Form Selects and Inputs */
+        .form-select, .form-control { border: 2px solid #e8dfd8; border-radius: 12px; padding: 12px 14px; font-family: 'Poppins', sans-serif; color: #3d3d3d; background: #ffffff; transition: all 0.3s ease; font-size: 15px; width: 100%; }
+        .form-select:focus, .form-control:focus { outline: none; border-color: #d4a574; box-shadow: 0 0 0 4px rgba(212,165,116,0.1); background: #ffffff; }
+        .form-select::placeholder, .form-control::placeholder { color: #c9b8ad; }
+
+        /* Form Groups & Spacing */
+        .mb-3 { margin-bottom: 28px; }
+        .row .col-md-6 { padding-right: 12px; padding-left: 12px; }
+        .row { margin-right: -12px; margin-left: -12px; }
+
+        .form-text { color: #9b8b7e; font-size: 13px; margin-top: 6px; font-family: 'Poppins', sans-serif; }
+
+        /* Voice Recording Button - primary color is gold for visibility */
+        #voice-record-btn {
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 2px solid #d4a574;
+            color: #ffffff;
+            background: #d4a574; /* gold */
+            transition: all 0.3s ease;
+            margin-top: 24px;
+        }
+        #voice-record-btn:hover { background: #c4955f; color: #ffffff; border-color: #c4955f; }
+        #voice-record-btn:focus { outline: none; border-color: #b87f47; box-shadow: 0 0 0 3px rgba(212,165,116,0.18); }
+        /* Danger recording state keeps its own palette */
+        #voice-record-btn.btn-danger { background: #f5d4d8; border-color: #f5d4d8; color: #8b3a3f; }
+
+        /* Submit & Cancel Buttons */
+        .btn-primary { background: #d4a574; border: none; border-radius: 10px; padding: 12px 28px; font-family: 'Poppins', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 14px; transition: all 0.3s ease; color: #ffffff; }
+        .btn-primary:hover { background: #c4955f; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(212,165,116,0.2); }
+        .btn-primary:focus { outline: none; box-shadow: 0 0 0 4px rgba(212,165,116,0.25); }
+
+        /* Cancel button: lavender */
+        .btn-outline-secondary {
+            border: 2px solid #bfa8ff;
+            color: #2b2b2b;
+            border-radius: 10px;
+            padding: 10px 26px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+            background: #bfa8ff;
+            transition: all 0.3s ease;
+        }
+        .btn-outline-secondary:hover { background: #a88bff; color: #ffffff; border-color: #a88bff; }
+        .btn-outline-secondary:focus { outline: none; box-shadow: 0 0 0 3px rgba(168,139,255,0.18); }
+
+        .d-flex.gap-2 { gap: 12px; margin-top: 32px; }
+
+        /* File Input */
+        #id_images { border: 2px solid #e8dfd8; border-radius: 12px; padding: 10px 12px; background: #ffffff; color: #3d3d3d; }
+        #id_images:focus { outline: none; border-color: #d4a574; box-shadow: 0 0 0 4px rgba(212,165,116,0.1); }
+
+        /* Existing Images */
+        .d-flex.gap-2.flex-wrap img { border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s ease; }
+        .d-flex.gap-2.flex-wrap img:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+
+        /* Error Messages */
+        .text-danger { color: #c84646; font-size: 13px; margin-top: 6px; font-family: 'Poppins', sans-serif; }
+
+        /* AI Alert Box */
+        .alert-light { background: #f9f7f5; border: 2px solid #e8dfd8; border-radius: 12px; color: #9b8b7e; padding: 14px 16px; font-family: 'Poppins', sans-serif; font-size: 14px; }
+
+        /* AI Nudge Status */
+        #ai-nudge-status { background: #f9f7f5; border-left: 4px solid #d4a574; border-radius: 8px; padding: 12px 16px; margin-top: 12px; font-size: 13px; color: #9b8b7e; font-family: 'Poppins', sans-serif; }
+
+        /* Location Suggestions Box */
+        #location-suggestions { background: #fafaf8; border: 2px solid #e8dfd8; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .list-group-item { background: #fafaf8; border: 1px solid #e8dfd8; color: #3d3d3d; font-family: 'Poppins', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s ease; }
+        .list-group-item:hover { background: #f0ebe5; border-color: #d4a574; color: #d4a574; }
+        .list-group-item:focus { outline: none; background: #f0ebe5; border-color: #d4a574; box-shadow: inset 0 0 0 2px rgba(212,165,116,0.2); }
+        .list-group-item:first-child { border-radius: 8px 8px 0 0; }
+        .list-group-item:last-child { border-radius: 0 0 8px 8px; }
+
+        /* FAB Button for AI Nudge */
+        #ai-nudge-fab { background: #d4a574; border: none; color: #ffffff; font-size: 18px; box-shadow: 0 4px 12px rgba(212,165,116,0.3); transition: all 0.3s ease; }
+        #ai-nudge-fab:hover { background: #c4955f; transform: scale(1.1); box-shadow: 0 6px 16px rgba(212,165,116,0.4); }
+        #ai-nudge-fab:focus { outline: none; box-shadow: 0 4px 12px rgba(212,165,116,0.3), 0 0 0 3px rgba(212,165,116,0.2); }
+    </style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">{% if create %}Create New Journal Entry{% else %}Edit Journal Entry{% endif %}</h4>
-                </div>
+        <div class="card journal-card">
+            <div class="card-header">
+                <h4 class="mb-0">{% if create %}Create New Journal Entry{% else %}Edit Journal Entry{% endif %}</h4>
+            </div>
+            <div class="card-body">
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            {{ form.title.label_tag }}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.title.label_tag }}
                             {{ form.title }}
                             {% if form.title.errors %}
                                 <div class="text-danger">{{ form.title.errors }}</div>
@@ -22,12 +219,36 @@
                         </div>
 
                         <div class="mb-3">
-                            {{ form.description.label_tag }}
-                            {{ form.description }}
-                            <div id="content-suggestions" class="list-group mt-1" style="position: absolute; z-index: 50; width: 100%; display: none;"></div>
-                            {% if form.description.errors %}
-                                <div class="text-danger">{{ form.description.errors }}</div>
-                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                {{ form.description.label_tag }}
+                                <button type="button" id="voice-record-btn" class="btn btn-sm btn-outline-primary" title="Voice recording">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
+                                        <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
+                                        <path d="M10 8a2 2 0 1 1-4 0V3a2 2 0 1 1 4 0v5zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3z"/>
+                                    </svg>
+                                    <span id="voice-status">Record</span>
+                                </button>
+                            </div>
+                            <!-- Quill rich-text editor: we'll keep the textarea for form binding but hide it and sync on submit -->
+                            <div id="quill-editor" style="min-height:200px; background:white; border-radius:8px;">
+                                <!-- Quill will initialize here -->
+                            </div>
+                            <!-- Hidden textarea: render the form field so the server receives description on submit -->
+                            <div style="display:none;">
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <!-- AI nudge status / loader -->
+                            <div id="ai-nudge-status" class="mt-2" style="display:none;">
+                                <div id="ai-nudge-loading" style="display:none;"> 
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <small>Thinking...</small>
+                                </div>
+                                
+                            </div>
+                           
                         </div>
 
                         <div class="row">
@@ -85,23 +306,346 @@
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-/* Category Select */
-.form-select {
-    border-radius: 8px;
-    border: 2px solid #e2e8f0;
-    transition: all 0.3s ease;
-}
 
-.form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-</style>
-{% endblock %}
 
 {% block extra_js %}
+<!-- Quill JS and initialization -->
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+// Ensure CSRF hidden input exists for the main POST form (helps when template context or cookies are inconsistent)
+document.addEventListener('DOMContentLoaded', function(){
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    try{
+        const postForm = document.querySelector('form[method="post"]');
+        if(postForm && !postForm.querySelector('input[name="csrfmiddlewaretoken"]')){
+            const token = getCookie('csrftoken');
+            if(token){
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'csrfmiddlewaretoken'; inp.value = token;
+                postForm.insertBefore(inp, postForm.firstChild);
+            }
+        }
+    }catch(e){ console.warn('CSRF helper failed', e); }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    // Initialize Quill editor
+    var quillContainer = document.getElementById('quill-editor');
+    if(quillContainer){
+        var quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            placeholder: 'Write your thoughts here...',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'blockquote', 'code-block'],
+                    [{ list: 'ordered'}, { list: 'bullet' }],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Find the original textarea and hide it; sync on submit
+        var textarea = document.getElementById('id_description');
+        if(textarea){
+            // If the textarea already has content (e.g., editing), load it into Quill
+            if(textarea.value && textarea.value.trim().length > 0){
+                try{
+                    quill.root.innerHTML = textarea.value;
+                }catch(e){
+                    // fallback: set as text
+                    quill.setText(textarea.value);
+                }
+            }
+
+            // Hide the textarea visually but keep it in the DOM for form binding
+            textarea.style.display = 'none';
+
+            // On form submit, copy HTML from Quill into the textarea so the server receives it
+            var form = textarea.closest('form');
+            if(form){
+                form.addEventListener('submit', function(){
+                    textarea.value = quill.root.innerHTML;
+                });
+            }
+        }
+    // Expose quill instance globally so other scripts can access it
+    window._quill = quill;
+    // Ensure form submit always copies Quill HTML into the textarea (robust fallback)
+    try{
+        const theForm = document.querySelector('form[method="post"]');
+        const descriptionTextarea = document.getElementById('id_description');
+        if(theForm && descriptionTextarea){
+            theForm.addEventListener('submit', function(evt){
+                try{
+                    // copy HTML into textarea before submission
+                    if(window._quill && window._quill.root){
+                        descriptionTextarea.value = window._quill.root.innerHTML || descriptionTextarea.value || '';
+                    }
+                }catch(e){ console.warn('Failed to copy Quill content to textarea on submit', e); }
+            });
+        }
+    }catch(e){ console.warn('Form submit binding failed', e); }
+    }
+
+    // AI prompt mode: if the server provided ai_prompt/ai_invitation values, wire UI
+    const AI_PROMPT = "{{ ai_prompt|default:''|escapejs }}";
+    const AI_INVITATION = "{{ ai_invitation|default:''|escapejs }}";
+    try{
+        // If ai prompt provided, set the title and hide date/location
+        if(AI_PROMPT){
+            const titleInput = document.getElementById('id_title');
+            if(titleInput){ titleInput.value = AI_PROMPT; titleInput.readOnly = true; }
+            const dateRow = document.getElementById('id_entry_date');
+            const locRow = document.getElementById('id_location');
+            try{
+                if(dateRow){ const container = dateRow.closest('.col-md-6'); if(container) container.style.display = 'none'; }
+            }catch(e){ console.warn('Could not hide entry_date column', e); }
+            try{
+                if(locRow){ const container = locRow.closest('.col-md-6'); if(container) container.style.display = 'none'; }
+            }catch(e){ console.warn('Could not hide location column', e); }
+
+            // Show transformed invitation above editor when available
+            if(AI_INVITATION){
+                const editor = document.getElementById('quill-editor');
+                if(editor && editor.parentNode){
+                    const box = document.createElement('div');
+                    box.className = 'alert alert-light small mb-2';
+                    box.textContent = AI_INVITATION;
+                    editor.parentNode.insertBefore(box, editor);
+                }
+            }
+        }
+    }catch(e){ console.error('AI prompt UI error', e); }
+});
+</script>
+<script>
+// Quill enter -> AI nudge
+document.addEventListener('DOMContentLoaded', function(){
+    const quillContainer = document.getElementById('quill-editor');
+    if(!quillContainer) return;
+    const quill = window._quill || null;
+    if(!quill) return;
+
+    // basic getCookie helper (CSRF token)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    let lastNudgeAt = 0;
+    const NUDGE_DEBOUNCE_MS = 800;
+
+    // status elements
+    const aiStatus = document.getElementById('ai-nudge-status');
+    const aiLoading = document.getElementById('ai-nudge-loading');
+    const aiLog = document.getElementById('ai-nudge-log');
+
+    function showLoading(){ console.debug('AI nudge: showLoading'); if(aiStatus){ aiStatus.style.display='block'; } if(aiLoading){ aiLoading.style.display='inline-block'; } }
+    function hideLoading(){ console.debug('AI nudge: hideLoading'); if(aiLoading){ aiLoading.style.display='none'; } }
+    function logLine(line){ console.debug('AI nudge log:', line); if(!aiLog) return; const ts = new Date().toISOString(); aiLog.textContent = ts + ' - ' + line + '\n' + aiLog.textContent; if(aiStatus) aiStatus.style.display='block'; }
+
+    // Helper: get the current paragraph text where the caret is
+    function getCurrentParagraphText(quill){
+        try{
+            const sel = quill.getSelection(true);
+            const full = quill.getText(); // includes trailing newline
+            if(!sel) return full.trim();
+            const index = sel.index;
+            // find previous newline before index
+            let start = full.lastIndexOf('\n', Math.max(0, index-1));
+            start = start === -1 ? 0 : start + 1;
+            // find next newline after index
+            let end = full.indexOf('\n', index);
+            end = end === -1 ? full.length : end;
+            const para = full.substring(start, end).trim();
+            return para;
+        }catch(e){ console.warn('Could not compute paragraph text', e); return '' }
+    }
+
+    // Helper to send nudge requests for a paragraph
+    function sendNudge(paragraphText){
+        if(!paragraphText) return;
+        const now = Date.now();
+        if(now - lastNudgeAt < NUDGE_DEBOUNCE_MS) return;
+        lastNudgeAt = now;
+
+        showLoading();
+        logLine('REQUEST: ' + paragraphText.slice(0, 200).replace(/\n/g, ' '));
+        console.debug('AI nudge: sending request to server', paragraphText.slice(0,200));
+        fetch('{% url "journal_ai_nudge" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ text: paragraphText })
+        }).then(r=>{
+            if(!r.ok){
+                // show user-visible message for server errors
+                showToast('Server error: ' + r.status + ' ' + r.statusText, 3000);
+                return r.text().then(t=>{ try{ return JSON.parse(t); }catch(e){ return { __text: t }; } });
+            }
+            return r.json().catch(()=>({}));
+        }).then(data=>{
+            hideLoading();
+            logLine('RESPONSE: ' + (data ? JSON.stringify(data).slice(0,600) : '(no JSON)'));
+            const nudge = (data && data.nudge) ? data.nudge.trim() : '';
+            if(nudge){
+                // Insert the nudge immediately after the current paragraph
+                const sel = quill.getSelection(true) || { index: quill.getLength() };
+                const full = quill.getText();
+                let end = full.indexOf('\n', sel.index);
+                if(end === -1) end = quill.getLength();
+                quill.insertText(end, '\n' + nudge + '\n', { 'italic': true });
+                logLine('INSERTED nudge');
+            } else {
+                logLine('AI nudge empty');
+            }
+        }).catch(err=>{
+            hideLoading();
+            console.error('AI nudge failed', err);
+            logLine('ERROR: ' + (err && err.message ? err.message : String(err)));
+            // show friendly toast when the server is unreachable
+            showToast('Could not reach nudge server — is the dev server running?', 3500);
+        });
+    }
+
+    // Bind Enter key via Quill keyboard (skip if shiftKey)
+    quill.keyboard.addBinding({ key: 13 }, function(range, context){
+        try{
+            const evt = context && context.event;
+            if(evt && evt.shiftKey){ return true; }
+            const paragraphText = getCurrentParagraphText(quill) || '';
+            if(!paragraphText || paragraphText.length < 4){ return true; }
+            sendNudge(paragraphText);
+        }catch(e){ console.error('Nudge handler error', e); }
+        return true;
+    });
+
+    // Also listen for raw Enter on the editor root as a robust fallback
+    try{
+        quill.root.addEventListener('keydown', function(e){
+            if(e.key === 'Enter' && !e.shiftKey){
+                // Don't prevent Quill default behavior; just trigger nudge
+                const paragraphText = getCurrentParagraphText(quill) || '';
+                if(paragraphText && paragraphText.length >= 4){ sendNudge(paragraphText); }
+            }
+        });
+    }catch(e){ console.warn('Could not attach raw keydown to quill root', e); }
+
+    // Wire test button to send current paragraph as nudge (manual trigger)
+    const testBtn = document.getElementById('ai-nudge-test-btn');
+    if(testBtn){
+        testBtn.addEventListener('click', function(){
+            try{
+                const paragraphText = getCurrentParagraphText(quill) || '';
+                if(!paragraphText){ logLine('TEST: no paragraph text to nudge'); return; }
+                sendNudge(paragraphText);
+            }catch(e){ console.error('Test nudge failed', e); }
+        });
+    }
+
+    // Add a visible floating nudge button (FAB) so user can click to trigger nudges
+    try{
+        const editorWrapper = quill.root.parentNode;
+        if(editorWrapper){
+            // Ensure the parent is positioned so absolute FAB can align
+            editorWrapper.style.position = editorWrapper.style.position || 'relative';
+
+            const fab = document.createElement('button');
+            fab.type = 'button';
+            fab.id = 'ai-nudge-fab';
+            fab.title = 'Send nudge (Enter)';
+            fab.className = 'btn btn-primary btn-sm';
+            fab.style.position = 'absolute';
+            fab.style.right = '12px';
+            fab.style.bottom = '12px';
+            fab.style.zIndex = 60;
+            fab.style.padding = '6px 8px';
+            fab.innerHTML = '&#128161;'; // lightbulb icon
+
+            fab.addEventListener('click', function(e){
+                e.preventDefault();
+                const paragraphText = getCurrentParagraphText(quill) || '';
+                if(!paragraphText){ logLine('FAB: nothing to nudge'); return; }
+                sendNudge(paragraphText);
+                showToast('Nudge sent');
+            });
+
+            editorWrapper.appendChild(fab);
+        }
+    }catch(e){ console.warn('Failed to add FAB nudge button', e); }
+
+    // Small toast helper (visible in-page feedback since console may be hidden)
+    function showToast(msg, timeout=1800){
+        try{
+            let t = document.getElementById('ai-nudge-toast');
+            if(!t){
+                t = document.createElement('div');
+                t.id = 'ai-nudge-toast';
+                t.style.position = 'absolute';
+                t.style.right = '12px';
+                t.style.bottom = '56px';
+                t.style.zIndex = 70;
+                t.style.padding = '6px 10px';
+                t.style.background = 'rgba(0,0,0,0.75)';
+                t.style.color = '#fff';
+                t.style.borderRadius = '6px';
+                t.style.fontSize = '12px';
+                t.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+                const editorWrapper = quill.root.parentNode;
+                if(editorWrapper) editorWrapper.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(()=>{ try{ t.style.display='none'; }catch(e){} }, timeout);
+        }catch(e){ /* ignore */ }
+    }
+
+    // Global key handler as robust fallback when editor is focused
+    document.addEventListener('keydown', function(e){
+        try{
+            if(e.key === 'Enter' && !e.shiftKey){
+                // Only when quill has focus
+                if(typeof quill.hasFocus === 'function' && quill.hasFocus()){
+                    const paragraphText = getCurrentParagraphText(quill) || '';
+                    if(paragraphText && paragraphText.length >= 4){
+                        // Slight debounce to avoid double-send
+                        setTimeout(()=>{ sendNudge(paragraphText); showToast('Nudge sent'); }, 10);
+                    }
+                }
+            }
+        }catch(e){ /* ignore */ }
+    }, true);
+});
+</script>
 <script>
 // Simple debounce
 function debounce(fn, wait){
@@ -209,18 +753,116 @@ document.addEventListener('DOMContentLoaded', function(){
         });
 
         document.addEventListener('click', function(e){
-            if(!contentSug.contains(e.target) && e.target !== contentInput){
-                contentSug.style.display = 'none';
-            }
-        });
+                if(!contentSug) return;
+                if(!contentSug.contains(e.target) && e.target !== contentInput){
+                    contentSug.style.display = 'none';
+                }
+            });
     }
 
     // Close suggestions when clicking outside
     document.addEventListener('click', function(e){
+        if(!sugBox) return;
         if(!sugBox.contains(e.target) && e.target !== locInput){
             sugBox.style.display = 'none';
         }
     });
+
+    // Voice Recording for Content
+    const voiceBtn = document.getElementById('voice-record-btn');
+    const voiceStatus = document.getElementById('voice-status');
+    const voiceFeedback = document.getElementById('voice-feedback');
+    const descriptionInput = document.getElementById('id_description');
+
+    if(voiceBtn && descriptionInput && 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US'; // Change to your preferred language
+        
+        let isRecording = false;
+        let finalTranscript = '';
+
+        recognition.onstart = function(){
+            isRecording = true;
+            voiceBtn.classList.remove('btn-outline-primary');
+            voiceBtn.classList.add('btn-danger');
+            voiceStatus.textContent = 'Recording...';
+            voiceFeedback.style.display = 'block';
+            voiceFeedback.textContent = 'Listening... Speak now';
+            voiceFeedback.className = 'text-primary';
+        };
+
+        recognition.onresult = function(event){
+            let interimTranscript = '';
+            
+            for(let i = event.resultIndex; i < event.results.length; i++){
+                const transcript = event.results[i][0].transcript;
+                if(event.results[i].isFinal){
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            // Show interim results as feedback
+            if(interimTranscript){
+                voiceFeedback.textContent = 'Recognizing: ' + interimTranscript;
+            }
+        };
+
+        recognition.onend = function(){
+            if(isRecording){
+                // Insert the final transcript at cursor position
+                if(finalTranscript.trim()){
+                    insertAtCursor(descriptionInput, finalTranscript);
+                    voiceFeedback.textContent = 'Added: ' + finalTranscript.substring(0, 50) + (finalTranscript.length > 50 ? '...' : '');
+                    voiceFeedback.className = 'text-success';
+                    setTimeout(() => {
+                        voiceFeedback.style.display = 'none';
+                    }, 3000);
+                }
+                finalTranscript = '';
+            }
+            
+            isRecording = false;
+            voiceBtn.classList.remove('btn-danger');
+            voiceBtn.classList.add('btn-outline-primary');
+            voiceStatus.textContent = 'Record';
+        };
+
+        recognition.onerror = function(event){
+            console.error('Speech recognition error:', event.error);
+            voiceFeedback.textContent = 'Error: ' + event.error;
+            voiceFeedback.className = 'text-danger';
+            voiceFeedback.style.display = 'block';
+            
+            isRecording = false;
+            voiceBtn.classList.remove('btn-danger');
+            voiceBtn.classList.add('btn-outline-primary');
+            voiceStatus.textContent = 'Record';
+            
+            setTimeout(() => {
+                voiceFeedback.style.display = 'none';
+            }, 3000);
+        };
+
+        voiceBtn.addEventListener('click', function(){
+            if(!isRecording){
+                finalTranscript = '';
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        });
+    } else if(voiceBtn) {
+        // Browser doesn't support speech recognition
+        voiceBtn.disabled = true;
+        voiceBtn.title = 'Speech recognition not supported in this browser';
+        voiceStatus.textContent = 'Not supported';
+    }
 });
 </script>
 {% endblock %}
