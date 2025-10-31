@@ -11,24 +11,171 @@
     padding-bottom: 80px;
 }
 
-body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
-    background-size: 400% 400%;
-    animation: gradient-shift 20s ease infinite;
+/* Updated styling with warm minimalist palette - removed animated gradient background */
+.card {
+    border: 2px solid #e8dfd8;
+    border-radius: 12px;
+    background-color: #fafaf8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-@keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+.card-premium {
+    background: linear-gradient(135deg, #fafaf8 0%, #f5f1ed 100%);
+    border: 2px solid #e8dfd8;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.card-title, .card-header h2 {
+    color: #3d3d3d;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.text-muted {
+    color: #9b8b7e !important;
+}
+
+.profile-picture-container {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-picture {
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #d4e4d8, #d4a574);
+    object-fit: cover;
+    border: 4px solid #fafaf8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.profile-status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.profile-status .badge {
+    background-color: #d4e4d8 !important;
+    color: #3d3d3d !important;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #9b8b7e, #d4a574);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.bio-section {
+    padding: 12px;
+    background-color: #f5f1ed;
+    border-radius: 8px;
+    border-left: 3px solid #d4e4d8;
+}
+
+/* Different button backgrounds for each action — only change backgrounds/borders, leave text color as-is */
+.profile-actions .btn-primary {
+    background-color: #7D66F5; /* purple background */
+    border-color: #7D66F5;
+        border: 1px solid #7D66F5 !important;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.profile-actions .btn-primary:hover {
+    background-color: #6b54e0;
+    border-color: #6b54e0;
+    box-shadow: 0 4px 12px rgba(107,84,224,0.18);
+}
+
+.profile-actions .btn-outline-primary {
+    /* lavender outline — only border/background changed; force background/border but keep readable text color */
+    border-color: #bfa8ff !important;
+        border: 1px solid #bfa8ff !important;
+    border-radius: 12px !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    /* Prevent global rules with !important from forcing a colored background or white text */
+    background-color: transparent !important;
+    color: #2b2b2b !important;
+}
+
+.profile-actions .btn-outline-primary:hover {
+    background-color: #bfa8ff !important;
+    border-color: #bfa8ff !important;
+    color: #2b2b2b !important;
+}
+
+.profile-actions .btn-outline-secondary {
+    /* gold outline for secondary actions; text color unchanged */
+    border-color: #FFD76D !important;
+        border: 1px solid #FFD76D !important;
+    border-radius: 12px !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background-color: transparent !important;
+    color: #2b2b2b !important;
+}
+
+.profile-actions .btn-outline-secondary:hover {
+    background-color: #FFD76D !important;
+    border-color: #FFD76D !important;
+    color: #2b2b2b !important;
+}
+
+.profile-actions .btn-outline-secondary.btn-sm {
+    border-color: #FFD76D;
+}
+
+.profile-actions .btn-outline-secondary.btn-sm:hover {
+    background-color: #FFD76D;
+    border-color: #FFD76D;
+}
+
+.list-group-item {
+    background-color: #fafaf8;
+    border-color: #e8dfd8;
+}
+
+.form-check-input:checked {
+    background-color: #d4e4d8;
+    border-color: #d4e4d8;
+}
+
+.form-check-input:focus {
+    border-color: #d4a574;
+    box-shadow: 0 0 0 0.25rem rgba(212, 165, 116, 0.25);
+}
+
+.text-primary {
+    color: #d4a574 !important;
+}
+
+.text-success {
+    color: #d4e4d8 !important;
+}
+
+.text-info {
+    color: #9b8b7e !important;
 }
 
 .footer {
     margin-top: 60px !important;
-    background: rgba(255, 255, 255, 0.95) !important;
+    background: rgba(250, 250, 248, 0.95) !important;
     backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid #e8dfd8;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
 }
 </style>
 {% endblock %}

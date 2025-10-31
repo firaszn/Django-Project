@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans "Home" %} - AI Personal Journal{% endblock %}
+{% block title %}{% trans "Home" %} - mindmuse{% endblock %}
 
 {% block content %}
 <!-- Hero Section Spectaculaire -->
@@ -11,37 +11,30 @@
         <div class="row align-items-center min-vh-75">
             <div class="col-lg-6" data-aos="fade-right" data-aos-delay="100">
                 <div class="hero-content">
-                    <h1 class="display-2 fw-bold text-white mb-4">
-                        {% trans "Welcome" %}, 
-                        <span class="text-gradient">{{ user.get_full_name|default:user.username }}</span>!
-                    </h1>
-                    <p class="lead text-white-50 mb-4 fs-5">
-                        {% trans "Transform your memories into intelligent insights with our AI-powered journal. Document your life like never before." %}
-                    </p>
-                    <div class="hero-buttons d-flex gap-3 flex-wrap">
-                        <a href="{% url 'journal_create' %}" class="btn btn-primary btn-lg pulse">
-                            <i class="fas fa-plus me-2"></i>{% trans "New Entry" %}
-                        </a>
-                        <a href="{% url 'profile' %}" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-user me-2"></i>{% trans "My Profile" %}
-                        </a>
+                    <div class="welcome-hero">
+                        <h1 class="display-5 fw-bold mb-3">
+                            Welcome back {{ user.first_name|default:user.get_full_name|default:user.username }}, what's on your mind today
+                        </h1>
+                        <p class="lead mb-3 fs-5">
+                            {% trans "Write about your thoughts and feelings, have a look at your growth" %}
+                        </p>
+                        <div class="hero-buttons d-flex gap-3 flex-wrap mt-3">
+                            <a href="{% url 'journal_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>{% trans "New Entry" %}
+                            </a>
+                            <a href="{% url 'journal_garden' %}" class="btn btn-lavender">
+                                <i class="fas fa-seedling me-2"></i>{% trans "Explore Garden" %}
+                            </a>
+                        </div>
                     </div>
+                    
                 </div>
             </div>
             <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
                 <div class="hero-visual text-center">
-                    <div class="floating-cards">
-                        <div class="card glass-card float" style="animation-delay: 0s;">
-                            <i class="fas fa-microphone fa-3x text-success mb-3"></i>
-                            <h5>{% trans "Voice Notes" %}</h5>
-                        </div>
-                        <div class="card glass-card float" style="animation-delay: 2s;">
-                            <i class="fas fa-camera fa-3x text-info mb-3"></i>
-                            <h5>{% trans "Photo AI" %}</h5>
-                        </div>
-                        <div class="card glass-card float" style="animation-delay: 4s;">
-                            <i class="fas fa-brain fa-3x text-warning mb-3"></i>
-                            <h5>{% trans "AI Insights" %}</h5>
+                    <div class=" d-flex align-items-center justify-content-center">
+                        <div class=" float" style="width:360px; height:360px; display:flex; align-items:center; justify-content:center; padding:0; overflow:hidden;">
+                            <img src="/media/journal_images/How_to_Start_Small_Rituals_That_Make_Every_Day_Feel_Special-removebg-preview.png" alt="Hero" style="max-width:100%; max-height:100%; object-fit:contain;">
                         </div>
                     </div>
                 </div>
@@ -58,9 +51,9 @@
         <div class="col-12">
             <div class="card p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i>Suggestions to get you started</h5>
+                    <h5 class="mb-0"><i class="fas fa-lightbulb text-accent me-2"></i>Suggestions to get you started</h5>
                     <div>
-                        <button id="regen-prompts" class="btn btn-sm btn-outline-secondary">Regenerate</button>
+                        <button id="regen-prompts" class="btn btn-sm btn-primary">Regenerate</button>
                     </div>
                 </div>
                 <div id="ai-prompts-container" class="d-flex gap-3 flex-wrap"></div>
@@ -73,7 +66,7 @@
         <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
             <div class="card card-premium h-100 hover-lift">
                 <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-4">
+                    <div class="feature-icon feature-icon-accent mb-4">
                         <div class="icon-wrapper">
                             <i class="fas fa-microphone"></i>
                         </div>
@@ -82,7 +75,7 @@
                     <p class="card-text text-muted">
                         {% trans "Record your thoughts and let AI transcribe them into beautiful journal entries." %}
                     </p>
-                    <a href="{% url 'journal_create' %}" class="btn btn-primary shimmer">
+                    <a href="{% url 'journal_create' %}" class="btn btn-accent shimmer">
                         <i class="fas fa-microphone me-2"></i>{% trans "Start Recording" %}
                     </a>
                 </div>
@@ -92,7 +85,7 @@
         <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
             <div class="card card-premium h-100 hover-lift">
                 <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-4">
+                    <div class="feature-icon feature-icon-accent mb-4">
                         <div class="icon-wrapper">
                             <i class="fas fa-camera"></i>
                         </div>
@@ -101,7 +94,7 @@
                     <p class="card-text text-muted">
                         {% trans "Upload photos and get AI-powered descriptions and automatic organization." %}
                     </p>
-                    <a href="#" class="btn btn-success shimmer">
+                    <a href="#" class="btn btn-accent shimmer">
                         <i class="fas fa-upload me-2"></i>{% trans "Upload Photos" %}
                     </a>
                 </div>
@@ -111,7 +104,7 @@
         <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
             <div class="card card-premium h-100 hover-lift">
                 <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-4">
+                    <div class="feature-icon feature-icon-accent mb-4">
                         <div class="icon-wrapper">
                             <i class="fas fa-brain"></i>
                         </div>
@@ -120,7 +113,7 @@
                     <p class="card-text text-muted">
                         {% trans "Get intelligent summaries, mood analysis, and discover patterns in your memories." %}
                     </p>
-                    <a href="#" class="btn btn-warning shimmer">
+                    <a href="#" class="btn btn-accent shimmer">
                         <i class="fas fa-chart-line me-2"></i>{% trans "View Insights" %}
                     </a>
                 </div>
@@ -160,7 +153,7 @@
                     <h4 class="mb-0">
                         <i class="fas fa-tag text-success me-2"></i>{% trans "Tags" %}
                     </h4>
-                    <button class="btn btn-success btn-sm" onclick="showTagForm()">
+                    <button class="btn btn-primary btn-sm" onclick="showTagForm()">
                         <i class="fas fa-plus me-1"></i>{% trans "Add" %}
                     </button>
                 </div>
@@ -181,16 +174,19 @@
     <div class="card">
         <div class="card-body">
             <h3 class="card-title mb-4">{% trans "Recent Entries" %}</h3>
-            
-            <div class="text-center py-5">
-                <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">{% trans "No entries yet" %}</h5>
-                <p class="text-muted mb-4">
-                    {% trans "Start your journey by creating your first journal entry." %}
-                </p>
-                <a href="{% url 'journal_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>{% trans "Create First Entry" %}
-                </a>
+
+            <div id="recent-entries-container">
+                <div id="recent-entries-list" class="row g-3">
+                    <!-- Recent entries will be injected here by JS -->
+                    <div class="col-12 text-center py-5" id="recent-entries-placeholder">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">{% trans "No entries yet" %}</h5>
+                        <p class="text-muted mb-4">{% trans "Start your journey by creating your first journal entry." %}</p>
+                        <a href="{% url 'journal_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>{% trans "Create First Entry" %}
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -256,7 +252,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i>{% trans "Save" %}
                     </button>
                 </div>
@@ -355,10 +351,10 @@ function loadCategories() {
                         ${category.icon ? `<i class="fas fa-${category.icon} ms-2 text-muted"></i>` : ''}
                     </div>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary btn-sm" onclick="editCategory(${category.id})">
+                        <button class="btn btn-sm btn-lavender" onclick="editCategory(${category.id})">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteCategory(${category.id})">
+                        <button class="btn btn-sm btn-lavender" onclick="deleteCategory(${category.id})">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -389,10 +385,10 @@ function loadTags() {
                         <small class="text-muted">${tag.usage_count} uses</small>
                     </div>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-success btn-sm" onclick="editTag(${tag.id})">
+                        <button class="btn btn-sm btn-lavender" onclick="editTag(${tag.id})">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteTag(${tag.id})">
+                        <button class="btn btn-sm btn-lavender" onclick="deleteTag(${tag.id})">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -482,23 +478,24 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function renderPrompts(list){
         container.innerHTML = '';
-        list.forEach(p=>{
+        const pastel = ['#fef6ff', '#f1f8ff', '#fef9ef', '#f6f4ff'];
+        list.forEach((p, idx)=>{
             const card = document.createElement('div');
-            card.className = 'card p-3 flex-grow-1';
-            card.style.minWidth = '220px';
-            card.style.cursor = 'pointer';
+            card.className = 'prompt-card';
+            card.style.background = pastel[idx % pastel.length];
             card.innerHTML = `
-                <div class="mb-2 small text-muted">Prompt</div>
-                <div class="fw-semibold mb-2">${p}</div>
+                <div class="small text-muted mb-2">Prompt</div>
+                <div class="fw-semibold mb-3">${p}</div>
                 <div class="d-flex justify-content-end">
-                    <button class="btn btn-sm btn-primary use-prompt">Use</button>
+                    <button class="btn btn-sm btn-accent use-prompt">Use</button>
                 </div>
             `;
-            card.querySelector('.use-prompt').addEventListener('click', function(e){
+            card.addEventListener('click', function(e){
+                // clicking anywhere acts like using the prompt
                 const url = '{% url "journal_create" %}';
-                // encode prompt as query param
                 window.location.href = url + '?prompt=' + encodeURIComponent(p);
             });
+            // allow the small button to stop propagation (optional)
             container.appendChild(card);
         });
     }
@@ -517,4 +514,67 @@ document.addEventListener('DOMContentLoaded', function(){
     if(regenBtn){ regenBtn.addEventListener('click', function(){ loadPrompts(); }); }
 });
 </script>
+    <script>
+    // Fetch three recent entries and render them in the Recent Entries card
+    document.addEventListener('DOMContentLoaded', function(){
+        async function loadRecentEntries(limit = 3){
+            try{
+                const resp = await fetch('{% url "journal_garden_data" %}?days=365');
+                if(!resp.ok) throw new Error('Network response was not ok');
+                const data = await resp.json();
+                const list = (Array.isArray(data) ? data : []).slice(0, limit);
+                const container = document.getElementById('recent-entries-list');
+                const placeholder = document.getElementById('recent-entries-placeholder');
+                if(!container) return;
+                if(placeholder) placeholder.remove();
+                if(list.length === 0){
+                    container.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No entries yet</h5>
+                            <p class="text-muted mb-4">Start your journey by creating your first journal entry.</p>
+                            <a href="{% url 'journal_create' %}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Create First Entry</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = list.map(entry => {
+                    const title = entry.title || (entry.snippet ? entry.snippet : 'Untitled');
+                    const date = entry.entry_date ? new Date(entry.entry_date).toLocaleDateString() : (entry.created_at ? new Date(entry.created_at).toLocaleDateString() : '');
+                    const mood = entry.mood || 'neutral';
+                    const snippet = entry.snippet || '';
+                    return `
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card h-100 p-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1 fw-semibold">${escapeHtml(title)}</h6>
+                                        <small class="text-muted">${date}</small>
+                                    </div>
+                                    <div>
+                                        <a href="/journals/${entry.id}/" class="btn btn-sm btn-lavender ms-2" title="Open"><i class="fas fa-external-link-alt"></i></a>
+                                    </div>
+                                </div>
+                                <p class="small text-muted mt-2">${escapeHtml(snippet)}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }catch(err){
+                console.error('Failed to load recent entries', err);
+            }
+        }
+
+        // small helper to prevent XSS in injected strings
+        function escapeHtml(str){
+            if(!str) return '';
+            return String(str).replace(/[&<>"']/g, function(s){
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]);
+            });
+        }
+
+        loadRecentEntries(3);
+    });
+    </script>
 {% endblock %}

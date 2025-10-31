@@ -10,30 +10,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('journal', '0002_journal_delete_journalentry'),
     ]
-
-    operations = [
-        migrations.AddField(
-            model_name='journal',
-            name='entry_date',
-            field=models.DateField(default=django.utils.timezone.localdate),
-        ),
-        migrations.AddField(
-            model_name='journal',
-            name='hidden',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='journal',
-            name='location',
-            field=models.CharField(blank=True, max_length=255, null=True),
-        ),
-        migrations.CreateModel(
-            name='JournalImage',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('image', models.ImageField(upload_to='journal_images/')),
-                ('uploaded_at', models.DateTimeField(auto_now_add=True)),
-                ('journal', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='images', to='journal.journal')),
-            ],
-        ),
-    ]
+    # This migration became redundant after repository merges; the initial migration
+    # already creates the fields and JournalImage model. Keep as a no-op so migration
+    # graph remains consistent for historical reasons.
+    operations = []

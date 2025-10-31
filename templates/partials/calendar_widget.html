@@ -21,8 +21,80 @@
 <style>
   #calendar-widget .day-cell { padding:8px; text-align:center; border-radius:8px; }
   #calendar-widget .day-cell.disabled { color:#b3b3b3; }
-  #calendar-widget .day-cell.active { background: linear-gradient(135deg, #f4a582, #ffb88c); color:white; font-weight:700; }
+  /* Active day: use gold accent instead of purple to avoid purple usage in calendar */
+  /* Active day: use gold accent instead of purple to avoid purple usage in calendar */
+  #calendar-widget .day-cell.active {
+    background: linear-gradient(135deg, #FFD76D, #FFE7A8) !important;
+    background-image: linear-gradient(135deg, #FFD76D, #FFE7A8) !important;
+    color: #2b2b2b !important;
+    font-weight: 700 !important;
+  }
+
+  /* Force all calendar buttons to white background (no purple). High-specificity + !important to override global .btn rules */
+  #calendar-widget .card .btn,
+  #calendar-widget button,
+  #calendar-widget .btn-sm,
+  #calendar-widget .btn-outline-secondary {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #2b2b2b !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove decorative pseudo-element overlays from buttons (some global rules use ::before gradients) */
+  #calendar-widget .card .btn::before,
+  #calendar-widget button::before,
+  #calendar-widget .btn-sm::before,
+  #calendar-widget .btn-outline-secondary::before {
+    display: none !important;
+    background: none !important;
+  }
+
+  /* Ensure button icons inherit the button text color */
+  #calendar-widget .card .btn i,
+  #calendar-widget button i {
+    color: inherit !important;
+  }
+
+  /* Override inline gradient backgrounds applied via JS/inline styles (e.g., element.style with linear-gradient) */
+  #calendar-widget [style*="linear-gradient"] {
+    background: #bfa8ff !important;
+    background-image: none !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    box-shadow: none !important;
+    color: #2b2b2b !important;
+  }
   #calendar-widget .day-cell .count { display:block; font-size:0.75rem; }
+
+  /* Force readable dark text for all calendar content (day numbers, counts, headers) */
+  #calendar-widget,
+  #calendar-widget .card,
+  #calendar-widget .day-cell,
+  #calendar-widget .day-cell > div,
+  #calendar-widget .day-cell .count,
+  #calendar-widget #cal-month-year,
+  #calendar-widget #cal-encourage,
+  #calendar-widget .text-muted {
+    color: #2b2b2b !important;
+  }
+
+  /* Make disabled look muted but still readable */
+  #calendar-widget .day-cell.disabled { color: #8a8a8a !important; }
+
+  /* Extra strong fallback for day number elements (catch deeply-specific overrides) */
+  #calendar-widget .day-cell > div,
+  #calendar-widget .day-cell > div * {
+    color: #2b2b2b !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    background-image: none !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    display: block !important;
+    -webkit-text-fill-color: #2b2b2b !important;
+    text-shadow: none !important;
+  }
 </style>
 
 <script>
@@ -85,15 +157,28 @@
     }
 
     for(let d=1; d<=total; d++){
-      const cell = document.createElement('div');
-      cell.className='day-cell';
-      cell.innerHTML = `<div>${d}</div>`;
+        const cell = document.createElement('div');
+        cell.className='day-cell';
+        cell.innerHTML = `<div>${d}</div>`;
+
+        // Ensure the day number itself is explicitly visible (override any text-fill / opacity rules)
+        const numDiv = cell.querySelector('div');
+        if(numDiv){
+          numDiv.style.setProperty('color', '#2b2b2b', 'important');
+          numDiv.style.setProperty('-webkit-text-fill-color', '#2b2b2b', 'important');
+          numDiv.style.setProperty('opacity', '1', 'important');
+          numDiv.style.setProperty('text-shadow', 'none', 'important');
+        }
       if(dayMap[d]){
         cell.classList.add('active');
-        const c = document.createElement('span');
-        c.className='count';
-        c.textContent = `${dayMap[d]} entry${dayMap[d] > 1 ? 'ies' : ''}`;
-        cell.appendChild(c);
+  const c = document.createElement('span');
+  c.className='count';
+  c.textContent = `${dayMap[d]} entry${dayMap[d] > 1 ? 'ies' : ''}`;
+  // Make count text clearly readable
+  c.style.setProperty('color', '#2b2b2b', 'important');
+  c.style.setProperty('opacity', '1', 'important');
+  c.style.setProperty('text-shadow', 'none', 'important');
+  cell.appendChild(c);
       }
 
       cell.addEventListener('click', ()=>{

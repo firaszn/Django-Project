@@ -369,8 +369,14 @@ def journal_hidden(request):
         if form.is_valid():
             pin = form.cleaned_data['pin']
             user = request.user
-            # Check pin using model helper
-            if user.check_journal_pin(pin):
+            # Check pin using UserProfile helper (PIN stored on profile)
+            try:
+                profile = user.profile
+            except Exception:
+                from users.models import UserProfile
+                profile, _ = UserProfile.objects.get_or_create(user=user)
+
+            if profile.check_journal_pin(pin):
                 journals = Journal.objects.filter(user=user, hidden=True).prefetch_related('images', 'related_goals')
                 return render(request, 'journal/hidden_journals_list.html', {'journals': journals})
             else:

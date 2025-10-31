@@ -378,9 +378,13 @@ loadData();
 animate();
 window.addEventListener('resize', onResize);
 
-document.getElementById('refreshGarden').addEventListener('click', async () => {
-  await loadData();
-});
+// If a refresh button exists in the template, wire it up. We do NOT create one here.
+const refreshBtn = document.getElementById('refreshGarden');
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', async () => {
+    await loadData();
+  });
+}
 
 container.addEventListener('click', (ev) => {
   if(!renderer) return;

@@ -1,8 +1,20 @@
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
-from decouple import config, Csv
 from dotenv import load_dotenv
+
+# The project previously used python-decouple's `config` helper. Some
+# environments may not have that package installed. Provide a thin
+# fallback that reads from environment variables via os.getenv so the
+# settings file works in development without extra deps.
+def config(key, default=None):
+    return os.getenv(key, default)
+
+# A minimal Csv helper to mimic decouple.Csv usage when needed.
+def Csv(value):
+    if value is None:
+        return []
+    return [v.strip() for v in str(value).split(',') if v.strip()]
 
 
 # Import de la configuration email
@@ -98,7 +110,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ai_journal_db',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
