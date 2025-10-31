@@ -8,11 +8,17 @@ import dj_database_url
 try:
     from email_config import ACTIVE_EMAIL_CONFIG
     # Appliquer la configuration email
-    for key, value in ACTIVE_EMAIL_CONFIG.items():
-        globals()[key] = value
-except ImportError:
-    # Configuration par défaut si le fichier n'existe pas
+    if ACTIVE_EMAIL_CONFIG:
+        for key, value in ACTIVE_EMAIL_CONFIG.items():
+            globals()[key] = value
+except (ImportError, AttributeError, TypeError):
+    # Configuration par défaut si le fichier n'existe pas ou erreur
     pass
+except Exception as e:
+    # Log l'erreur mais continue (pour éviter de bloquer le démarrage)
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Erreur lors du chargement de email_config: {e}")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -265,3 +271,47 @@ HUGGINGFACE_API_KEY = config('HUGGINGFACE_API_KEY', default=None)  # Optionnel :
 # reCAPTCHA Configuration
 RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
 RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
+
+# Logging Configuration pour voir les erreurs dans Render
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'users': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

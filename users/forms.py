@@ -5,6 +5,10 @@ from allauth.account.forms import SignupForm, LoginForm
 from .models import CustomUser
 from django.conf import settings
 import requests
+import os
+import logging
+
+logger = logging.getLogger('users')
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
@@ -260,16 +264,31 @@ class CustomLoginForm(LoginForm):
     
     def clean(self):
         """Validate reCAPTCHA token"""
-        cleaned_data = super().clean()
-        recaptcha_token = cleaned_data.get('recaptcha_token')
+        try:
+            logger.debug("Starting CustomLoginForm.clean()")
+            cleaned_data = super().clean()
+            logger.debug("Parent clean() completed successfully")
+        except Exception as e:
+            logger.error(f"Error in parent clean(): {e}", exc_info=True)
+            # Si une erreur se produit lors du clean() parent, on la laisse remonter
+            raise
+        
+        recaptcha_token = cleaned_data.get('recaptcha_token', '')
+        logger.debug(f"reCAPTCHA token present: {bool(recaptcha_token)}")
         
         # Ne pas valider reCAPTCHA si on est sur Render (les clés locales ne fonctionnent pas)
-        import os
-        is_on_render = os.environ.get('RENDER_EXTERNAL_HOSTNAME') is not None
+        try:
+            is_on_render = os.environ.get('RENDER_EXTERNAL_HOSTNAME') is not None
+            logger.debug(f"Is on Render: {is_on_render}")
+        except Exception as e:
+            logger.warning(f"Error checking Render environment: {e}")
+            is_on_render = False
         
         # Only validate if RECAPTCHA is configured and not on Render
         if not is_on_render and settings.RECAPTCHA_SECRET_KEY and settings.RECAPTCHA_SITE_KEY:
+            logger.debug("Validating reCAPTCHA")
             if not recaptcha_token:
+                logger.warning("reCAPTCHA token missing")
                 raise forms.ValidationError(_('Please complete the reCAPTCHA verification.'))
             
             # Verify the token with Google
@@ -282,14 +301,23 @@ class CustomLoginForm(LoginForm):
             try:
                 response = requests.post(verify_url, data=data, timeout=5)
                 result = response.json()
+                logger.debug(f"reCAPTCHA verification result: {result}")
                 
                 if not result.get('success'):
+                    logger.warning("reCAPTCHA verification failed")
                     raise forms.ValidationError(_('reCAPTCHA verification failed. Please try again.'))
-            except requests.exceptions.RequestException:
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Network error during reCAPTCHA verification: {e}")
                 # If there's a network error, we'll allow the login to proceed
-                # but could also raise an error if you want stricter validation
                 pass
+            except Exception as e:
+                logger.warning(f"Error during reCAPTCHA verification: {e}")
+                # Pour toute autre erreur, on ignore reCAPTCHA
+                pass
+        else:
+            logger.debug("reCAPTCHA validation skipped")
         
+        logger.debug("CustomLoginForm.clean() completed successfully")
         return cleaned_data
 
 class UserProfileForm(forms.ModelForm):
